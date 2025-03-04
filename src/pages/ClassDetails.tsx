@@ -10,15 +10,17 @@ const ClassDetails = () => {
   const { moduleId, classId } = useParams<{ moduleId: string; classId: string }>();
   const { modules } = useSyllabusGenerator();
   
-  const { currentClass, slides } = useMemo(() => {
+  const { currentClass, moduleIndex, classIndex, slides } = useMemo(() => {
     const moduleIndex = modules.findIndex(m => m.id === moduleId);
-    if (moduleIndex === -1) return { currentClass: null, slides: [] };
+    if (moduleIndex === -1) return { currentClass: null, moduleIndex: -1, classIndex: -1, slides: [] };
     
     const classIndex = modules[moduleIndex].classes.findIndex(c => c.id === classId);
-    if (classIndex === -1) return { currentClass: null, slides: [] };
+    if (classIndex === -1) return { currentClass: null, moduleIndex, classIndex: -1, slides: [] };
     
     return { 
       currentClass: modules[moduleIndex].classes[classIndex],
+      moduleIndex,
+      classIndex,
       slides: modules[moduleIndex].slides?.[classIndex] || []
     };
   }, [modules, moduleId, classId]);
