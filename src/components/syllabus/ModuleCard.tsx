@@ -2,7 +2,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import ClassCard from './ClassCard';
 
 export interface Class {
@@ -23,6 +22,7 @@ interface ModuleCardProps {
   expanded: boolean;
   onToggle: () => void;
   onEdit: (moduleId: string, title: string) => void;
+  onClassSelect: (moduleId: string, classId: string) => void;
 }
 
 const ModuleCard: React.FC<ModuleCardProps> = ({
@@ -30,6 +30,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
   expanded,
   onToggle,
   onEdit,
+  onClassSelect,
 }) => {
   return (
     <div className="mb-4 border-b border-gray-100 pb-4">
@@ -66,6 +67,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
                 key={classItem.id}
                 classItem={classItem}
                 moduleId={module.id}
+                onSelect={onClassSelect}
               />
             ))}
           </div>

@@ -5,6 +5,7 @@ import { BookText, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ModuleCard from './syllabus/ModuleCard';
 import EditDialog from './syllabus/EditDialog';
+import ClassDetailsPanel from './syllabus/ClassDetailsPanel';
 
 interface SyllabusPreviewProps {
   modules: Module[];
@@ -23,6 +24,15 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
     // Initialize all modules as expanded
     modules.reduce((acc, module) => ({ ...acc, [module.id]: true }), {})
   );
+
+  // Selected class state
+  const [selectedClass, setSelectedClass] = useState<{
+    moduleId: string;
+    classId: string;
+    title: string;
+    corePoints: string[];
+    slides: any[];
+  } | null>(null);
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -48,6 +58,26 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
     setDialogOpen(true);
   };
 
+  // Handle class selection
+  const handleClassSelect = (moduleId: string, classId: string) => {
+    const moduleIndex = modules.findIndex(m => m.id === moduleId);
+    if (moduleIndex === -1) return;
+    
+    const classIndex = modules[moduleIndex].classes.findIndex(c => c.id === classId);
+    if (classIndex === -1) return;
+    
+    const classItem = modules[moduleIndex].classes[classIndex];
+    const slides = modules[moduleIndex].slides?.[classIndex] || [];
+    
+    setSelectedClass({
+      moduleId,
+      classId,
+      title: classItem.title,
+      corePoints: classItem.corePoints,
+      slides
+    });
+  };
+
   // Save changes
   const saveChanges = () => {
     if (dialogType === 'module') {
@@ -56,6 +86,11 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
       onLessonUpdate(editingModule, editingLesson, editTitle, editDescription);
     }
     setDialogOpen(false);
+  };
+
+  // Clear selected class
+  const clearSelectedClass = () => {
+    setSelectedClass(null);
   };
 
   return (
@@ -84,15 +119,25 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
           </div>
         ) : (
           <div className="p-4 md:p-6">
-            {modules.map((module) => (
-              <ModuleCard
-                key={module.id}
-                module={module}
-                expanded={expandedModules[module.id]}
-                onToggle={() => toggleModule(module.id)}
-                onEdit={openModuleEdit}
+            {selectedClass ? (
+              <ClassDetailsPanel
+                title={selectedClass.title}
+                corePoints={selectedClass.corePoints}
+                slides={selectedClass.slides}
+                onBack={clearSelectedClass}
               />
-            ))}
+            ) : (
+              modules.map((module) => (
+                <ModuleCard
+                  key={module.id}
+                  module={module}
+                  expanded={expandedModules[module.id]}
+                  onToggle={() => toggleModule(module.id)}
+                  onEdit={openModuleEdit}
+                  onClassSelect={handleClassSelect}
+                />
+              ))
+            )}
           </div>
         )}
       </div>
