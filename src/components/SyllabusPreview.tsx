@@ -48,16 +48,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
     setDialogOpen(true);
   };
 
-  // Open lesson edit dialog
-  const openLessonEdit = (moduleId: string, lessonId: string, title: string, description: string) => {
-    setDialogType('lesson');
-    setEditingModule(moduleId);
-    setEditingLesson(lessonId);
-    setEditTitle(title);
-    setEditDescription(description);
-    setDialogOpen(true);
-  };
-
   // Save changes
   const saveChanges = () => {
     if (dialogType === 'module') {
@@ -101,7 +91,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
                 expanded={expandedModules[module.id]}
                 onToggle={() => toggleModule(module.id)}
                 onEdit={openModuleEdit}
-                onLessonEdit={openLessonEdit}
               />
             ))}
           </div>

@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { readFileContent } from "@/utils/fileProcessor";
 import { toast } from "sonner";
@@ -10,10 +9,26 @@ export interface Lesson {
 	description: string;
 }
 
+export interface Slide {
+  title: string;
+  content: string;
+  visualPrompt: string;
+  voiceoverScript: string;
+}
+
+export interface Class {
+  id: string;
+  title: string;
+  corePoints: string[];
+  slideCount: number;
+}
+
 export interface Module {
-	id: string;
-	title: string;
-	lessons: Lesson[];
+  id: string;
+  title: string;
+  classes: Class[];
+  slides: Slide[][];
+  lessons: Lesson[]; // Keep for backwards compatibility
 }
 
 type AnalysisState = "idle" | "analyzing" | "generating" | "complete" | "error";
@@ -198,11 +213,34 @@ export function useSyllabusGenerator() {
 				const module: Module = {
 					id: `module-${moduleIndex}-${uuidv4().slice(0, 4)}`,
 					title: `Module ${moduleIndex}: ${moduleClasses[0].classTitle.split(':')[0]}`,
-					lessons: []
+					classes: [],
+					slides: [],
+					lessons: [] // Keep for backwards compatibility
 				};
 				
-				// Add lessons from each class in this module
-				moduleClasses.forEach(classItem => {
+				// Add classes to this module
+				moduleClasses.forEach((classItem, classIndex) => {
+					// Create class
+					const newClass: Class = {
+						id: `class-${classItem.classNo}-${uuidv4().slice(0, 6)}`,
+						title: classItem.classTitle,
+						corePoints: classItem.coreConcepts,
+						slideCount: classItem.slides.length
+					};
+					
+					module.classes.push(newClass);
+					
+					// Store slides for this class
+					const slides: Slide[] = classItem.slides.map(slide => ({
+						title: slide.title,
+						content: slide.content,
+						visualPrompt: slide.visualPrompt,
+						voiceoverScript: slide.voiceoverScript
+					}));
+					
+					module.slides.push(slides);
+					
+					// Keep backwards compatibility with lessons
 					classItem.slides.forEach(slide => {
 						module.lessons.push({
 							id: `lesson-${uuidv4().slice(0, 8)}`,

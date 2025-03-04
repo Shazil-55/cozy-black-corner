@@ -2,16 +2,27 @@
 import React from 'react';
 import { ChevronDown, ChevronRight, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Module } from '@/hooks/useSyllabusGenerator';
 import { cn } from '@/lib/utils';
-import LessonCard from './LessonCard';
+import ClassCard from './ClassCard';
+
+export interface Class {
+  id: string;
+  title: string;
+  corePoints: string[];
+  slideCount: number;
+}
+
+export interface Module {
+  id: string;
+  title: string;
+  classes: Class[];
+}
 
 interface ModuleCardProps {
   module: Module;
   expanded: boolean;
   onToggle: () => void;
   onEdit: (moduleId: string, title: string) => void;
-  onLessonEdit: (moduleId: string, lessonId: string, title: string, description: string) => void;
 }
 
 const ModuleCard: React.FC<ModuleCardProps> = ({
@@ -19,10 +30,9 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
   expanded,
   onToggle,
   onEdit,
-  onLessonEdit,
 }) => {
   return (
-    <div className="mb-4 border-b border-gray-100 pb-2">
+    <div className="mb-4 border-b border-gray-100 pb-4">
       <div 
         className="flex items-center justify-between py-3 cursor-pointer"
         onClick={onToggle}
@@ -50,12 +60,12 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
       
       {expanded && (
         <div className="pl-8 mt-2 space-y-3 animate-fade-in">
-          <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
-            {module.lessons.map((lesson) => (
-              <LessonCard 
-                key={lesson.id}
-                lesson={lesson}
-                onEdit={() => onLessonEdit(module.id, lesson.id, lesson.title, lesson.description)}
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            {module.classes.map((classItem) => (
+              <ClassCard 
+                key={classItem.id}
+                classItem={classItem}
+                moduleId={module.id}
               />
             ))}
           </div>
