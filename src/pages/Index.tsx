@@ -1,149 +1,227 @@
 
-import React, { useEffect } from 'react';
-import Navbar from '@/components/Navbar';
-import Hero from '@/components/Hero';
-import Features from '@/components/Features';
-import Footer from '@/components/Footer';
+import React, { useState } from "react";
+import { DocumentUpload } from "@/components/DocumentUpload";
+import { ClassSelector } from "@/components/ClassSelector";
+import { LoadingState } from "@/components/LoadingState";
+import SyllabusPreview from "@/components/SyllabusPreview";
+import { Sidebar } from "@/components/Sidebar";
+import { Button } from "@/components/ui/button";
+import { useSyllabusGenerator } from "@/hooks/useSyllabusGenerator";
+import { toast } from "sonner";
+import {
+	BookOpen,
+	ArrowRight,
+	UploadCloud,
+	Sparkles,
+	BookText,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Index = () => {
-  useEffect(() => {
-    // Smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function(e) {
-        e.preventDefault();
-        const targetId = this.getAttribute('href');
-        if (targetId === '#') return;
-        
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-          window.scrollTo({
-            top: targetElement.getBoundingClientRect().top + window.scrollY - 100,
-            behavior: 'smooth'
-          });
-        }
-      });
-    });
+	const {
+		file,
+		numClasses,
+		modules,
+		status,
+		progress,
+		error,
+		setNumClasses,
+		handleFileUpload,
+		generateSyllabus,
+		updateModuleTitle,
+		updateLesson,
+	} = useSyllabusGenerator();
 
-    // Initial animation on page load
-    document.body.classList.add('smooth-display-enter');
-    
-    return () => {
-      document.body.classList.remove('smooth-display-enter');
-    };
-  }, []);
+	const [uploadProgress, setUploadProgress] = useState(0);
+	const [uploadStatus, setUploadStatus] = useState<
+		"idle" | "uploading" | "success" | "error"
+	>("idle");
+	const isMobile = useIsMobile();
 
-  return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      <Navbar />
-      <Hero />
-      <Features />
-      
-      {/* Work section - simple placeholder */}
-      <section id="work" className="py-24 px-6 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16">
-            <span className="inline-block px-3 py-1 text-xs font-medium tracking-wide bg-white/10 backdrop-blur-sm border border-white/10 rounded-full mb-6">
-              Our Portfolio
-            </span>
-            
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
-              Selected work
-            </h2>
-            
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto text-balance">
-              A showcase of our most impactful projects, demonstrating our commitment to excellence.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-8">
-            {[1, 2, 3, 4].map((_, index) => (
-              <div 
-                key={index}
-                className="glass-card rounded-2xl overflow-hidden transition-all duration-500 ease-apple-ease hover:scale-[1.02] group cursor-pointer"
-              >
-                <div className="aspect-[4/3] bg-white/5 relative">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-sm font-medium text-white/60">Project {index + 1}</span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2 group-hover:text-white/80 transition-colors">
-                    Project Title {index + 1}
-                  </h3>
-                  <p className="text-gray-400">
-                    Brief description of the project and its unique features.
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
-      {/* Contact section - simple placeholder */}
-      <section id="contact" className="py-24 px-6 relative overflow-hidden">
-        <div className="max-w-3xl mx-auto relative z-10">
-          <div className="text-center mb-16">
-            <span className="inline-block px-3 py-1 text-xs font-medium tracking-wide bg-white/10 backdrop-blur-sm border border-white/10 rounded-full mb-6">
-              Get in Touch
-            </span>
-            
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-balance">
-              Let's start a conversation
-            </h2>
-            
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto text-balance">
-              Ready to elevate your digital presence? We're here to help bring your vision to life.
-            </p>
-          </div>
-          
-          <div className="glass-card rounded-2xl p-8">
-            <form className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium mb-2">Name</label>
-                  <input 
-                    type="text" 
-                    id="name" 
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-white/30 transition-all"
-                    placeholder="Your name"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-2">Email</label>
-                  <input 
-                    type="email" 
-                    id="email" 
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-white/30 transition-all"
-                    placeholder="Your email"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium mb-2">Message</label>
-                <textarea 
-                  id="message" 
-                  rows={4} 
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-white/30 transition-all"
-                  placeholder="Tell us about your project..."
-                ></textarea>
-              </div>
-              
-              <button 
-                type="submit"
-                className="button-hover w-full rounded-lg px-6 py-4 font-medium bg-white text-black"
-              >
-                Send Message
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
-      
-      <Footer />
-    </div>
-  );
+	const handleFileSelected = (selectedFile: File) => {
+		// Simulate file upload progress
+		setUploadStatus("uploading");
+		setUploadProgress(0);
+
+		const interval = setInterval(() => {
+			setUploadProgress((prev) => {
+				if (prev >= 100) {
+					clearInterval(interval);
+					setUploadStatus("success");
+					handleFileUpload(selectedFile);
+					return 100;
+				}
+				return prev + 5;
+			});
+		}, 100);
+	};
+
+	const handleGenerate = () => {
+		const apiKey = import.meta.env.VITE_CHATGPT_API_KEY;
+		
+		if (!apiKey) {
+			toast.error("Please set your OpenAI API key in the environment variables.");
+			return;
+		}
+		
+		if (!file) {
+			toast.error("Please upload a document first");
+			return;
+		}
+		
+		generateSyllabus();
+	};
+
+	const handleRegenerate = () => {
+		toast.success("Regenerating syllabus...");
+		generateSyllabus();
+	};
+
+	// Convert modules to sidebar structure
+	const sidebarItems = modules.map((module) => ({
+		id: module.id,
+		title: module.title,
+		type: "module" as const,
+		expanded: true,
+		children: module.lessons.map((lesson) => ({
+			id: lesson.id,
+			title: lesson.title,
+			type: "lesson" as const,
+		})),
+	}));
+
+	const [selectedItem, setSelectedItem] = useState<string | undefined>();
+
+	return (
+		<div className="flex min-h-screen bg-gray-50">
+			{/* Sidebar */}
+			{modules.length > 0 && (
+				<Sidebar
+					items={sidebarItems}
+					onSelect={setSelectedItem}
+					selectedId={selectedItem}
+				/>
+			)}
+
+			<main
+				className={cn(
+					"flex-1 px-6 py-6 md:py-8 max-w-full",
+					modules.length > 0 && !isMobile
+				)}
+			>
+				<div className="max-w-4xl mx-auto">
+					{/* Header */}
+					<div className="mb-8 text-center">
+						{status === "idle" || status === "error" ? (
+							<>
+								<div className="flex justify-center mb-4">
+									<div className="w-14 h-14 rounded-full bg-talentlms-blue flex items-center justify-center">
+										<BookText className="w-7 h-7 text-white" />
+									</div>
+								</div>
+								<h1 className="text-3xl font-medium tracking-tight mb-3 text-talentlms-darkBlue">
+									AI Syllabus Generator
+								</h1>
+								<p className="text-muted-foreground max-w-2xl mx-auto">
+									Upload your course material and let AI create a structured
+									syllabus. Simply upload a document, specify the number of
+									classes, and get a professionally organized course structure.
+								</p>
+							</>
+						) : (
+							<h1 className="text-2xl font-medium tracking-tight mb-3 text-talentlms-darkBlue flex items-center justify-center">
+								<BookText className="w-6 h-6 mr-2 text-talentlms-blue" />
+								AI Syllabus Generator
+							</h1>
+						)}
+					</div>
+
+					{/* Main content */}
+					{status === "idle" || status === "error" ? (
+						<div className="space-y-6">
+							{/* Step 1: Upload Document */}
+							<div className="bg-white rounded-md p-6 border border-gray-200 shadow-subtle hover:shadow-md transition-shadow">
+								<div className="flex items-center mb-4">
+									<div className="w-8 h-8 rounded-md bg-talentlms-blue flex items-center justify-center mr-3">
+										<UploadCloud className="w-4 h-4 text-white" />
+									</div>
+									<h2 className="font-medium text-lg text-talentlms-darkBlue">
+										Upload Document
+									</h2>
+								</div>
+
+								<DocumentUpload
+									onFileAccepted={handleFileSelected}
+									status={uploadStatus}
+									progress={uploadProgress}
+								/>
+							</div>
+
+							{/* Step 2: Select number of classes */}
+							<div
+								className={cn(
+									"bg-white rounded-md p-6 border border-gray-200 shadow-subtle hover:shadow-md transition-shadow",
+									!file && "opacity-70"
+								)}
+							>
+								<div className="flex items-center mb-4">
+									<div className="w-8 h-8 rounded-md bg-talentlms-blue flex items-center justify-center mr-3">
+										<Sparkles className="w-4 h-4 text-white" />
+									</div>
+									<h2 className="font-medium text-lg text-talentlms-darkBlue">
+										Configure Syllabus
+									</h2>
+								</div>
+
+								<ClassSelector
+									value={numClasses}
+									onChange={setNumClasses}
+									min={1}
+									max={50}
+								/>
+
+								<div className="mt-6">
+									<Button
+										onClick={handleGenerate}
+										disabled={!file}
+										className="bg-talentlms-blue hover:bg-talentlms-darkBlue text-white w-full md:w-auto"
+									>
+										Generate Syllabus
+										<ArrowRight className="ml-2 w-4 h-4" />
+									</Button>
+								</div>
+							</div>
+
+							{error && (
+								<div className="rounded-md bg-red-50 p-4 border border-red-100">
+									<p className="text-sm text-red-800">{error}</p>
+								</div>
+							)}
+						</div>
+					) : status === "analyzing" || status === "generating" ? (
+						<div className="bg-white rounded-md p-8 border border-gray-200 shadow-subtle">
+							<LoadingState
+								message={
+									status === "analyzing"
+										? "Analyzing document..."
+										: "Generating syllabus..."
+								}
+								progress={progress}
+							/>
+						</div>
+					) : (
+						<SyllabusPreview
+							modules={modules}
+							onModuleUpdate={updateModuleTitle}
+							onLessonUpdate={updateLesson}
+							onRegenerate={handleRegenerate}
+						/>
+					)}
+				</div>
+			</main>
+		</div>
+	);
 };
 
 export default Index;

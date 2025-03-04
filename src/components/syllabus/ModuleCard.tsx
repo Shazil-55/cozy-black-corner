@@ -1,0 +1,68 @@
+
+import React from 'react';
+import { ChevronDown, ChevronRight, Edit } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Module } from '@/hooks/useSyllabusGenerator';
+import { cn } from '@/lib/utils';
+import LessonCard from './LessonCard';
+
+interface ModuleCardProps {
+  module: Module;
+  expanded: boolean;
+  onToggle: () => void;
+  onEdit: (moduleId: string, title: string) => void;
+  onLessonEdit: (moduleId: string, lessonId: string, title: string, description: string) => void;
+}
+
+const ModuleCard: React.FC<ModuleCardProps> = ({
+  module,
+  expanded,
+  onToggle,
+  onEdit,
+  onLessonEdit,
+}) => {
+  return (
+    <div className="mb-4 border-b border-gray-100 pb-2">
+      <div 
+        className="flex items-center justify-between py-3 cursor-pointer"
+        onClick={onToggle}
+      >
+        <div className="flex items-center space-x-3">
+          {expanded ? 
+            <ChevronDown className="w-5 h-5 text-talentlms-blue flex-shrink-0" /> : 
+            <ChevronRight className="w-5 h-5 text-talentlms-blue flex-shrink-0" />
+          }
+          <h3 className="font-medium text-lg text-talentlms-darkBlue">{module.title}</h3>
+        </div>
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(module.id, module.title);
+          }}
+          size="sm"
+          variant="ghost"
+          className="flex items-center text-talentlms-blue hover:bg-talentlms-lightBlue"
+        >
+          <Edit className="w-4 h-4 mr-1.5" />
+          Edit
+        </Button>
+      </div>
+      
+      {expanded && (
+        <div className="pl-8 mt-2 space-y-3 animate-fade-in">
+          <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
+            {module.lessons.map((lesson) => (
+              <LessonCard 
+                key={lesson.id}
+                lesson={lesson}
+                onEdit={() => onLessonEdit(module.id, lesson.id, lesson.title, lesson.description)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ModuleCard;
