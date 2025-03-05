@@ -10,46 +10,46 @@ export interface Lesson {
 }
 
 export interface Slide {
-  title: string;
-  content: string;
-  visualPrompt: string;
-  voiceoverScript: string;
+	title: string;
+	content: string;
+	visualPrompt: string;
+	voiceoverScript: string;
 }
 
 export interface Class {
-  id: string;
-  title: string;
-  corePoints: string[];
-  slideCount: number;
+	id: string;
+	title: string;
+	corePoints: string[];
+	slideCount: number;
 }
 
 export interface Module {
-  id: string;
-  title: string;
-  classes: Class[];
-  slides: Slide[][];
-  lessons: Lesson[]; // Keep for backwards compatibility
+	id: string;
+	title: string;
+	classes: Class[];
+	slides: Slide[][];
+	lessons: Lesson[]; // Keep for backwards compatibility
 }
 
 type AnalysisState = "idle" | "analyzing" | "generating" | "complete" | "error";
 
 // Interface for API response
 interface SyllabusApiResponse {
-  syllabus: Array<{
-    classTitle: string;
-    classNo: number;
-    coreConcepts: string[];
-    slides: Array<{
-      slideNo: number;
-      title: string;
-      content: string;
-      visualPrompt: string;
-      voiceoverScript: string;
-    }>;
-    assessment: {
-      quiz: string[];
-    };
-  }>;
+	syllabus: Array<{
+		classTitle: string;
+		classNo: number;
+		coreConcepts: string[];
+		slides: Array<{
+			slideNo: number;
+			title: string;
+			content: string;
+			visualPrompt: string;
+			voiceoverScript: string;
+		}>;
+		assessment: {
+			quiz: string[];
+		};
+	}>;
 }
 
 export function useSyllabusGenerator() {
@@ -67,26 +67,33 @@ export function useSyllabusGenerator() {
 		setError(null);
 	}, []);
 
-	const callOpenAIAPI = useCallback(async (fileContent: string, classRange: { start: number; end: number }, totalClasses: number): Promise<SyllabusApiResponse> => {
-		const CHATGPT_API_KEY = import.meta.env.VITE_CHATGPT_API_KEY;
-		if (!CHATGPT_API_KEY) {
-			throw new Error("API key not found. Please add your API key in the application settings.");
-		}
+	const callOpenAIAPI = useCallback(
+		async (
+			fileContent: string,
+			classRange: { start: number; end: number },
+			totalClasses: number
+		): Promise<SyllabusApiResponse> => {
+			const CHATGPT_API_KEY = import.meta.env.VITE_CHATGPT_API_KEY;
+			if (!CHATGPT_API_KEY) {
+				throw new Error(
+					"API key not found. Please add your API key in the application settings."
+				);
+			}
 
-		const response = await fetch(
-			"https://api.openai.com/v1/chat/completions",
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${CHATGPT_API_KEY}`,
-				},
-				body: JSON.stringify({
-					model: "gpt-4o",
-					messages: [
-						{
-							role: "system",
-							content: `You are a precision-focused syllabus architect. Strictly follow these requirements:
+			const response = await fetch(
+				"https://api.openai.com/v1/chat/completions",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${CHATGPT_API_KEY}`,
+					},
+					body: JSON.stringify({
+						model: "gpt-4o",
+						messages: [
+							{
+								role: "system",
+								content: `You are a precision-focused syllabus architect. Strictly follow these requirements:
 							- Generate classes ${classRange.start} to ${classRange.end} out of ${totalClasses} total classes
 							- Each class should have 10-15 slides
 							- Maintain logical progression: Foundational → Application → Mastery
@@ -118,34 +125,36 @@ export function useSyllabusGenerator() {
 							}
 							This structure should be strictly followed 
 							- Flag uncertain content with [REVIEW-NEEDED]`,
-						},
-						{
-							role: "user",
-							content: `PDF Content: ${fileContent}\n\nGenerate structured syllabus for classes ${classRange.start} to ${classRange.end} according to specifications.`,
-						},
-					],
-					temperature: 0.1,
-					max_tokens: 4000,
-					response_format: { type: "json_object" },
-				}),
+							},
+							{
+								role: "user",
+								content: `PDF Content: ${fileContent}\n\nGenerate structured syllabus for classes ${classRange.start} to ${classRange.end} according to specifications.`,
+							},
+						],
+						temperature: 0.1,
+						max_tokens: 4000,
+						response_format: { type: "json_object" },
+					}),
+				}
+			);
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error?.message || "API request failed");
 			}
-		);
 
-		if (!response.ok) {
-			const errorData = await response.json();
-			throw new Error(errorData.error?.message || "API request failed");
-		}
+			const data = await response.json();
+			const rawResponse = data.choices[0].message.content;
 
-		const data = await response.json();
-		const rawResponse = data.choices[0].message.content;
-		
-		try {
-			return JSON.parse(rawResponse);
-		} catch (parseError) {
-			console.error("Failed to parse JSON:", rawResponse);
-			throw new Error("Invalid JSON response from API");
-		}
-	}, []);
+			try {
+				return JSON.parse(rawResponse);
+			} catch (parseError) {
+				console.error("Failed to parse JSON:", rawResponse);
+				throw new Error("Invalid JSON response from API");
+			}
+		},
+		[]
+	);
 
 	const generateSyllabus = useCallback(async () => {
 		if (!file) {
@@ -173,51 +182,65 @@ export function useSyllabusGenerator() {
 			setProgress(40);
 
 			// Calculate chunks based on number of classes
-			const CHUNK_SIZE = 4; // Maximum number of classes per API call
+			const CHUNK_SIZE = 2; // Maximum number of classes per API call
 			const chunks = [];
-			
+
 			for (let i = 1; i <= numClasses; i += CHUNK_SIZE) {
 				chunks.push({
 					start: i,
-					end: Math.min(i + CHUNK_SIZE - 1, numClasses)
+					end: Math.min(i + CHUNK_SIZE - 1, numClasses),
 				});
 			}
 
 			let combinedSyllabus: SyllabusApiResponse = { syllabus: [] };
 			let chunkCounter = 0;
-			
+
 			// Process each chunk
 			for (const chunk of chunks) {
 				chunkCounter++;
-				setProgress(40 + (50 * (chunkCounter / chunks.length)));
-				
+				setProgress(40 + 50 * (chunkCounter / chunks.length));
+
 				// Show progress toast for each chunk
-				toast.info(`Generating classes ${chunk.start} to ${chunk.end} (${chunkCounter}/${chunks.length})`);
-				
+				toast.info(
+					`Generating classes ${chunk.start} to ${chunk.end} (${chunkCounter}/${chunks.length})`
+				);
+
 				const chunkResult = await callOpenAIAPI(fileContent, chunk, numClasses);
-				combinedSyllabus.syllabus = [...combinedSyllabus.syllabus, ...chunkResult.syllabus];
+				combinedSyllabus.syllabus = [
+					...combinedSyllabus.syllabus,
+					...chunkResult.syllabus,
+				];
 			}
 
 			// Sort by classNo to ensure proper order
 			combinedSyllabus.syllabus.sort((a, b) => a.classNo - b.classNo);
-			
+
 			// Group classes into modules (4 classes per module)
 			const CLASSES_PER_MODULE = 4;
 			const generatedModules: Module[] = [];
-			
-			for (let i = 0; i < combinedSyllabus.syllabus.length; i += CLASSES_PER_MODULE) {
-				const moduleClasses = combinedSyllabus.syllabus.slice(i, i + CLASSES_PER_MODULE);
+
+			for (
+				let i = 0;
+				i < combinedSyllabus.syllabus.length;
+				i += CLASSES_PER_MODULE
+			) {
+				const moduleClasses = combinedSyllabus.syllabus.slice(
+					i,
+					i + CLASSES_PER_MODULE
+				);
 				const moduleIndex = Math.floor(i / CLASSES_PER_MODULE) + 1;
-				
+
 				// Create a module
 				const module: Module = {
 					id: `module-${moduleIndex}-${uuidv4().slice(0, 4)}`,
-					title: `Module ${moduleIndex}: ${moduleClasses[0].classTitle.split(':')[0]}`,
+					title: `Module ${moduleIndex}: ${
+						moduleClasses[0].classTitle.split(":")[0]
+					}`,
 					classes: [],
 					slides: [],
-					lessons: [] // Keep for backwards compatibility
+					lessons: [], // Keep for backwards compatibility
 				};
-				
+
 				// Add classes to this module
 				moduleClasses.forEach((classItem, classIndex) => {
 					// Create class
@@ -225,31 +248,31 @@ export function useSyllabusGenerator() {
 						id: `class-${classItem.classNo}-${uuidv4().slice(0, 6)}`,
 						title: classItem.classTitle,
 						corePoints: classItem.coreConcepts,
-						slideCount: classItem.slides.length
+						slideCount: classItem.slides.length,
 					};
-					
+
 					module.classes.push(newClass);
-					
+
 					// Store slides for this class
-					const slides: Slide[] = classItem.slides.map(slide => ({
+					const slides: Slide[] = classItem.slides.map((slide) => ({
 						title: slide.title,
 						content: slide.content,
 						visualPrompt: slide.visualPrompt,
-						voiceoverScript: slide.voiceoverScript
+						voiceoverScript: slide.voiceoverScript,
 					}));
-					
+
 					module.slides.push(slides);
-					
+
 					// Keep backwards compatibility with lessons
-					classItem.slides.forEach(slide => {
+					classItem.slides.forEach((slide) => {
 						module.lessons.push({
 							id: `lesson-${uuidv4().slice(0, 8)}`,
 							title: `Class ${classItem.classNo} - ${slide.title}`,
-							description: `${slide.content}\n\nVisual: ${slide.visualPrompt}\nVoiceover: ${slide.voiceoverScript}`
+							description: `${slide.content}\n\nVisual: ${slide.visualPrompt}\nVoiceover: ${slide.voiceoverScript}`,
 						});
 					});
 				});
-				
+
 				generatedModules.push(module);
 			}
 

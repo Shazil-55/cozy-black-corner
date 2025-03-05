@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { ClassSelector } from "@/components/ClassSelector";
 import { LoadingState } from "@/components/LoadingState";
@@ -40,7 +39,6 @@ const Index = () => {
 	const isMobile = useIsMobile();
 
 	const handleFileSelected = (selectedFile: File) => {
-		// Simulate file upload progress
 		setUploadStatus("uploading");
 		setUploadProgress(0);
 
@@ -78,18 +76,20 @@ const Index = () => {
 		generateSyllabus();
 	};
 
-	// Convert modules to sidebar structure
-	const sidebarItems = modules.map((module) => ({
-		id: module.id,
-		title: module.title,
-		type: "module" as const,
-		expanded: true,
-		children: module.lessons.map((lesson) => ({
-			id: lesson.id,
-			title: lesson.title,
-			type: "lesson" as const,
-		})),
-	}));
+	// Convert modules to sidebar structure with classes
+	const sidebarItems = useMemo(() => {
+		return modules.map((module) => ({
+			id: module.id,
+			title: module.title,
+			type: "module" as const,
+			expanded: true,
+			children: module.classes.map((classItem) => ({
+				id: classItem.id,
+				title: classItem.title,
+				type: "class" as const,
+			})),
+		}));
+	}, [modules]);
 
 	const [selectedItem, setSelectedItem] = useState<string | undefined>();
 

@@ -1,14 +1,16 @@
 
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, FileText, Menu, X, BookOpen, GraduationCap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, FileText, Menu, X, BookOpen, GraduationCap, Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useNavigate } from 'react-router-dom';
+import { Slider } from '@/components/ui/slider';
 
 interface SidebarItem {
   id: string;
   title: string;
-  type: 'module' | 'lesson';
+  type: 'module' | 'class';
   children?: SidebarItem[];
   expanded?: boolean;
 }
@@ -22,7 +24,21 @@ interface SidebarProps {
 export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [sidebarWidth, setSidebarWidth] = useState<number>(64); // Default width in rem units
+  const [isResizing, setIsResizing] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Initialize expanded state for modules
+    const initialExpandedState: Record<string, boolean> = {};
+    items.forEach(item => {
+      if (item.type === 'module') {
+        initialExpandedState[item.id] = item.expanded ?? true;
+      }
+    });
+    setExpandedItems(initialExpandedState);
+  }, [items]);
 
   const toggleItem = (id: string) => {
     setExpandedItems(prev => ({
@@ -31,7 +47,15 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
     }));
   };
 
-  const renderItems = (items: SidebarItem[], level = 0) => {
+  const handleSelect = (id: string, type: 'module' | 'class', moduleId?: string) => {
+    onSelect(id);
+    
+    if (type === 'class' && moduleId) {
+      navigate(`/class/${moduleId}/${id}`);
+    }
+  };
+
+  const renderItems = (items: SidebarItem[], level = 0, parentId?: string) => {
     return items.map((item) => {
       const isExpanded = expandedItems[item.id] ?? item.expanded ?? false;
       const hasChildren = item.children && item.children.length > 0;
@@ -51,12 +75,14 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
               level === 0 && "font-medium"
             )}
             onClick={() => {
-              onSelect(item.id);
-              if (hasChildren) toggleItem(item.id);
+              if (hasChildren) {
+                toggleItem(item.id);
+              }
+              handleSelect(item.id, item.type, parentId);
             }}
           >
             <div className="flex-shrink-0 mr-2">
-              {hasChildren ? (
+              {item.type === 'module' ? (
                 isExpanded ? (
                   <ChevronDown className="w-4 h-4 text-white/70 group-hover:text-white" />
                 ) : (
@@ -79,12 +105,31 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
               "overflow-hidden transition-all duration-300 ease-in-out pl-1 border-l border-white/10 ml-4",
               isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0",
             )}>
-              {renderItems(item.children!, level + 1)}
+              {renderItems(item.children!, level + 1, item.id)}
             </div>
           )}
         </div>
       );
     });
+  };
+
+  const handleResizeStart = () => {
+    setIsResizing(true);
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', handleResizeEnd);
+  };
+
+  const handleResize = (e: MouseEvent) => {
+    if (isResizing) {
+      const newWidth = Math.max(16, Math.min(80, e.clientX / 16)); // Convert to rem and limit between 16rem and 80rem
+      setSidebarWidth(newWidth);
+    }
+  };
+
+  const handleResizeEnd = () => {
+    setIsResizing(false);
+    document.removeEventListener('mousemove', handleResize);
+    document.removeEventListener('mouseup', handleResizeEnd);
   };
 
   return (
@@ -108,12 +153,14 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
       )}
       
       <div className={cn(
-        "bg-talentlms-blue border-r border-talentlms-darkBlue flex flex-col h-screen w-64",
+        "bg-talentlms-blue border-r border-talentlms-darkBlue flex flex-col h-screen relative",
         "transition-all duration-300 ease-in-out z-40",
         isMobile ? "fixed" : "sticky top-0",
         isMobile && !isOpen && "-translate-x-full",
         isMobile && isOpen && "translate-x-0 shadow-xl"
-      )}>
+      )}
+      // style={{ width: `${sidebarWidth}rem` }}
+      >
         <div className="p-5 border-b border-talentlms-navBlue flex items-center">
           <BookOpen className="w-5 h-5 text-white mr-3" />
           <h2 className="font-medium text-lg text-white">Syllabus</h2>
@@ -130,6 +177,14 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
             </div>
           )}
         </div>
+
+        {/* Resize handle */}
+        {!isMobile && (
+          <div 
+            className="absolute top-0 right-0 w-1 h-full cursor-ew-resize bg-talentlms-darkBlue hover:bg-talentlms-navBlue transition-colors"
+            onMouseDown={handleResizeStart}
+          />
+        )}
       </div>
       
       {/* Mobile overlay backdrop */}

@@ -2,6 +2,7 @@
 import React from 'react';
 import { Book, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 interface Class {
   id: string;
@@ -28,7 +29,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classItem, moduleId, onSelect }) 
       
       <div className="mb-4 flex-grow">
         <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 pl-2">
-          {classItem.corePoints.map((point, index) => (
+          {classItem.corePoints.slice(0, 3).map((point, index) => (
             <li key={index} className="line-clamp-1">{point}</li>
           ))}
         </ul>
@@ -38,15 +39,20 @@ const ClassCard: React.FC<ClassCardProps> = ({ classItem, moduleId, onSelect }) 
         <div className="text-sm text-gray-500">
           {classItem.slideCount} {classItem.slideCount === 1 ? 'slide' : 'slides'}
         </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-talentlms-blue hover:bg-talentlms-lightBlue"
-          onClick={() => onSelect(moduleId, classItem.id)}
-        >
-          <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-          View
-        </Button>
+        <Link to={`/class/${moduleId}/${classItem.id}`}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-talentlms-blue hover:bg-talentlms-lightBlue"
+            onClick={(e) => {
+              e.preventDefault(); // Prevent navigation if you're handling it differently
+              onSelect(moduleId, classItem.id);
+            }}
+          >
+            <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+            View
+          </Button>
+        </Link>
       </div>
     </div>
   );
