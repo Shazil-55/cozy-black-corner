@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Slide } from '@/hooks/useSyllabusGenerator';
@@ -170,27 +170,32 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
         </Button>
       </div>
       
-      {/* Slide Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 relative">
-        <div className="absolute top-0 left-0 m-4 text-white text-sm flex items-center">
-          <span className="px-3 py-1 bg-talentlms-blue rounded-full">
+      {/* Main Content - Made scrollable */}
+      <div className="flex-1 overflow-y-auto relative bg-gray-100">
+        {/* Slide Number Indicator */}
+        <div className="sticky top-4 left-4 z-10">
+          <span className="px-3 py-1 bg-talentlms-blue rounded-full text-white text-sm shadow-md">
             {currentSlideIndex + 1} / {totalSlides}
           </span>
         </div>
         
-        <div className="bg-white w-full max-w-5xl rounded-lg shadow-lg flex flex-col h-full">
-          {/* Slide header */}
-          <div className="bg-talentlms-blue text-white p-6 rounded-t-lg">
-            <h2 className="text-3xl font-bold">{currentSlide?.title}</h2>
-          </div>
-          
-          {/* Slide body */}
-          <div className="p-8 flex-1 flex flex-col md:flex-row gap-6">
-            <div className="flex-1">
-              <p className="text-2xl leading-relaxed text-gray-700 mb-6">{currentSlide?.content}</p>
+        {/* Slide Content */}
+        <div className="flex flex-col items-center justify-start p-4 md:p-8 min-h-full">
+          <div className="bg-white w-full max-w-5xl rounded-lg shadow-lg flex flex-col mb-20">
+            {/* Slide header */}
+            <div className="bg-talentlms-blue text-white p-6 rounded-t-lg">
+              <h2 className="text-3xl font-bold">{currentSlide?.title}</h2>
+            </div>
+            
+            {/* Slide body - Improved layout */}
+            <div className="p-6 flex flex-col gap-6">
+              {/* Content */}
+              <div className="text-xl leading-relaxed text-gray-700">
+                {currentSlide?.content}
+              </div>
               
-              {/* Generated Image Area */}
-              <div className="mt-4 flex-1">
+              {/* Generated Image Area - Constrained height */}
+              <div className="mt-2">
                 <div className="rounded-lg overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center">
                   {currentImageData.loading ? (
                     <div className="p-8 h-64 flex flex-col items-center justify-center text-gray-500">
@@ -198,11 +203,13 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
                       <p>Generating image...</p>
                     </div>
                   ) : currentImageData.imageUrl ? (
-                    <img 
-                      src={currentImageData.imageUrl} 
-                      alt={currentSlide?.title || "Slide visualization"} 
-                      className="w-full h-auto object-contain max-h-[400px]"
-                    />
+                    <div className="max-h-[300px] overflow-hidden">
+                      <img 
+                        src={currentImageData.imageUrl} 
+                        alt={currentSlide?.title || "Slide visualization"} 
+                        className="w-full h-auto object-contain max-h-[300px]"
+                      />
+                    </div>
                   ) : (
                     <div className="p-8 h-64 flex flex-col items-center justify-center text-gray-500 bg-gray-100">
                       <p className="text-center mb-3">{currentImageData.error || "No image available"}</p>
@@ -211,7 +218,9 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
                           variant="outline" 
                           size="sm"
                           onClick={retryImageGeneration}
+                          className="flex items-center gap-2"
                         >
+                          <RefreshCw className="w-4 h-4" />
                           Retry
                         </Button>
                       )}
@@ -228,22 +237,24 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
           </div>
         </div>
         
-        {/* Navigation Controls */}
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-4">
+        {/* Fixed Navigation Controls */}
+        <div className="fixed bottom-[calc(2rem+2.5rem)] left-0 right-0 flex justify-center space-x-4 z-10">
           <Button 
-            variant="secondary"
+            variant="default"
             onClick={goToPrevSlide} 
             disabled={currentSlideIndex === 0}
-            className="bg-white/90 text-gray-800 hover:bg-white"
+            className="shadow-lg bg-white text-talentlms-darkBlue hover:bg-gray-100 border border-gray-200"
+            size="lg"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Previous
           </Button>
           <Button 
-            variant="secondary"
+            variant="default"
             onClick={goToNextSlide}
             disabled={currentSlideIndex === slides.length - 1}
-            className="bg-white/90 text-gray-800 hover:bg-white"
+            className="shadow-lg bg-talentlms-blue text-white hover:bg-talentlms-blue/90"
+            size="lg"
           >
             Next
             <ArrowRight className="w-5 h-5 ml-2" />
@@ -252,11 +263,17 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
       </div>
       
       {/* Footer - Voiceover script */}
-      <div className="bg-gray-800 text-white p-4 max-h-36 overflow-y-auto">
+      <div className="bg-gray-800 text-white p-4 h-[2.5rem] hover:h-36 transition-all duration-300 overflow-hidden group">
         <div className="flex items-center mb-2">
-          <h3 className="text-sm font-medium text-gray-300">Voiceover Script:</h3>
+          <h3 className="text-sm font-medium text-gray-300">Voiceover Script 
+            <span className="ml-2 text-xs text-gray-400 group-hover:opacity-0 transition-opacity">
+              (Hover to expand)
+            </span>
+          </h3>
         </div>
-        <p className="text-base text-gray-300 whitespace-pre-line">{currentSlide?.voiceoverScript}</p>
+        <div className="overflow-y-auto max-h-24 custom-scrollbar">
+          <p className="text-base text-gray-300 whitespace-pre-line">{currentSlide?.voiceoverScript}</p>
+        </div>
       </div>
     </div>
   );
