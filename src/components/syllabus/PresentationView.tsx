@@ -20,13 +20,18 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
   const currentSlide = slides[currentSlideIndex];
   const totalSlides = slides.length;
   
-  // Generate image only for the current slide when the slide changes
+  // Only generate image for the current slide after component mounts or when slide changes
+  // We use a separate useEffect to control when the image generation happens
   useEffect(() => {
-    if (currentSlide?.visualPrompt) {
-      const slideId = `slide-${currentSlideIndex}`;
+    // Only generate if there's a visual prompt and we don't already have a non-error result
+    const slideId = `slide-${currentSlideIndex}`;
+    const currentResult = results[slideId];
+    
+    if (currentSlide?.visualPrompt && (!currentResult || currentResult.error)) {
+      // Only generate if we don't have a result or if previous attempt resulted in error
       generateImage(currentSlide.visualPrompt, slideId);
     }
-  }, [currentSlideIndex, currentSlide?.visualPrompt, generateImage]);
+  }, [currentSlideIndex, currentSlide?.visualPrompt, generateImage, results]);
   
   // Get current slide image data
   const currentSlideId = `slide-${currentSlideIndex}`;
@@ -150,7 +155,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
           {/* Slide body */}
           <div className="p-8 flex-1 flex flex-col md:flex-row gap-6">
             <div className="flex-1">
-              <p className="text-xl leading-relaxed text-gray-700 mb-6">{currentSlide?.content}</p>
+              <p className="text-2xl leading-relaxed text-gray-700 mb-6">{currentSlide?.content}</p>
               
               {/* Generated Image Area */}
               <div className="mt-4 flex-1">

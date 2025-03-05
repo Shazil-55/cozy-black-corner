@@ -10,18 +10,31 @@ export interface ImageGenerationResult {
 
 export function useImageGenerator() {
   const [results, setResults] = useState<Record<string, ImageGenerationResult>>({});
+  const [activeGenerations, setActiveGenerations] = useState<Set<string>>(new Set());
 
   const generateImage = useCallback(async (prompt: string, slideId: string) => {
     // If we already have this image and it's not in an error state, don't regenerate
     if (results[slideId]?.imageUrl && !results[slideId]?.error) {
       return results[slideId].imageUrl;
     }
-
-    // Mark this image as loading
+    
+    // If there's already an active generation for this slideId, don't start another one
+    if (activeGenerations.has(slideId)) {
+      console.log(`Skipping duplicate generation request for ${slideId}`);
+      return null;
+    }
+    
+    // Mark this image as loading and add to active generations
     setResults(prev => ({
       ...prev,
       [slideId]: { loading: true, imageUrl: null, error: null }
     }));
+    
+    setActiveGenerations(prev => {
+      const newSet = new Set(prev);
+      newSet.add(slideId);
+      return newSet;
+    });
 
     const apiKey = import.meta.env.VITE_CHATGPT_API_KEY;
     if (!apiKey) {
@@ -31,10 +44,19 @@ export function useImageGenerator() {
         ...prev,
         [slideId]: { loading: false, imageUrl: null, error }
       }));
+      
+      // Remove from active generations
+      setActiveGenerations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(slideId);
+        return newSet;
+      });
+      
       return null;
     }
 
     try {
+      console.log(`Generating image for slide ${slideId}`);
       const response = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: {
@@ -64,6 +86,13 @@ export function useImageGenerator() {
         [slideId]: { loading: false, imageUrl, error: null }
       }));
       
+      // Remove from active generations
+      setActiveGenerations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(slideId);
+        return newSet;
+      });
+      
       return imageUrl;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
@@ -76,9 +105,16 @@ export function useImageGenerator() {
         [slideId]: { loading: false, imageUrl: null, error: errorMessage }
       }));
       
+      // Remove from active generations
+      setActiveGenerations(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(slideId);
+        return newSet;
+      });
+      
       return null;
     }
-  }, [results]);
+  }, [results, activeGenerations]);
 
   return {
     results,
