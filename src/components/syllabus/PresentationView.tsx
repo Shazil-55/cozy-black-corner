@@ -20,7 +20,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
   const currentSlide = slides[currentSlideIndex];
   const totalSlides = slides.length;
   
-  // Generate image for the current slide
+  // Generate image only for the current slide when the slide changes
   useEffect(() => {
     if (currentSlide?.visualPrompt) {
       const slideId = `slide-${currentSlideIndex}`;
