@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -15,22 +15,39 @@ interface PresentationViewProps {
 const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onClose }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const { generateImage, results } = useImageGenerator();
+  const { generateImage, results, clearActiveGenerations } = useImageGenerator();
+  const generationAttemptedRef = useRef<Set<string>>(new Set());
   
   const currentSlide = slides[currentSlideIndex];
   const totalSlides = slides.length;
   
-  // Only generate image for the current slide after component mounts or when slide changes
-  // We use a separate useEffect to control when the image generation happens
+  // Only generate image for the current slide - with debouncing
   useEffect(() => {
-    // Only generate if there's a visual prompt and we don't already have a non-error result
+    if (!currentSlide?.visualPrompt) return;
+    
     const slideId = `slide-${currentSlideIndex}`;
     const currentResult = results[slideId];
     
-    if (currentSlide?.visualPrompt && (!currentResult || currentResult.error)) {
-      // Only generate if we don't have a result or if previous attempt resulted in error
-      generateImage(currentSlide.visualPrompt, slideId);
+    // Skip if we already have a successful result
+    if (currentResult?.imageUrl && !currentResult.error) {
+      console.log(`Using existing image for slide ${currentSlideIndex}`);
+      return;
     }
+    
+    // Skip if we've already attempted and failed recently (to prevent rapid retries)
+    if (currentResult?.error && generationAttemptedRef.current.has(slideId)) {
+      console.log(`Skipping generation for slide ${currentSlideIndex} due to previous error`);
+      return;
+    }
+    
+    // Set a small timeout to prevent immediate API calls when quickly flipping through slides
+    const timeoutId = setTimeout(() => {
+      console.log(`Requesting image generation for slide ${currentSlideIndex}`);
+      generateImage(currentSlide.visualPrompt, slideId);
+      generationAttemptedRef.current.add(slideId);
+    }, 300);
+    
+    return () => clearTimeout(timeoutId);
   }, [currentSlideIndex, currentSlide?.visualPrompt, generateImage, results]);
   
   // Get current slide image data
@@ -62,6 +79,13 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentSlideIndex, isFullScreen, slides.length]);
+  
+  // Clean up any pending image generations on unmount
+  useEffect(() => {
+    return () => {
+      clearActiveGenerations();
+    };
+  }, [clearActiveGenerations]);
   
   const goToNextSlide = () => {
     if (currentSlideIndex < slides.length - 1) {
@@ -109,6 +133,14 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
     document.addEventListener('fullscreenchange', handleFullScreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullScreenChange);
   }, []);
+  
+  const retryImageGeneration = () => {
+    if (!currentSlide?.visualPrompt) return;
+    
+    const slideId = `slide-${currentSlideIndex}`;
+    generationAttemptedRef.current.delete(slideId); // Remove from attempted set to allow retry
+    generateImage(currentSlide.visualPrompt, slideId);
+  };
   
   return (
     <div 
@@ -172,8 +204,17 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
                       className="w-full h-auto object-contain max-h-[400px]"
                     />
                   ) : (
-                    <div className="p-8 h-64 flex items-center justify-center text-gray-500 bg-gray-100">
-                      <p className="text-center">{currentImageData.error || "No image available"}</p>
+                    <div className="p-8 h-64 flex flex-col items-center justify-center text-gray-500 bg-gray-100">
+                      <p className="text-center mb-3">{currentImageData.error || "No image available"}</p>
+                      {currentImageData.error && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={retryImageGeneration}
+                        >
+                          Retry
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

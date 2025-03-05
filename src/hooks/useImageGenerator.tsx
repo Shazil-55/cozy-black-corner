@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
 export interface ImageGenerationResult {
@@ -10,16 +10,17 @@ export interface ImageGenerationResult {
 
 export function useImageGenerator() {
   const [results, setResults] = useState<Record<string, ImageGenerationResult>>({});
-  const [activeGenerations, setActiveGenerations] = useState<Set<string>>(new Set());
+  const activeGenerationsRef = useRef<Set<string>>(new Set());
 
   const generateImage = useCallback(async (prompt: string, slideId: string) => {
     // If we already have this image and it's not in an error state, don't regenerate
     if (results[slideId]?.imageUrl && !results[slideId]?.error) {
+      console.log(`Using cached image for slide ${slideId}`);
       return results[slideId].imageUrl;
     }
     
     // If there's already an active generation for this slideId, don't start another one
-    if (activeGenerations.has(slideId)) {
+    if (activeGenerationsRef.current.has(slideId)) {
       console.log(`Skipping duplicate generation request for ${slideId}`);
       return null;
     }
@@ -30,11 +31,9 @@ export function useImageGenerator() {
       [slideId]: { loading: true, imageUrl: null, error: null }
     }));
     
-    setActiveGenerations(prev => {
-      const newSet = new Set(prev);
-      newSet.add(slideId);
-      return newSet;
-    });
+    // Add to active generations using the ref (more reliable than state for async operations)
+    activeGenerationsRef.current.add(slideId);
+    console.log(`Starting image generation for slide ${slideId}`);
 
     const apiKey = import.meta.env.VITE_CHATGPT_API_KEY;
     if (!apiKey) {
@@ -46,17 +45,12 @@ export function useImageGenerator() {
       }));
       
       // Remove from active generations
-      setActiveGenerations(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(slideId);
-        return newSet;
-      });
-      
+      activeGenerationsRef.current.delete(slideId);
       return null;
     }
 
     try {
-      console.log(`Generating image for slide ${slideId}`);
+      console.log(`Making API request for slide ${slideId}`);
       const response = await fetch('https://api.openai.com/v1/images/generations', {
         method: 'POST',
         headers: {
@@ -74,11 +68,18 @@ export function useImageGenerator() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Failed to generate image");
+        const errorMessage = errorData.error?.message || `Server responded with ${response.status}`;
+        
+        if (response.status === 429) {
+          throw new Error(`Rate limit exceeded. Please try again later. (${errorMessage})`);
+        } else {
+          throw new Error(errorMessage);
+        }
       }
 
       const data = await response.json();
       const imageUrl = data.data[0].url;
+      console.log(`Successfully generated image for slide ${slideId}`);
       
       // Update the state with the successful result
       setResults(prev => ({
@@ -87,16 +88,11 @@ export function useImageGenerator() {
       }));
       
       // Remove from active generations
-      setActiveGenerations(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(slideId);
-        return newSet;
-      });
-      
+      activeGenerationsRef.current.delete(slideId);
       return imageUrl;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      console.error("Image generation error:", errorMessage);
+      console.error(`Image generation error for slide ${slideId}:`, errorMessage);
       toast.error(`Failed to generate image: ${errorMessage}`);
       
       // Update the state with the error
@@ -106,18 +102,19 @@ export function useImageGenerator() {
       }));
       
       // Remove from active generations
-      setActiveGenerations(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(slideId);
-        return newSet;
-      });
-      
+      activeGenerationsRef.current.delete(slideId);
       return null;
     }
-  }, [results, activeGenerations]);
+  }, [results]);
+
+  // Add a method to clear all active generations (useful for component unmount)
+  const clearActiveGenerations = useCallback(() => {
+    activeGenerationsRef.current.clear();
+  }, []);
 
   return {
     results,
-    generateImage
+    generateImage,
+    clearActiveGenerations
   };
 }
