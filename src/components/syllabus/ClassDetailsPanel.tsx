@@ -70,7 +70,7 @@ const ClassDetailsPanel: React.FC<ClassDetailsPanelProps> = ({
               
               {slides.length > 0 && (
                 <Button 
-                  variant="primary" 
+                  variant="default" 
                   onClick={startPresentation}
                   className="bg-talentlms-blue hover:bg-talentlms-darkBlue text-white"
                 >
