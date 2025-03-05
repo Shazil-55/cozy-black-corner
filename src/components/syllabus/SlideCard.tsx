@@ -24,10 +24,10 @@ const SlideCard: React.FC<SlideCardProps> = ({ slide, slideNumber }) => {
       <div className="p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-start space-x-3">
-            <div className="w-7 h-7 bg-talentlms-lightBlue rounded-full flex items-center justify-center text-talentlms-blue font-medium text-sm">
+            <div className="w-8 h-8 bg-talentlms-lightBlue rounded-full flex items-center justify-center text-talentlms-blue font-medium text-sm">
               {slideNumber}
             </div>
-            <h3 className="font-medium text-lg text-talentlms-darkBlue">{slide.title}</h3>
+            <h3 className="font-medium text-xl text-talentlms-darkBlue">{slide.title}</h3>
           </div>
           <Button
             variant="ghost"
@@ -43,26 +43,26 @@ const SlideCard: React.FC<SlideCardProps> = ({ slide, slideNumber }) => {
           </Button>
         </div>
         
-        <div className="mt-3">
-          <p className="text-gray-600">{slide.content}</p>
+        <div className="mt-4 pl-11">
+          <p className="text-gray-600 text-base">{slide.content}</p>
         </div>
         
         {expanded && (
-          <div className={cn("mt-4 pt-4 border-t border-gray-100 space-y-4 animate-fade-in")}>
+          <div className={cn("mt-5 pt-5 border-t border-gray-100 space-y-5 animate-fade-in pl-11")}>
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <Image className="w-4 h-4 text-talentlms-blue" />
-                <h4 className="text-sm font-medium text-gray-700">Visual Prompt</h4>
+                <h4 className="text-base font-medium text-gray-700">Visual Prompt</h4>
               </div>
-              <p className="text-sm text-gray-600 pl-6">{slide.visualPrompt}</p>
+              <p className="text-base text-gray-600 pl-6">{slide.visualPrompt}</p>
             </div>
             
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <Mic className="w-4 h-4 text-talentlms-blue" />
-                <h4 className="text-sm font-medium text-gray-700">Voiceover Script</h4>
+                <h4 className="text-base font-medium text-gray-700">Voiceover Script</h4>
               </div>
-              <p className="text-sm text-gray-600 pl-6 whitespace-pre-line">{slide.voiceoverScript}</p>
+              <p className="text-base text-gray-600 pl-6 whitespace-pre-line">{slide.voiceoverScript}</p>
             </div>
           </div>
         )}

@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Slide } from '@/hooks/useSyllabusGenerator';
+import { useImageGenerator } from '@/hooks/useImageGenerator';
 
 interface PresentationViewProps {
   slides: Slide[];
@@ -14,9 +15,26 @@ interface PresentationViewProps {
 const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onClose }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const { generateImage, results } = useImageGenerator();
   
   const currentSlide = slides[currentSlideIndex];
   const totalSlides = slides.length;
+  
+  // Generate image for the current slide
+  useEffect(() => {
+    if (currentSlide?.visualPrompt) {
+      const slideId = `slide-${currentSlideIndex}`;
+      generateImage(currentSlide.visualPrompt, slideId);
+    }
+  }, [currentSlideIndex, currentSlide?.visualPrompt, generateImage]);
+  
+  // Get current slide image data
+  const currentSlideId = `slide-${currentSlideIndex}`;
+  const currentImageData = results[currentSlideId] || { 
+    loading: false, 
+    imageUrl: null, 
+    error: null 
+  };
   
   // Handle keyboard navigation
   useEffect(() => {
@@ -123,22 +141,42 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
           </span>
         </div>
         
-        <div className="bg-white w-full max-w-4xl rounded-lg shadow-lg flex flex-col h-full">
+        <div className="bg-white w-full max-w-5xl rounded-lg shadow-lg flex flex-col h-full">
           {/* Slide header */}
           <div className="bg-talentlms-blue text-white p-6 rounded-t-lg">
-            <h2 className="text-2xl font-bold">{currentSlide?.title}</h2>
+            <h2 className="text-3xl font-bold">{currentSlide?.title}</h2>
           </div>
           
           {/* Slide body */}
-          <div className="p-8 flex-1 flex flex-col">
-            <div className="mb-6 flex-1">
-              <p className="text-lg text-gray-700">{currentSlide?.content}</p>
-            </div>
-            
-            <div className="mt-auto">
-              <div className="bg-gray-100 p-4 rounded-md">
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Visual Prompt:</h3>
-                <p className="text-gray-700 italic">{currentSlide?.visualPrompt}</p>
+          <div className="p-8 flex-1 flex flex-col md:flex-row gap-6">
+            <div className="flex-1">
+              <p className="text-xl leading-relaxed text-gray-700 mb-6">{currentSlide?.content}</p>
+              
+              {/* Generated Image Area */}
+              <div className="mt-4 flex-1">
+                <div className="rounded-lg overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center">
+                  {currentImageData.loading ? (
+                    <div className="p-8 h-64 flex flex-col items-center justify-center text-gray-500">
+                      <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                      <p>Generating image...</p>
+                    </div>
+                  ) : currentImageData.imageUrl ? (
+                    <img 
+                      src={currentImageData.imageUrl} 
+                      alt={currentSlide?.title || "Slide visualization"} 
+                      className="w-full h-auto object-contain max-h-[400px]"
+                    />
+                  ) : (
+                    <div className="p-8 h-64 flex items-center justify-center text-gray-500 bg-gray-100">
+                      <p className="text-center">{currentImageData.error || "No image available"}</p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mt-4 bg-gray-100 p-4 rounded-md">
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">Visual Prompt:</h3>
+                  <p className="text-gray-700 italic">{currentSlide?.visualPrompt}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -168,11 +206,11 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
       </div>
       
       {/* Footer - Voiceover script */}
-      <div className="bg-gray-800 text-white p-4 max-h-32 overflow-y-auto">
+      <div className="bg-gray-800 text-white p-4 max-h-36 overflow-y-auto">
         <div className="flex items-center mb-2">
           <h3 className="text-sm font-medium text-gray-300">Voiceover Script:</h3>
         </div>
-        <p className="text-sm text-gray-300 whitespace-pre-line">{currentSlide?.voiceoverScript}</p>
+        <p className="text-base text-gray-300 whitespace-pre-line">{currentSlide?.voiceoverScript}</p>
       </div>
     </div>
   );
