@@ -1,6 +1,5 @@
-
-import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { SlideData } from '@/services/courseService';
@@ -18,7 +17,6 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
   const currentSlide = slides[currentSlideIndex];
   const totalSlides = slides.length;
   
-  // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === ' ') {
@@ -77,7 +75,6 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
     }
   };
   
-  // Handle fullscreen changes from browser
   useEffect(() => {
     const handleFullScreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
@@ -87,17 +84,14 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
     return () => document.removeEventListener('fullscreenchange', handleFullScreenChange);
   }, []);
   
-  // Get gradient background based on index
   const getSlideGradient = (index: number) => {
     const gradients = [
-      'from-blue-100 to-violet-200',
-      'from-green-100 to-emerald-200',
-      'from-amber-100 to-yellow-200',
-      'from-rose-100 to-pink-200',
-      'from-sky-100 to-indigo-200',
-      'from-teal-100 to-cyan-200',
-      'from-purple-100 to-fuchsia-200',
-      'from-orange-100 to-amber-200',
+      'from-blue-50 to-indigo-100',
+      'from-emerald-50 to-teal-100',
+      'from-amber-50 to-yellow-100',
+      'from-rose-50 to-pink-100',
+      'from-violet-50 to-purple-100',
+      'from-cyan-50 to-sky-100',
     ];
     return gradients[index % gradients.length];
   };
@@ -110,7 +104,6 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
         isFullScreen ? "fullscreen" : ""
       )}
     >
-      {/* Header */}
       <div className="p-4 flex items-center justify-between bg-gradient-to-r from-talentlms-darkBlue to-talentlms-blue text-white shadow-md">
         <Button 
           variant="ghost" 
@@ -130,71 +123,62 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
         </Button>
       </div>
       
-      {/* Main Content - Made scrollable */}
-      <div className="flex-1 overflow-y-auto relative">
-        {/* Slide Number Indicator */}
-        <div className="sticky top-4 left-4 z-10 flex justify-center w-full">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
           <span className="px-4 py-1.5 bg-white/90 backdrop-blur-sm rounded-full text-talentlms-darkBlue text-sm shadow-md border border-white/30">
             {currentSlideIndex + 1} / {totalSlides}
           </span>
         </div>
         
-        {/* Slide Content */}
-        <div className="flex flex-col items-center justify-center p-4 md:p-8 min-h-full pb-32">
-          <div className={cn(
-            "bg-gradient-to-br w-full max-w-5xl rounded-xl shadow-xl flex flex-col transform transition-all duration-500",
-            getSlideGradient(currentSlideIndex)
-          )}>
-            {/* Slide header */}
-            <div className="bg-gradient-to-r from-talentlms-blue to-talentlms-darkBlue text-white p-6 rounded-t-xl">
-              <h2 className="text-3xl font-bold">{currentSlide?.title}</h2>
+        <Button
+          variant="secondary"
+          size="icon"
+          className="fixed left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 shadow-lg hover:bg-white"
+        >
+          <Volume2 className="w-5 h-5 text-talentlms-blue" />
+        </Button>
+
+        <div className={cn(
+          "w-full max-w-7xl h-[calc(100vh-12rem)] bg-gradient-to-br rounded-xl shadow-xl overflow-hidden",
+          getSlideGradient(currentSlideIndex)
+        )}>
+          <div className="bg-gradient-to-r from-talentlms-blue to-talentlms-darkBlue text-white p-6">
+            <h2 className="text-3xl font-bold">{currentSlide?.title}</h2>
+          </div>
+          
+          <div className="flex h-[calc(100%-5rem)] p-6 gap-6 bg-white/90 backdrop-blur-sm">
+            <div className="flex-1 overflow-auto">
+              <div className="prose max-w-none">
+                <div className="text-xl leading-relaxed text-gray-700 bg-white/50 p-5 rounded-lg shadow-inner">
+                  {currentSlide?.content}
+                </div>
+              </div>
             </div>
             
-            {/* Slide body - Improved layout */}
-            <div className="p-6 flex flex-col gap-6 bg-white/90 backdrop-blur-sm rounded-b-xl">
-              {/* Content */}
-              <div className="text-xl leading-relaxed text-gray-700 bg-white/50 p-5 rounded-lg shadow-inner">
-                {currentSlide?.content}
-              </div>
-              
-              {/* Image Area - Using backend image if available */}
+            <div className="w-[40%] flex items-start justify-center p-4 bg-white/50 rounded-lg">
               {currentSlide?.imageUrl ? (
-                <div className="mt-2 flex justify-center">
-                  <div className="rounded-lg overflow-hidden bg-white border border-gray-200 shadow-md max-h-[350px]">
-                    <img 
-                      src={currentSlide.imageUrl} 
-                      alt={currentSlide.title || "Slide visualization"} 
-                      className="object-contain max-h-[350px] w-auto max-w-full"
-                    />
-                  </div>
-                </div>
+                <img 
+                  src={currentSlide.imageUrl} 
+                  alt={currentSlide.title}
+                  className="w-full h-auto object-contain rounded-lg shadow-md"
+                />
               ) : (
-                <div className="mt-2 p-6 bg-gray-100 rounded-lg border border-gray-200 text-center">
-                  <p className="text-gray-500 italic">
+                <div className="w-full h-full flex items-center justify-center p-6 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-gray-500 text-center italic">
                     {currentSlide?.visualPrompt || "No image available for this slide."}
                   </p>
-                </div>
-              )}
-              
-              {/* Visual Prompt - Only show if there's no image */}
-              {!currentSlide?.imageUrl && currentSlide?.visualPrompt && (
-                <div className="mt-2 bg-blue-50 p-4 rounded-md border border-blue-100">
-                  <h3 className="text-sm font-medium text-blue-700 mb-2">Visual Description:</h3>
-                  <p className="text-gray-700 italic">{currentSlide?.visualPrompt}</p>
                 </div>
               )}
             </div>
           </div>
         </div>
         
-        {/* Fixed Navigation Controls - Improved styling */}
-        <div className="fixed bottom-20 left-0 right-0 flex justify-center gap-4 z-10">
+        <div className="flex justify-center gap-4 mt-6">
           <Button 
             variant="default"
             onClick={goToPrevSlide} 
             disabled={currentSlideIndex === 0}
-            className="shadow-lg bg-white/90 backdrop-blur-sm text-talentlms-darkBlue hover:bg-white border border-white/50 
-                      disabled:opacity-50 disabled:pointer-events-none transition-all duration-200"
+            className="shadow-lg bg-white/90 backdrop-blur-sm text-talentlms-darkBlue hover:bg-white"
             size="lg"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -204,27 +188,12 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
             variant="default"
             onClick={goToNextSlide}
             disabled={currentSlideIndex === slides.length - 1}
-            className="shadow-lg bg-talentlms-blue/90 backdrop-blur-sm text-white hover:bg-talentlms-blue border border-talentlms-blue/50
-                      disabled:opacity-50 disabled:pointer-events-none transition-all duration-200"
+            className="shadow-lg bg-talentlms-blue/90 backdrop-blur-sm text-white hover:bg-talentlms-blue"
             size="lg"
           >
             Next
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
-        </div>
-      </div>
-      
-      {/* Footer - Voiceover script with elegant styling */}
-      <div className="bg-gray-800/90 backdrop-blur-md text-white p-4 h-16 hover:h-40 transition-all duration-300 overflow-hidden group border-t border-gray-700">
-        <div className="flex items-center mb-2">
-          <h3 className="text-sm font-medium text-gray-300">Voiceover Script 
-            <span className="ml-2 text-xs text-gray-400 group-hover:opacity-0 transition-opacity">
-              (Hover to expand)
-            </span>
-          </h3>
-        </div>
-        <div className="overflow-y-auto max-h-28 custom-scrollbar pr-4">
-          <p className="text-base text-gray-300 whitespace-pre-line">{currentSlide?.voiceoverScript}</p>
         </div>
       </div>
     </div>
