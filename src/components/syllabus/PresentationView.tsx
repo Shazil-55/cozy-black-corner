@@ -20,11 +20,13 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
   const totalSlides = slides.length;
   
   useEffect(() => {
-    // Reset loading state when slide changes
-    if (currentSlide.imageUrl) {
+    // Reset image loading state when slide changes
+    if (currentSlide?.imageUrl) {
       setIsImageLoading(true);
+    } else {
+      setIsImageLoading(false);
     }
-  }, [currentSlideIndex, currentSlide.imageUrl]);
+  }, [currentSlideIndex, currentSlide]);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -95,12 +97,12 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
   
   const getSlideGradient = (index: number) => {
     const gradients = [
-      'from-blue-50 to-indigo-100',
-      'from-emerald-50 to-teal-100',
-      'from-amber-50 to-yellow-100',
-      'from-rose-50 to-pink-100',
-      'from-violet-50 to-purple-100',
-      'from-cyan-50 to-sky-100',
+      'from-blue-600 to-blue-800',
+      'from-emerald-600 to-teal-800',
+      'from-indigo-600 to-purple-800',
+      'from-rose-600 to-pink-800',
+      'from-amber-600 to-orange-800',
+      'from-cyan-600 to-sky-800',
     ];
     return gradients[index % gradients.length];
   };
@@ -117,7 +119,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
         isFullScreen ? "fullscreen" : ""
       )}
     >
-      <div className="p-4 flex items-center justify-between bg-gradient-to-r from-talentlms-darkBlue to-talentlms-blue text-white shadow-md">
+      <div className="p-4 flex items-center justify-between bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md">
         <Button 
           variant="ghost" 
           className="text-white hover:bg-white/10"
@@ -126,7 +128,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
           <X className="w-5 h-5 mr-2" />
           Exit
         </Button>
-        <h1 className="text-lg font-medium truncate max-w-md">{title}</h1>
+        <h1 className="text-lg font-semibold truncate max-w-md">{title}</h1>
         <div className="flex items-center gap-2">
           <Button 
             variant="secondary"
@@ -147,45 +149,53 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
       
       <div className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-auto">
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
-          <span className="px-4 py-1.5 bg-white/90 backdrop-blur-sm rounded-full text-talentlms-darkBlue text-sm shadow-md border border-white/30">
+          <span className="px-4 py-1.5 bg-white/90 backdrop-blur-sm rounded-full text-blue-800 text-sm font-medium shadow-md border border-white/30">
             {currentSlideIndex + 1} / {totalSlides}
           </span>
         </div>
 
+        {/* Main slide container - adjusted width and height */}
         <div className={cn(
-          "w-full max-w-5xl mx-auto my-6 h-auto bg-gradient-to-br rounded-xl shadow-xl overflow-hidden",
-          getSlideGradient(currentSlideIndex)
+          "w-full max-w-4xl mx-auto my-6 h-auto rounded-xl shadow-2xl overflow-hidden",
+          "border border-white/10"
         )}>
-          <div className="bg-gradient-to-r from-talentlms-blue to-talentlms-darkBlue text-white p-6">
-            <h2 className="text-3xl font-bold">{currentSlide?.title}</h2>
+          {/* Slide title bar */}
+          <div className={cn(
+            "bg-gradient-to-r text-white p-5",
+            getSlideGradient(currentSlideIndex)
+          )}>
+            <h2 className="text-2xl font-bold">{currentSlide?.title}</h2>
           </div>
           
-          <div className="flex flex-col md:flex-row p-6 gap-6 bg-white/90 backdrop-blur-sm">
-            <div className="w-full md:w-[60%] overflow-auto">
+          {/* Slide content area */}
+          <div className="flex flex-col md:flex-row bg-white p-0">
+            {/* Text content */}
+            <div className="w-full md:w-[60%] p-6 h-[500px] overflow-auto">
               <div className="prose max-w-none">
-                <div className="text-xl leading-relaxed text-gray-700 bg-white/50 p-5 rounded-lg shadow-inner max-h-[400px] overflow-y-auto">
+                <div className="text-lg leading-relaxed text-gray-700">
                   {currentSlide?.content}
                 </div>
               </div>
             </div>
             
-            <div className="w-full md:w-[40%] flex items-start justify-center p-4 bg-white/50 rounded-lg">
+            {/* Image area - right side, fixed size */}
+            <div className="w-full md:w-[40%] p-6 flex items-center justify-center bg-gray-50 border-l border-gray-100">
               {currentSlide?.imageUrl ? (
                 isImageLoading ? (
-                  <div className="w-full aspect-square flex items-center justify-center bg-gray-100 rounded-lg animate-pulse">
+                  <div className="w-full h-[300px] flex items-center justify-center bg-gray-100 rounded animate-pulse">
                     <div className="text-gray-400">Loading image...</div>
                   </div>
                 ) : (
                   <img 
                     src={currentSlide.imageUrl} 
                     alt={currentSlide.title}
-                    className="w-full h-auto object-contain rounded-lg shadow-md max-h-[300px]"
+                    className="max-w-full max-h-[300px] object-contain rounded"
                     onLoad={handleImageLoad}
                     onError={() => setIsImageLoading(false)}
                   />
                 )
               ) : (
-                <div className="w-full h-[250px] flex items-center justify-center p-6 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="w-full h-[300px] flex items-center justify-center p-6 bg-gray-50 rounded border border-gray-200">
                   <p className="text-gray-500 text-center italic">
                     {currentSlide?.visualPrompt || "No image available for this slide."}
                   </p>
@@ -195,12 +205,13 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
           </div>
         </div>
         
-        <div className="flex justify-center gap-4 mt-6 mb-4">
+        {/* Navigation controls */}
+        <div className="flex justify-center gap-4 mt-4 mb-6">
           <Button 
             variant="default"
             onClick={goToPrevSlide} 
             disabled={currentSlideIndex === 0}
-            className="shadow-lg bg-white/90 backdrop-blur-sm text-talentlms-darkBlue hover:bg-white"
+            className="shadow-lg bg-white text-blue-800 border border-blue-100 hover:bg-blue-50"
             size="lg"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -210,7 +221,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
             variant="default"
             onClick={goToNextSlide}
             disabled={currentSlideIndex === slides.length - 1}
-            className="shadow-lg bg-talentlms-blue/90 backdrop-blur-sm text-white hover:bg-talentlms-blue"
+            className="shadow-lg bg-blue-700 text-white hover:bg-blue-800"
             size="lg"
           >
             Next

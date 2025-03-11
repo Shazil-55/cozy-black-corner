@@ -73,14 +73,14 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
     
     const classItem = modules[moduleIndex].classes[classIndex];
     
-    // Convert Slide[] to SlideData[]
+    // Convert Slide[] to SlideData[] and ensure imageUrl is handled properly
     const slidesData: SlideData[] = modules[moduleIndex].slides?.[classIndex].map(slide => ({
       id: slide.id,
       title: slide.title,
       slideNo: slide.slideNo,
       visualPrompt: slide.visualPrompt,
       voiceoverScript: slide.voiceoverScript,
-      imageUrl: slide.imageUrl,
+      imageUrl: slide.imageUrl || null, // Ensure null is explicitly used when no image
       content: slide.content,
       classId: slide.classId,
       createdAt: slide.createdAt,
