@@ -3,11 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Slide } from '@/hooks/useSyllabusGenerator';
+import { SlideData } from '@/services/courseService';
 import { useImageGenerator } from '@/hooks/useImageGenerator';
 
 interface PresentationViewProps {
-  slides: Slide[];
+  slides: SlideData[];
   title: string;
   onClose: () => void;
 }
@@ -180,8 +180,8 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
         </div>
         
         {/* Slide Content */}
-        <div className="flex flex-col items-center justify-start p-4 md:p-8 min-h-full">
-          <div className="bg-white w-full max-w-5xl rounded-lg shadow-lg flex flex-col mb-20">
+        <div className="flex flex-col items-center justify-start p-4 md:p-8 min-h-full pb-32">
+          <div className="bg-white w-full max-w-5xl rounded-lg shadow-lg flex flex-col">
             {/* Slide header */}
             <div className="bg-talentlms-blue text-white p-6 rounded-t-lg">
               <h2 className="text-3xl font-bold">{currentSlide?.title}</h2>

@@ -4,12 +4,13 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ArrowLeft, BookOpen, Calendar } from 'lucide-react';
-import { courseService, ModuleData, ClassData } from '@/services/courseService';
+import { courseService, ModuleData, ClassData, SlideData } from '@/services/courseService';
 import { Button } from '@/components/ui/button';
 import { Sidebar } from '@/components/Sidebar';
 import ModuleCard from '@/components/syllabus/ModuleCard';
 import ClassDetailsPanel from '@/components/syllabus/ClassDetailsPanel';
 import EditDialog from '@/components/syllabus/EditDialog';
+import PresentationView from '@/components/syllabus/PresentationView';
 
 interface SidebarItem {
   id: string;
@@ -36,6 +37,11 @@ const CourseDetails: React.FC = () => {
   const [editingModule, setEditingModule] = useState<string>('');
   const [editTitle, setEditTitle] = useState('');
 
+  // State for presentation mode
+  const [isPresentationMode, setIsPresentationMode] = useState(false);
+  const [presentationSlides, setPresentationSlides] = useState<SlideData[]>([]);
+  const [presentationTitle, setPresentationTitle] = useState('');
+
   // Fetch course details
   const { data, isLoading, error } = useQuery({
     queryKey: ['courseDetails', courseId],
@@ -44,6 +50,18 @@ const CourseDetails: React.FC = () => {
     meta: {
       onError: () => {
         toast.error('Failed to fetch course details. Please try again later.');
+      }
+    }
+  });
+
+  // Fetch class details when a class is selected
+  const { data: classData, isLoading: isLoadingClass } = useQuery({
+    queryKey: ['classDetails', selectedClass?.classId],
+    queryFn: () => courseService.getClassDetails(selectedClass?.classId || ''),
+    enabled: !!selectedClass?.classId,
+    meta: {
+      onError: () => {
+        toast.error('Failed to fetch class details. Please try again later.');
       }
     }
   });
@@ -148,6 +166,18 @@ const CourseDetails: React.FC = () => {
     setDialogOpen(false);
   };
 
+  // Start presentation mode
+  const startPresentation = (slides: SlideData[], title: string) => {
+    setPresentationSlides(slides);
+    setPresentationTitle(title);
+    setIsPresentationMode(true);
+  };
+
+  // Close presentation mode
+  const closePresentationMode = () => {
+    setIsPresentationMode(false);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex">
@@ -224,12 +254,27 @@ const CourseDetails: React.FC = () => {
             {/* Course Content */}
             <div className="p-4 md:p-6">
               {selectedClass ? (
-                <ClassDetailsPanel
-                  title={selectedClass.title}
-                  corePoints={selectedClass.corePoints}
-                  slides={[]} // We don't have slides in the API response
-                  onBack={clearSelectedClass}
-                />
+                isLoadingClass ? (
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-talentlms-blue"></div>
+                    <p className="ml-4 text-gray-600">Loading class details...</p>
+                  </div>
+                ) : classData?.data ? (
+                  <ClassDetailsPanel
+                    title={classData.data.title}
+                    corePoints={classData.data.concepts}
+                    slides={classData.data.slides || []}
+                    onBack={clearSelectedClass}
+                    onStartPresentation={() => startPresentation(classData.data.slides, classData.data.title)}
+                  />
+                ) : (
+                  <div className="p-6 text-center">
+                    <p className="text-red-500">Failed to load class details.</p>
+                    <Button onClick={clearSelectedClass} className="mt-4">
+                      Go Back
+                    </Button>
+                  </div>
+                )
               ) : (
                 transformedModules.map((module) => (
                   <ModuleCard
@@ -258,6 +303,15 @@ const CourseDetails: React.FC = () => {
         onDescriptionChange={() => {}}
         onSave={saveModuleChanges}
       />
+
+      {/* Presentation Mode */}
+      {isPresentationMode && (
+        <PresentationView 
+          slides={presentationSlides}
+          title={presentationTitle}
+          onClose={closePresentationMode}
+        />
+      )}
     </div>
   );
 };

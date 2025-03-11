@@ -3,16 +3,10 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Presentation, Mic, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-export interface Slide {
-  title: string;
-  content: string;
-  visualPrompt: string;
-  voiceoverScript: string;
-}
+import { SlideData } from '@/services/courseService';
 
 interface SlideCardProps {
-  slide: Slide;
+  slide: SlideData;
   slideNumber: number;
 }
 

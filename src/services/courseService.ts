@@ -31,6 +31,43 @@ export interface CourseDetailsResponse {
   };
 }
 
+export interface SlideData {
+  id: string;
+  title: string;
+  slideNo: number;
+  visualPrompt: string;
+  voiceoverScript: string;
+  imageUrl: string | null;
+  content: string;
+  classId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  classId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClassDetailsResponse {
+  data: {
+    id: string;
+    title: string;
+    classNo: number;
+    concepts: string[];
+    moduleId: string;
+    createdAt: string;
+    updatedAt: string;
+    slides: SlideData[];
+    assessment: {
+      quiz: QuizQuestion[];
+    };
+  };
+}
+
 export const courseService = {
   async getCourseDetails(courseId: string): Promise<CourseDetailsResponse> {
     try {
@@ -50,6 +87,16 @@ export const courseService = {
       return response.data;
     } catch (error) {
       console.error('Error updating module title:', error);
+      throw error;
+    }
+  },
+
+  async getClassDetails(classId: string): Promise<ClassDetailsResponse> {
+    try {
+      const response = await api.get<ClassDetailsResponse>(`/user/class/${classId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching class details:', error);
       throw error;
     }
   }
