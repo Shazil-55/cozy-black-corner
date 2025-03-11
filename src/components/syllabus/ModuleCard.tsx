@@ -35,7 +35,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
   return (
     <div className="mb-4 border-b border-gray-100 pb-4">
       <div 
-        className="flex items-center justify-between py-3 cursor-pointer"
+        className="flex items-center justify-between py-3 cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-700/10 rounded-md px-2"
         onClick={onToggle}
       >
         <div className="flex items-center space-x-3">
@@ -43,11 +43,11 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
             <ChevronDown className="w-5 h-5 text-talentlms-blue flex-shrink-0" /> : 
             <ChevronRight className="w-5 h-5 text-talentlms-blue flex-shrink-0" />
           }
-          <h3 className="font-medium text-lg text-talentlms-darkBlue">{module.title}</h3>
+          <h3 className="font-medium text-lg text-talentlms-darkBlue dark:text-white">{module.title}</h3>
         </div>
         <Button
           onClick={(e) => {
-            e.stopPropagation();
+            e.stopPropagation(); // Prevent triggering the parent's onClick
             onEdit(module.id, module.title);
           }}
           size="sm"

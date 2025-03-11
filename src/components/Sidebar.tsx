@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, FileText, Menu, X, BookOpen, GraduationCap, Folder } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, Menu, X, BookOpen, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNavigate } from 'react-router-dom';
-import { Slider } from '@/components/ui/slider';
 
 interface SidebarItem {
   id: string;
@@ -22,9 +21,9 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
-  const [sidebarWidth, setSidebarWidth] = useState<number>(64); // Default width in rem units
+  const [sidebarWidth, setSidebarWidth] = useState<number>(300); // Default width in pixels
   const [isResizing, setIsResizing] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -113,7 +112,8 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
     });
   };
 
-  const handleResizeStart = () => {
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsResizing(true);
     document.addEventListener('mousemove', handleResize);
     document.addEventListener('mouseup', handleResizeEnd);
@@ -121,7 +121,7 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
 
   const handleResize = (e: MouseEvent) => {
     if (isResizing) {
-      const newWidth = Math.max(16, Math.min(80, e.clientX / 16)); // Convert to rem and limit between 16rem and 80rem
+      const newWidth = Math.max(200, Math.min(500, e.clientX));
       setSidebarWidth(newWidth);
     }
   };
@@ -140,7 +140,7 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
             <TooltipTrigger asChild>
               <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed top-4 left-4 z-50 p-2.5 rounded-full bg-talentlms-blue text-white shadow-md"
+                className="fixed top-20 left-4 z-50 p-2.5 rounded-full bg-talentlms-blue text-white shadow-md"
               >
                 {isOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
@@ -152,14 +152,15 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
         </TooltipProvider>
       )}
       
-      <div className={cn(
-        "bg-talentlms-blue border-r border-talentlms-darkBlue flex flex-col h-screen relative",
-        "transition-all duration-300 ease-in-out z-40",
-        isMobile ? "fixed" : "sticky top-0",
-        isMobile && !isOpen && "-translate-x-full",
-        isMobile && isOpen && "translate-x-0 shadow-xl"
-      )}
-      // style={{ width: `${sidebarWidth}rem` }}
+      <div 
+        className={cn(
+          "bg-talentlms-blue border-r border-talentlms-darkBlue flex flex-col h-screen relative",
+          "transition-all duration-300 ease-in-out z-40",
+          isMobile ? "fixed" : "sticky top-0",
+          isMobile && !isOpen && "-translate-x-full",
+          isMobile && isOpen && "translate-x-0 shadow-xl"
+        )}
+        style={{ width: `${sidebarWidth}px`, minWidth: '200px', maxWidth: '500px' }}
       >
         <div className="p-5 border-b border-talentlms-navBlue flex items-center">
           <BookOpen className="w-5 h-5 text-white mr-3" />
@@ -181,7 +182,7 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
         {/* Resize handle */}
         {!isMobile && (
           <div 
-            className="absolute top-0 right-0 w-1 h-full cursor-ew-resize bg-talentlms-darkBlue hover:bg-talentlms-navBlue transition-colors"
+            className="absolute top-0 right-0 w-2 h-full cursor-ew-resize bg-talentlms-darkBlue hover:bg-talentlms-navBlue transition-colors"
             onMouseDown={handleResizeStart}
           />
         )}

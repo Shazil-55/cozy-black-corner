@@ -154,6 +154,7 @@ export default {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
 				'glass-gradient': 'linear-gradient(to right bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7))',
 				'shimmer': 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0.5) 60%, rgba(255, 255, 255, 0) 100%)',
+				'dark-glass-gradient': 'linear-gradient(to right bottom, rgba(30, 41, 59, 0.9), rgba(30, 41, 59, 0.7))',
 			},
 			backdropFilter: {
 				'glass': 'blur(16px) saturate(180%)',

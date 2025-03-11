@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from "react";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { ClassSelector } from "@/components/ClassSelector";
@@ -13,9 +14,12 @@ import {
 	UploadCloud,
 	Sparkles,
 	BookText,
+	Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/context/AuthContext";
+import { Link } from "react-router-dom";
 
 const Index = () => {
 	const {
@@ -37,8 +41,20 @@ const Index = () => {
 		"idle" | "uploading" | "success" | "error"
 	>("idle");
 	const isMobile = useIsMobile();
+	const { isAuthenticated } = useAuth();
 
 	const handleFileSelected = (selectedFile: File) => {
+		if (!isAuthenticated) {
+			toast.error("Please log in to upload documents", {
+				description: "You need to be logged in to use this feature.",
+				action: {
+					label: "Login",
+					onClick: () => window.location.href = '/login'
+				}
+			});
+			return;
+		}
+
 		setUploadStatus("uploading");
 		setUploadProgress(0);
 
@@ -56,13 +72,6 @@ const Index = () => {
 	};
 
 	const handleGenerate = () => {
-		const apiKey = import.meta.env.VITE_CHATGPT_API_KEY;
-		
-		if (!apiKey) {
-			toast.error("Please set your OpenAI API key in the environment variables.");
-			return;
-		}
-		
 		if (!file) {
 			toast.error("Please upload a document first");
 			return;
@@ -144,25 +153,55 @@ const Index = () => {
 							<div className="bg-white rounded-md p-6 border border-gray-200 shadow-subtle hover:shadow-md transition-shadow">
 								<div className="flex items-center mb-4">
 									<div className="w-8 h-8 rounded-md bg-talentlms-blue flex items-center justify-center mr-3">
-										<UploadCloud className="w-4 h-4 text-white" />
+										{isAuthenticated ? (
+											<UploadCloud className="w-4 h-4 text-white" />
+										) : (
+											<Lock className="w-4 h-4 text-white" />
+										)}
 									</div>
 									<h2 className="font-medium text-lg text-talentlms-darkBlue">
 										Upload Document
 									</h2>
 								</div>
 
-								<DocumentUpload
-									onFileAccepted={handleFileSelected}
-									status={uploadStatus}
-									progress={uploadProgress}
-								/>
+								{isAuthenticated ? (
+									<DocumentUpload
+										onFileAccepted={handleFileSelected}
+										status={uploadStatus}
+										progress={uploadProgress}
+									/>
+								) : (
+									<div className="border-2 border-dashed border-gray-200 rounded-md p-6 flex flex-col items-center justify-center text-center bg-gray-50">
+										<div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mb-4">
+											<Lock className="h-6 w-6 text-gray-500" />
+										</div>
+										<h3 className="font-medium text-lg mb-2 text-gray-700">
+											Authentication Required
+										</h3>
+										<p className="text-muted-foreground text-sm mb-4 max-w-md">
+											Please log in or register to upload documents and generate syllabuses.
+										</p>
+										<div className="flex flex-col sm:flex-row gap-3">
+											<Link to="/login">
+												<Button variant="outline" className="w-full sm:w-auto">
+													Login
+												</Button>
+											</Link>
+											<Link to="/register">
+												<Button className="w-full sm:w-auto bg-talentlms-blue hover:bg-talentlms-darkBlue">
+													Register
+												</Button>
+											</Link>
+										</div>
+									</div>
+								)}
 							</div>
 
 							{/* Step 2: Select number of classes */}
 							<div
 								className={cn(
 									"bg-white rounded-md p-6 border border-gray-200 shadow-subtle hover:shadow-md transition-shadow",
-									!file && "opacity-70"
+									(!file || !isAuthenticated) && "opacity-70"
 								)}
 							>
 								<div className="flex items-center mb-4">
@@ -184,7 +223,7 @@ const Index = () => {
 								<div className="mt-6">
 									<Button
 										onClick={handleGenerate}
-										disabled={!file}
+										disabled={!file || !isAuthenticated}
 										className="bg-talentlms-blue hover:bg-talentlms-darkBlue text-white w-full md:w-auto"
 									>
 										Generate Syllabus
