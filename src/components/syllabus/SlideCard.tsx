@@ -43,6 +43,23 @@ const SlideCard: React.FC<SlideCardProps> = ({ slide, slideNumber }) => {
         
         {expanded && (
           <div className={cn("mt-5 pt-5 border-t border-gray-100 space-y-5 animate-fade-in pl-11")}>
+            {/* Display image if available */}
+            {slide.imageUrl && (
+              <div className="mb-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Image className="w-4 h-4 text-talentlms-blue" />
+                  <h4 className="text-base font-medium text-gray-700">Slide Image</h4>
+                </div>
+                <div className="mt-2 pl-6">
+                  <img 
+                    src={slide.imageUrl} 
+                    alt={slide.title}
+                    className="rounded-md max-h-48 object-contain border border-gray-200" 
+                  />
+                </div>
+              </div>
+            )}
+            
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <Image className="w-4 h-4 text-talentlms-blue" />
