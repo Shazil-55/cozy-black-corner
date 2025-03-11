@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,9 +14,17 @@ interface PresentationViewProps {
 const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onClose }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(false);
   
   const currentSlide = slides[currentSlideIndex];
   const totalSlides = slides.length;
+  
+  useEffect(() => {
+    // Reset loading state when slide changes
+    if (currentSlide.imageUrl) {
+      setIsImageLoading(true);
+    }
+  }, [currentSlideIndex, currentSlide.imageUrl]);
   
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -96,6 +105,10 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
     return gradients[index % gradients.length];
   };
   
+  const handleImageLoad = () => {
+    setIsImageLoading(false);
+  };
+  
   return (
     <div 
       id="presentation-container"
@@ -114,56 +127,65 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
           Exit
         </Button>
         <h1 className="text-lg font-medium truncate max-w-md">{title}</h1>
-        <Button 
-          variant="ghost" 
-          className="text-white hover:bg-white/10"
-          onClick={toggleFullScreen}
-        >
-          {isFullScreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="secondary"
+            size="icon"
+            className="bg-white/10 hover:bg-white/20 text-white"
+          >
+            <Volume2 className="w-5 h-5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            className="text-white hover:bg-white/10"
+            onClick={toggleFullScreen}
+          >
+            {isFullScreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+          </Button>
+        </div>
       </div>
       
-      <div className="flex-1 flex flex-col items-center justify-center p-4 relative">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-auto">
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
           <span className="px-4 py-1.5 bg-white/90 backdrop-blur-sm rounded-full text-talentlms-darkBlue text-sm shadow-md border border-white/30">
             {currentSlideIndex + 1} / {totalSlides}
           </span>
         </div>
-        
-        <Button
-          variant="secondary"
-          size="icon"
-          className="fixed left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 shadow-lg hover:bg-white"
-        >
-          <Volume2 className="w-5 h-5 text-talentlms-blue" />
-        </Button>
 
         <div className={cn(
-          "w-full max-w-7xl h-[calc(100vh-12rem)] bg-gradient-to-br rounded-xl shadow-xl overflow-hidden",
+          "w-full max-w-5xl mx-auto my-6 h-auto bg-gradient-to-br rounded-xl shadow-xl overflow-hidden",
           getSlideGradient(currentSlideIndex)
         )}>
           <div className="bg-gradient-to-r from-talentlms-blue to-talentlms-darkBlue text-white p-6">
             <h2 className="text-3xl font-bold">{currentSlide?.title}</h2>
           </div>
           
-          <div className="flex h-[calc(100%-5rem)] p-6 gap-6 bg-white/90 backdrop-blur-sm">
-            <div className="flex-1 overflow-auto">
+          <div className="flex flex-col md:flex-row p-6 gap-6 bg-white/90 backdrop-blur-sm">
+            <div className="w-full md:w-[60%] overflow-auto">
               <div className="prose max-w-none">
-                <div className="text-xl leading-relaxed text-gray-700 bg-white/50 p-5 rounded-lg shadow-inner">
+                <div className="text-xl leading-relaxed text-gray-700 bg-white/50 p-5 rounded-lg shadow-inner max-h-[400px] overflow-y-auto">
                   {currentSlide?.content}
                 </div>
               </div>
             </div>
             
-            <div className="w-[40%] flex items-start justify-center p-4 bg-white/50 rounded-lg">
+            <div className="w-full md:w-[40%] flex items-start justify-center p-4 bg-white/50 rounded-lg">
               {currentSlide?.imageUrl ? (
-                <img 
-                  src={currentSlide.imageUrl} 
-                  alt={currentSlide.title}
-                  className="w-full h-auto object-contain rounded-lg shadow-md"
-                />
+                isImageLoading ? (
+                  <div className="w-full aspect-square flex items-center justify-center bg-gray-100 rounded-lg animate-pulse">
+                    <div className="text-gray-400">Loading image...</div>
+                  </div>
+                ) : (
+                  <img 
+                    src={currentSlide.imageUrl} 
+                    alt={currentSlide.title}
+                    className="w-full h-auto object-contain rounded-lg shadow-md max-h-[300px]"
+                    onLoad={handleImageLoad}
+                    onError={() => setIsImageLoading(false)}
+                  />
+                )
               ) : (
-                <div className="w-full h-full flex items-center justify-center p-6 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="w-full h-[250px] flex items-center justify-center p-6 bg-gray-50 rounded-lg border border-gray-200">
                   <p className="text-gray-500 text-center italic">
                     {currentSlide?.visualPrompt || "No image available for this slide."}
                   </p>
@@ -173,7 +195,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
           </div>
         </div>
         
-        <div className="flex justify-center gap-4 mt-6">
+        <div className="flex justify-center gap-4 mt-6 mb-4">
           <Button 
             variant="default"
             onClick={goToPrevSlide} 
