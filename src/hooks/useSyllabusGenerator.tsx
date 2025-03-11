@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import api from "@/services/api";
+import { SlideData } from "@/services/courseService";
 
 export interface Lesson {
 	id: string;
@@ -10,10 +11,16 @@ export interface Lesson {
 }
 
 export interface Slide {
+	id: string;
 	title: string;
+	slideNo: number;
 	content: string;
 	visualPrompt: string;
 	voiceoverScript: string;
+	imageUrl: string | null;
+	classId: string;
+	createdAt: string;
+	updatedAt: string;
 }
 
 export interface Class {
@@ -59,7 +66,6 @@ export function useSyllabusGenerator() {
 		setError(null);
 
 		try {
-			// Set up progress simulation
 			const progressInterval = setInterval(() => {
 				setProgress((prev) => {
 					if (prev >= 90) {
@@ -70,35 +76,28 @@ export function useSyllabusGenerator() {
 				});
 			}, 300);
 
-			// Create form data for the API request
 			const formData = new FormData();
 			formData.append('pdfFile', file);
 			formData.append('noOfClasses', numClasses.toString());
 
-			// Call the backend API
 			const response = await api.post('/user/generate-content', formData, {
 				headers: {
 					'Content-Type': 'multipart/form-data',
 				},
 			});
 
-			// Process the response
 			const syllabusData = response.data;
 			
-			// Group classes into modules (4 classes per module)
 			const CLASSES_PER_MODULE = 4;
 			const generatedModules: Module[] = [];
 
-			// Process the syllabus data from the API
 			if (syllabusData && syllabusData.syllabus) {
-				// Sort by classNo to ensure proper order
 				syllabusData.syllabus.sort((a: any, b: any) => a.classNo - b.classNo);
 
 				for (let i = 0; i < syllabusData.syllabus.length; i += CLASSES_PER_MODULE) {
 					const moduleClasses = syllabusData.syllabus.slice(i, i + CLASSES_PER_MODULE);
 					const moduleIndex = Math.floor(i / CLASSES_PER_MODULE) + 1;
 
-					// Create a module
 					const module: Module = {
 						id: `module-${moduleIndex}-${uuidv4().slice(0, 4)}`,
 						title: `Module ${moduleIndex}: ${
@@ -109,9 +108,7 @@ export function useSyllabusGenerator() {
 						lessons: [], // Keep for backwards compatibility
 					};
 
-					// Add classes to this module
 					moduleClasses.forEach((classItem: any) => {
-						// Create class
 						const newClass: Class = {
 							id: `class-${classItem.classNo}-${uuidv4().slice(0, 6)}`,
 							title: classItem.classTitle,
@@ -121,17 +118,21 @@ export function useSyllabusGenerator() {
 
 						module.classes.push(newClass);
 
-						// Store slides for this class
-						const slides: Slide[] = classItem.slides.map((slide: any) => ({
+						const slides: Slide[] = classItem.slides.map((slide: any, slideIndex: number) => ({
+							id: `slide-${uuidv4()}`,
 							title: slide.title,
+							slideNo: slideIndex + 1,
 							content: slide.content,
 							visualPrompt: slide.visualPrompt,
 							voiceoverScript: slide.voiceoverScript,
+							imageUrl: null,
+							classId: newClass.id,
+							createdAt: new Date().toISOString(),
+							updatedAt: new Date().toISOString()
 						}));
 
 						module.slides.push(slides);
 
-						// Keep backwards compatibility with lessons
 						classItem.slides.forEach((slide: any) => {
 							module.lessons.push({
 								id: `lesson-${uuidv4().slice(0, 8)}`,

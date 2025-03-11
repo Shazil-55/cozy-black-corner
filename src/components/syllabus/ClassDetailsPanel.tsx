@@ -10,7 +10,7 @@ interface ClassDetailsPanelProps {
   corePoints: string[];
   slides: SlideData[];
   onBack: () => void;
-  onStartPresentation: () => void;
+  onStartPresentation?: () => void;
 }
 
 const ClassDetailsPanel: React.FC<ClassDetailsPanelProps> = ({
@@ -58,7 +58,7 @@ const ClassDetailsPanel: React.FC<ClassDetailsPanelProps> = ({
               {slides.length} {slides.length === 1 ? 'slide' : 'slides'}
             </div>
             
-            {slides.length > 0 && (
+            {slides.length > 0 && onStartPresentation && (
               <Button 
                 variant="default" 
                 onClick={onStartPresentation}

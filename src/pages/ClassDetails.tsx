@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useSyllabusGenerator } from "@/hooks/useSyllabusGenerator";
 import SlideCard from "@/components/syllabus/SlideCard";
 import PresentationView from "@/components/syllabus/PresentationView";
+import { SlideData } from "@/services/courseService";
 
 const ClassDetails = () => {
 	const { moduleId, classId } = useParams<{
@@ -22,20 +23,39 @@ const ClassDetails = () => {
 				currentClass: null,
 				moduleIndex: -1,
 				classIndex: -1,
-				slides: [],
+				slides: [] as SlideData[],
 			};
 
 		const classIndex = modules[moduleIndex].classes.findIndex(
 			(c) => c.id === classId
 		);
 		if (classIndex === -1)
-			return { currentClass: null, moduleIndex, classIndex: -1, slides: [] };
+			return { 
+				currentClass: null, 
+				moduleIndex, 
+				classIndex: -1, 
+				slides: [] as SlideData[],
+			};
+
+		// Convert Slide[] to SlideData[]
+		const slidesData: SlideData[] = modules[moduleIndex].slides?.[classIndex].map(slide => ({
+			id: slide.id,
+			title: slide.title,
+			slideNo: slide.slideNo,
+			visualPrompt: slide.visualPrompt,
+			voiceoverScript: slide.voiceoverScript,
+			imageUrl: slide.imageUrl,
+			content: slide.content,
+			classId: slide.classId,
+			createdAt: slide.createdAt,
+			updatedAt: slide.updatedAt
+		})) || [];
 
 		return {
 			currentClass: modules[moduleIndex].classes[classIndex],
 			moduleIndex,
 			classIndex,
-			slides: modules[moduleIndex].slides?.[classIndex] || [],
+			slides: slidesData,
 		};
 	}, [modules, moduleId, classId]);
 
@@ -126,7 +146,7 @@ const ClassDetails = () => {
 						) : (
 							<div className="space-y-4">
 								{slides.map((slide, index) => (
-									<SlideCard key={index} slide={slide} slideNumber={index + 1} />
+									<SlideCard key={slide.id} slide={slide} slideNumber={slide.slideNo} />
 								))}
 							</div>
 						)}

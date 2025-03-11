@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import ModuleCard from './syllabus/ModuleCard';
 import EditDialog from './syllabus/EditDialog';
 import ClassDetailsPanel from './syllabus/ClassDetailsPanel';
+import PresentationView from './syllabus/PresentationView';
+import { SlideData } from '@/services/courseService';
 
 interface SyllabusPreviewProps {
   modules: Module[];
@@ -31,7 +33,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
     classId: string;
     title: string;
     corePoints: string[];
-    slides: any[];
+    slides: SlideData[];
   } | null>(null);
 
   // Dialog state
@@ -41,6 +43,9 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
   const [editingLesson, setEditingLesson] = useState<string>('');
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
+
+  // Presentation state
+  const [isPresentationMode, setIsPresentationMode] = useState(false);
 
   // Toggle module expansion
   const toggleModule = (moduleId: string) => {
@@ -67,14 +72,27 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
     if (classIndex === -1) return;
     
     const classItem = modules[moduleIndex].classes[classIndex];
-    const slides = modules[moduleIndex].slides?.[classIndex] || [];
+    
+    // Convert Slide[] to SlideData[]
+    const slidesData: SlideData[] = modules[moduleIndex].slides?.[classIndex].map(slide => ({
+      id: slide.id,
+      title: slide.title,
+      slideNo: slide.slideNo,
+      visualPrompt: slide.visualPrompt,
+      voiceoverScript: slide.voiceoverScript,
+      imageUrl: slide.imageUrl,
+      content: slide.content,
+      classId: slide.classId,
+      createdAt: slide.createdAt,
+      updatedAt: slide.updatedAt
+    })) || [];
     
     setSelectedClass({
       moduleId,
       classId,
       title: classItem.title,
       corePoints: classItem.corePoints,
-      slides
+      slides: slidesData
     });
   };
 
@@ -91,6 +109,18 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
   // Clear selected class
   const clearSelectedClass = () => {
     setSelectedClass(null);
+  };
+
+  // Start presentation
+  const startPresentation = () => {
+    if (selectedClass?.slides.length) {
+      setIsPresentationMode(true);
+    }
+  };
+
+  // Close presentation
+  const closePresentation = () => {
+    setIsPresentationMode(false);
   };
 
   return (
@@ -125,6 +155,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
                 corePoints={selectedClass.corePoints}
                 slides={selectedClass.slides}
                 onBack={clearSelectedClass}
+                onStartPresentation={startPresentation}
               />
             ) : (
               modules.map((module) => (
@@ -153,6 +184,15 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
         onDescriptionChange={setEditDescription}
         onSave={saveChanges}
       />
+
+      {/* Presentation Mode */}
+      {isPresentationMode && selectedClass && (
+        <PresentationView 
+          slides={selectedClass.slides}
+          title={selectedClass.title}
+          onClose={closePresentation}
+        />
+      )}
     </>
   );
 };
