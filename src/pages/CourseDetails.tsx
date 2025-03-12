@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ArrowLeft, BookOpen, Calendar } from 'lucide-react';
-import { courseService, ModuleData, ClassData, SlideData } from '@/services/courseService';
+import { courseService, ModuleData, ClassData, SlideData, FAQ } from '@/services/courseService';
 import { Button } from '@/components/ui/button';
 import { Sidebar } from '@/components/Sidebar';
 import ModuleCard from '@/components/syllabus/ModuleCard';
@@ -29,20 +28,17 @@ const CourseDetails: React.FC = () => {
     corePoints: string[];
   } | null>(null);
   
-  // State for module expansion
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   
-  // Dialog state for editing
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<string>('');
   const [editTitle, setEditTitle] = useState('');
 
-  // State for presentation mode
   const [isPresentationMode, setIsPresentationMode] = useState(false);
   const [presentationSlides, setPresentationSlides] = useState<SlideData[]>([]);
   const [presentationTitle, setPresentationTitle] = useState('');
+  const [presentationFaqs, setPresentationFaqs] = useState<FAQ[]>([]);
 
-  // Fetch course details
   const { data, isLoading, error } = useQuery({
     queryKey: ['courseDetails', courseId],
     queryFn: () => courseService.getCourseDetails(courseId || ''),
@@ -54,7 +50,6 @@ const CourseDetails: React.FC = () => {
     }
   });
 
-  // Fetch class details when a class is selected
   const { data: classData, isLoading: isLoadingClass } = useQuery({
     queryKey: ['classDetails', selectedClass?.classId],
     queryFn: () => courseService.getClassDetails(selectedClass?.classId || ''),
@@ -66,7 +61,6 @@ const CourseDetails: React.FC = () => {
     }
   });
 
-  // Transform API data to match our component props
   const transformedModules = React.useMemo(() => {
     if (!data?.data?.modules) return [];
     
@@ -77,23 +71,21 @@ const CourseDetails: React.FC = () => {
         id: classItem.id,
         title: classItem.title,
         corePoints: classItem.concepts,
-        slideCount: 0 // We don't have slides in the API response
+        slideCount: 0
       }))
     }));
   }, [data]);
 
-  // Initialize expanded state for modules
   React.useEffect(() => {
     if (transformedModules.length > 0) {
       const initialExpandedState: Record<string, boolean> = {};
       transformedModules.forEach(module => {
-        initialExpandedState[module.id] = true; // Default to expanded
+        initialExpandedState[module.id] = true;
       });
       setExpandedModules(initialExpandedState);
     }
   }, [transformedModules]);
 
-  // Transform API data to sidebar items
   const sidebarItems = React.useMemo(() => {
     if (!data?.data?.modules) return [];
 
@@ -130,7 +122,6 @@ const CourseDetails: React.FC = () => {
   };
 
   const handleSidebarSelect = (id: string) => {
-    // Find if this is a class ID
     for (const module of data?.data?.modules || []) {
       const classItem = module.classes.find(c => c.id === id);
       if (classItem) {
@@ -144,7 +135,6 @@ const CourseDetails: React.FC = () => {
     setSelectedClass(null);
   };
 
-  // Toggle module expansion
   const toggleModule = (moduleId: string) => {
     setExpandedModules(prev => ({
       ...prev,
@@ -152,28 +142,24 @@ const CourseDetails: React.FC = () => {
     }));
   };
 
-  // Open module edit dialog
   const openModuleEdit = (moduleId: string, title: string) => {
     setEditingModule(moduleId);
     setEditTitle(title);
     setDialogOpen(true);
   };
 
-  // Save module title changes
   const saveModuleChanges = () => {
-    // In a real application, this would make an API call to update the module
     toast.success(`Module title updated to "${editTitle}"`);
     setDialogOpen(false);
   };
 
-  // Start presentation mode
-  const startPresentation = (slides: SlideData[], title: string) => {
+  const startPresentation = (slides: SlideData[], title: string, faqs: FAQ[] = []) => {
     setPresentationSlides(slides);
     setPresentationTitle(title);
+    setPresentationFaqs(faqs);
     setIsPresentationMode(true);
   };
 
-  // Close presentation mode
   const closePresentationMode = () => {
     setIsPresentationMode(false);
   };
@@ -211,17 +197,14 @@ const CourseDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Sidebar */}
       <Sidebar 
         items={sidebarItems}
         onSelect={handleSidebarSelect}
         selectedId={selectedClass?.classId}
       />
       
-      {/* Main Content */}
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-5xl mx-auto">
-          {/* Header */}
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center">
               <Link
@@ -241,9 +224,7 @@ const CourseDetails: React.FC = () => {
             </div>
           </div>
 
-          {/* Content */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-            {/* Course Header */}
             <div className="bg-talentlms-blue p-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <BookOpen className="w-6 h-6 text-white" />
@@ -251,7 +232,6 @@ const CourseDetails: React.FC = () => {
               </div>
             </div>
 
-            {/* Course Content */}
             <div className="p-4 md:p-6">
               {selectedClass ? (
                 isLoadingClass ? (
@@ -292,7 +272,6 @@ const CourseDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Edit Dialog */}
       <EditDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -304,11 +283,11 @@ const CourseDetails: React.FC = () => {
         onSave={saveModuleChanges}
       />
 
-      {/* Presentation Mode */}
       {isPresentationMode && (
         <PresentationView 
           slides={presentationSlides}
           title={presentationTitle}
+          faqs={presentationFaqs}
           onClose={closePresentationMode}
         />
       )}

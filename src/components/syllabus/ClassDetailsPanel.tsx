@@ -1,27 +1,28 @@
-
 import React from 'react';
-import { ArrowLeft, Presentation, BookText, Play } from 'lucide-react';
+import { ArrowLeft, BookText, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import SlideCard from '@/components/syllabus/SlideCard';
-import { SlideData } from '@/services/courseService';
+import SlideCard from './SlideCard';
+import { SlideData, FAQ } from '@/services/courseService';
 
 interface ClassDetailsPanelProps {
   title: string;
   corePoints: string[];
   slides: SlideData[];
+  faqs?: FAQ[];
   onBack: () => void;
-  onStartPresentation?: () => void;
+  onStartPresentation: () => void;
 }
 
 const ClassDetailsPanel: React.FC<ClassDetailsPanelProps> = ({
   title,
   corePoints,
   slides,
+  faqs = [],
   onBack,
   onStartPresentation,
 }) => {
   return (
-    <div className="bg-gray-50 py-6 px-4 rounded-lg animate-fade-in">
+    <div className="space-y-6">
       {/* Header */}
       <div className="mb-6">
         <Button 

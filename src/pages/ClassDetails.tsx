@@ -41,7 +41,7 @@ const ClassDetails = () => {
 			};
 
 		// Convert Slide[] to SlideData[]
-		const slidesData: SlideData[] = modules[moduleIndex].slides?.[classIndex].map(slide => ({
+		const slidesData: SlideData[] = modules[moduleIndex].slides?.[classIndex]?.map(slide => ({
 			id: slide.id,
 			title: slide.title,
 			slideNo: slide.slideNo,

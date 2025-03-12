@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bot, X, Send, MessageCircle } from 'lucide-react';
+import { Bot, X, Send, MessageCircle, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FAQ } from '@/services/courseService';
@@ -23,12 +23,30 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
     {
       id: '1',
       type: 'bot',
-      content: 'Hi! I can help you with frequently asked questions about this topic. What would you like to know?',
+      content: 'Hi! I can help you with frequently asked questions about this topic. Below are the available questions:',
     },
   ]);
 
-  const [showFaqs, setShowFaqs] = useState(true);
   const [userInput, setUserInput] = useState('');
+
+  // Add numbers to FAQs
+  const numberedFaqs = faqs.map((faq, index) => ({
+    ...faq,
+    numberLabel: `${index + 1}. `
+  }));
+
+  // Initialize with showing FAQs
+  React.useEffect(() => {
+    if (faqs.length > 0) {
+      const faqListMessage = {
+        id: Date.now().toString(),
+        type: 'bot' as const,
+        content: numberedFaqs.map(faq => `${faq.numberLabel}${faq.question}`).join('\n\n'),
+      };
+      
+      setMessages(prev => [...prev, faqListMessage]);
+    }
+  }, [faqs]);
 
   const addMessage = (content: string, type: 'bot' | 'user', isQuestion = false) => {
     const newMessage: Message = {
@@ -40,16 +58,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
     setMessages((prev) => [...prev, newMessage]);
   };
 
-  const handleFaqClick = (faq: FAQ) => {
-    addMessage(faq.question, 'user', true);
-    
-    // Add small delay to simulate thinking
-    setTimeout(() => {
-      addMessage(faq.answer, 'bot');
-      setShowFaqs(false);
-    }, 500);
-  };
-
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!userInput.trim()) return;
@@ -57,24 +65,41 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
     addMessage(userInput, 'user');
     setUserInput('');
     
-    // Find most relevant FAQ based on user's question
-    const relevantFaq = findRelevantFaq(userInput);
+    // Check if user input is a number corresponding to a FAQ
+    const numInput = parseInt(userInput.trim());
     
-    // Simulate typing delay
-    setTimeout(() => {
-      if (relevantFaq) {
-        addMessage(relevantFaq.answer, 'bot');
-      } else {
-        addMessage("I'm not sure about that. Would you like to see all available FAQs?", 'bot');
-        setShowFaqs(true);
-      }
-    }, 1000);
+    if (!isNaN(numInput) && numInput > 0 && numInput <= numberedFaqs.length) {
+      // User entered a number that matches a FAQ
+      const selectedFaq = numberedFaqs[numInput - 1];
+      
+      // Simulate typing delay
+      setTimeout(() => {
+        addMessage(selectedFaq.answer, 'bot');
+      }, 500);
+    } else {
+      // Try to find a relevant FAQ by keyword matching
+      const relevantFaq = findRelevantFaq(userInput);
+      
+      // Simulate typing delay
+      setTimeout(() => {
+        if (relevantFaq) {
+          addMessage(relevantFaq.answer, 'bot');
+        } else {
+          // Show numbered FAQ list again if no match
+          addMessage(
+            'I don\'t have specific information about that. Here are the questions I can answer:\n\n' + 
+            numberedFaqs.map(faq => `${faq.numberLabel}${faq.question}`).join('\n\n'), 
+            'bot'
+          );
+        }
+      }, 500);
+    }
   };
 
   const findRelevantFaq = (question: string): FAQ | null => {
     // Simple keyword matching - in a real app, you might use more sophisticated NLP
     const lowerQuestion = question.toLowerCase();
-    return faqs.find(faq => 
+    return numberedFaqs.find(faq => 
       faq.question.toLowerCase().includes(lowerQuestion) || 
       lowerQuestion.includes(faq.question.toLowerCase().split(' ').slice(0, 3).join(' '))
     ) || null;
@@ -85,10 +110,26 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
       {
         id: '1',
         type: 'bot',
-        content: 'Hi! I can help you with frequently asked questions about this topic. What would you like to know?',
+        content: 'Hi! I can help you with frequently asked questions about this topic. Below are the available questions:',
       },
     ]);
-    setShowFaqs(true);
+    
+    // Add the FAQ list again after reset
+    const faqListMessage = {
+      id: Date.now().toString(),
+      type: 'bot' as const,
+      content: numberedFaqs.map(faq => `${faq.numberLabel}${faq.question}`).join('\n\n'),
+    };
+    
+    setMessages(prev => [...prev, faqListMessage]);
+  };
+
+  const speakText = (text: string) => {
+    // Using the Web Speech API for text-to-speech
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.lang = 'en-US';
+    speech.rate = 0.9; // slightly slower than default
+    window.speechSynthesis.speak(speech);
   };
 
   return (
@@ -111,6 +152,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
               <DialogTitle className="text-lg font-medium">Course Assistant</DialogTitle>
             </div>
             
+            {/* Only one X button */}
             <Button 
               variant="ghost" 
               size="icon" 
@@ -139,28 +181,31 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
                         : 'bg-white shadow-sm border rounded-tl-none'
                     )}
                   >
-                    <p className="text-sm">{msg.content}</p>
+                    {msg.type === 'bot' && (
+                      <div className="whitespace-pre-wrap text-sm">
+                        {msg.content}
+                        {/* Add speaker icon for bot responses that aren't question lists */}
+                        {!msg.content.includes('Here are the questions') && 
+                         !msg.content.includes('Below are the available questions') && 
+                         !msg.content.startsWith('1.') && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="ml-1 h-6 w-6 p-1 inline-flex float-right"
+                            onClick={() => speakText(msg.content)}
+                          >
+                            <Volume2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    {msg.type === 'user' && (
+                      <p className="text-sm">{msg.content}</p>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-            
-            {showFaqs && faqs.length > 0 && (
-              <div className="mt-6 space-y-2">
-                <p className="text-xs text-gray-500 font-medium">FREQUENTLY ASKED QUESTIONS:</p>
-                <div className="space-y-2">
-                  {faqs.map((faq) => (
-                    <button
-                      key={faq.id}
-                      className="w-full text-left p-3 bg-white rounded-lg shadow-sm border text-sm hover:bg-gray-50 transition-colors"
-                      onClick={() => handleFaqClick(faq)}
-                    >
-                      {faq.question}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
           
           <form 
@@ -180,7 +225,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
               type="text"
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              placeholder="Type a message..."
+              placeholder="Type a message or FAQ number..."
               className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
             <Button type="submit" size="icon" disabled={!userInput.trim()}>
