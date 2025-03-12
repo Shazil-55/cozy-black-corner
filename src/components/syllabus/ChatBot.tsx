@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useRef } from "react";
 import { Bot, X, Send, MessageCircle, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,10 +32,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
 				"Hi! I can help you with frequently asked questions about this topic. Below are the available questions:",
 		},
 	]);
-
-	console.log("faqs", faqs);
-
 	const [userInput, setUserInput] = useState("");
+	const [activeSpeech, setActiveSpeech] = useState<SpeechSynthesisUtterance | null>(null);
+	const speechSynthRef = useRef<SpeechSynthesis | null>(null);
 
 	// Add numbers to FAQs
 	const numberedFaqs = faqs.map((faq, index) => ({
@@ -56,6 +56,18 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
 			setMessages((prev) => [...prev, faqListMessage]);
 		}
 	}, [faqs]);
+
+	// Initialize speech synthesis
+	React.useEffect(() => {
+		speechSynthRef.current = window.speechSynthesis;
+		
+		// Cleanup speech on unmount
+		return () => {
+			if (speechSynthRef.current) {
+				speechSynthRef.current.cancel();
+			}
+		};
+	}, []);
 
 	const addMessage = (
 		content: string,
@@ -148,11 +160,37 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
 	};
 
 	const speakText = (text: string) => {
-		// Using the Web Speech API for text-to-speech
+		// Cancel any active speech
+		if (speechSynthRef.current) {
+			speechSynthRef.current.cancel();
+		}
+		
+		// If we already have an active speech and we're trying to speak the same text,
+		// this means we want to stop the current speech
+		if (activeSpeech?.text === text && speechSynthRef.current?.speaking) {
+			setActiveSpeech(null);
+			return;
+		}
+
+		// Create a new utterance
 		const speech = new SpeechSynthesisUtterance(text);
 		speech.lang = "en-US";
 		speech.rate = 0.9; // slightly slower than default
-		window.speechSynthesis.speak(speech);
+		
+		// Set up event handlers for the utterance
+		speech.onend = () => {
+			setActiveSpeech(null);
+		};
+		
+		speech.onerror = () => {
+			setActiveSpeech(null);
+		};
+		
+		// Store the active speech and speak
+		setActiveSpeech(speech);
+		if (speechSynthRef.current) {
+			speechSynthRef.current.speak(speech);
+		}
 	};
 
 	return (
@@ -177,7 +215,6 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
 							</DialogTitle>
 						</div>
 
-						{/* Only one X button */}
 						<Button
 							variant="ghost"
 							size="icon"
@@ -218,7 +255,10 @@ const ChatBot: React.FC<ChatBotProps> = ({ faqs }) => {
 														<Button
 															variant="ghost"
 															size="icon"
-															className="ml-1 h-6 w-6 p-1 inline-flex float-right"
+															className={cn(
+																"ml-1 h-6 w-6 p-1 inline-flex float-right",
+																activeSpeech?.text === msg.content ? "text-accent" : ""
+															)}
 															onClick={() => speakText(msg.content)}
 														>
 															<Volume2 className="h-4 w-4" />
