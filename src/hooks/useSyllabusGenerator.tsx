@@ -24,6 +24,7 @@ export interface Slide {
 }
 
 export interface Class {
+	faqs: any[];
 	id: string;
 	title: string;
 	corePoints: string[];
@@ -78,25 +79,32 @@ export function useSyllabusGenerator() {
 			}, 300);
 
 			const formData = new FormData();
-			formData.append('pdfFile', file);
-			formData.append('noOfClasses', numClasses.toString());
+			formData.append("pdfFile", file);
+			formData.append("noOfClasses", numClasses.toString());
 
-			const response = await api.post('/user/generate-content', formData, {
+			const response = await api.post("/user/generate-content", formData, {
 				headers: {
-					'Content-Type': 'multipart/form-data',
+					"Content-Type": "multipart/form-data",
 				},
 			});
 
 			const syllabusData = response.data;
-			
+
 			const CLASSES_PER_MODULE = 4;
 			const generatedModules: Module[] = [];
 
 			if (syllabusData && syllabusData.syllabus) {
 				syllabusData.syllabus.sort((a: any, b: any) => a.classNo - b.classNo);
 
-				for (let i = 0; i < syllabusData.syllabus.length; i += CLASSES_PER_MODULE) {
-					const moduleClasses = syllabusData.syllabus.slice(i, i + CLASSES_PER_MODULE);
+				for (
+					let i = 0;
+					i < syllabusData.syllabus.length;
+					i += CLASSES_PER_MODULE
+				) {
+					const moduleClasses = syllabusData.syllabus.slice(
+						i,
+						i + CLASSES_PER_MODULE
+					);
 					const moduleIndex = Math.floor(i / CLASSES_PER_MODULE) + 1;
 
 					const module: Module = {
@@ -116,25 +124,28 @@ export function useSyllabusGenerator() {
 							title: classItem.classTitle,
 							corePoints: classItem.coreConcepts,
 							slideCount: classItem.slides.length,
+							faqs: [],
 						};
 
 						module.classes.push(newClass);
 
-						const slides: Slide[] = classItem.slides.map((slide: any, slideIndex: number) => ({
-							id: `slide-${uuidv4()}`,
-							title: slide.title,
-							slideNo: slideIndex + 1,
-							content: slide.content,
-							visualPrompt: slide.visualPrompt,
-							voiceoverScript: slide.voiceoverScript,
-							imageUrl: null,
-							classId: newClass.id,
-							createdAt: new Date().toISOString(),
-							updatedAt: new Date().toISOString()
-						}));
+						const slides: Slide[] = classItem.slides.map(
+							(slide: any, slideIndex: number) => ({
+								id: `slide-${uuidv4()}`,
+								title: slide.title,
+								slideNo: slideIndex + 1,
+								content: slide.content,
+								visualPrompt: slide.visualPrompt,
+								voiceoverScript: slide.voiceoverScript,
+								imageUrl: null,
+								classId: newClass.id,
+								createdAt: new Date().toISOString(),
+								updatedAt: new Date().toISOString(),
+							})
+						);
 
 						module.slides.push(slides);
-						
+
 						// Initialize empty FAQs array for each class
 						module.faqs.push([]);
 

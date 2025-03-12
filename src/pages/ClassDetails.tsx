@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Presentation, BookText, Play } from "lucide-react";
@@ -17,54 +16,57 @@ const ClassDetails = () => {
 	const { modules } = useSyllabusGenerator();
 	const [isPresentationMode, setIsPresentationMode] = useState(false);
 
-	const { currentClass, moduleIndex, classIndex, slides, faqs } = useMemo(() => {
-		const moduleIndex = modules.findIndex((m) => m.id === moduleId);
-		if (moduleIndex === -1)
+	const { currentClass, moduleIndex, classIndex, slides, faqs } =
+		useMemo(() => {
+			const moduleIndex = modules.findIndex((m) => m.id === moduleId);
+			if (moduleIndex === -1)
+				return {
+					currentClass: null,
+					moduleIndex: -1,
+					classIndex: -1,
+					slides: [] as SlideData[],
+					faqs: [] as FAQ[],
+				};
+
+			const classIndex = modules[moduleIndex].classes.findIndex(
+				(c) => c.id === classId
+			);
+			if (classIndex === -1)
+				return {
+					currentClass: null,
+					moduleIndex,
+					classIndex: -1,
+					slides: [] as SlideData[],
+					faqs: [] as FAQ[],
+				};
+			console.log("Modules", modules[moduleIndex].faqs?.[classIndex]);
+
+			// Convert Slide[] to SlideData[]
+			const slidesData: SlideData[] =
+				modules[moduleIndex].slides?.[classIndex]?.map((slide) => ({
+					id: slide.id,
+					title: slide.title,
+					slideNo: slide.slideNo,
+					visualPrompt: slide.visualPrompt,
+					voiceoverScript: slide.voiceoverScript,
+					imageUrl: slide.imageUrl,
+					content: slide.content,
+					classId: slide.classId,
+					createdAt: slide.createdAt,
+					updatedAt: slide.updatedAt,
+				})) || [];
+
+			// Get FAQs if they exist
+			const faqsData: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
+
 			return {
-				currentClass: null,
-				moduleIndex: -1,
-				classIndex: -1,
-				slides: [] as SlideData[],
-				faqs: [] as FAQ[],
+				currentClass: modules[moduleIndex].classes[classIndex],
+				moduleIndex,
+				classIndex,
+				slides: slidesData,
+				faqs: faqsData,
 			};
-
-		const classIndex = modules[moduleIndex].classes.findIndex(
-			(c) => c.id === classId
-		);
-		if (classIndex === -1)
-			return { 
-				currentClass: null, 
-				moduleIndex, 
-				classIndex: -1, 
-				slides: [] as SlideData[],
-				faqs: [] as FAQ[],
-			};
-
-		// Convert Slide[] to SlideData[]
-		const slidesData: SlideData[] = modules[moduleIndex].slides?.[classIndex]?.map(slide => ({
-			id: slide.id,
-			title: slide.title,
-			slideNo: slide.slideNo,
-			visualPrompt: slide.visualPrompt,
-			voiceoverScript: slide.voiceoverScript,
-			imageUrl: slide.imageUrl,
-			content: slide.content,
-			classId: slide.classId,
-			createdAt: slide.createdAt,
-			updatedAt: slide.updatedAt
-		})) || [];
-
-		// Get FAQs if they exist
-		const faqsData: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
-
-		return {
-			currentClass: modules[moduleIndex].classes[classIndex],
-			moduleIndex,
-			classIndex,
-			slides: slidesData,
-			faqs: faqsData,
-		};
-	}, [modules, moduleId, classId]);
+		}, [modules, moduleId, classId]);
 
 	const startPresentation = () => {
 		setIsPresentationMode(true);
@@ -125,10 +127,10 @@ const ClassDetails = () => {
 									<BookText className="w-4 h-4 mr-1.5" />
 									{slides.length} {slides.length === 1 ? "slide" : "slides"}
 								</div>
-								
+
 								{slides.length > 0 && (
-									<Button 
-										variant="default" 
+									<Button
+										variant="default"
 										onClick={startPresentation}
 										className="bg-talentlms-blue hover:bg-talentlms-darkBlue text-white"
 									>
@@ -152,21 +154,25 @@ const ClassDetails = () => {
 							</div>
 						) : (
 							<div className="space-y-4">
-								{slides.map((slide) => (
-									<SlideCard key={slide.id} slide={slide} slideNumber={slide.slideNo} />
+								{slides.map((slide, index) => (
+									<SlideCard
+										key={slide.id}
+										slide={slide}
+										slideNumber={slide.slideNo}
+									/>
 								))}
 							</div>
 						)}
 					</div>
 				</div>
-				
+
 				{/* Add ChatBot to the main page as well */}
-				{faqs && faqs.length > 0 && <ChatBot faqs={faqs} />}
+				{faqs.length > 0 && <ChatBot faqs={faqs} />}
 			</div>
-			
+
 			{/* Presentation Mode */}
 			{isPresentationMode && (
-				<PresentationView 
+				<PresentationView
 					slides={slides}
 					title={currentClass.title}
 					faqs={faqs}
