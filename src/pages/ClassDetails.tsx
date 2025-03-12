@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useSyllabusGenerator } from "@/hooks/useSyllabusGenerator";
 import SlideCard from "@/components/syllabus/SlideCard";
 import PresentationView from "@/components/syllabus/PresentationView";
-import { SlideData } from "@/services/courseService";
+import { SlideData, FAQ } from "@/services/courseService";
+import ChatBot from "@/components/syllabus/ChatBot";
 
 const ClassDetails = () => {
 	const { moduleId, classId } = useParams<{
@@ -16,7 +17,7 @@ const ClassDetails = () => {
 	const { modules } = useSyllabusGenerator();
 	const [isPresentationMode, setIsPresentationMode] = useState(false);
 
-	const { currentClass, moduleIndex, classIndex, slides } = useMemo(() => {
+	const { currentClass, moduleIndex, classIndex, slides, faqs } = useMemo(() => {
 		const moduleIndex = modules.findIndex((m) => m.id === moduleId);
 		if (moduleIndex === -1)
 			return {
@@ -24,6 +25,7 @@ const ClassDetails = () => {
 				moduleIndex: -1,
 				classIndex: -1,
 				slides: [] as SlideData[],
+				faqs: [] as FAQ[],
 			};
 
 		const classIndex = modules[moduleIndex].classes.findIndex(
@@ -35,6 +37,7 @@ const ClassDetails = () => {
 				moduleIndex, 
 				classIndex: -1, 
 				slides: [] as SlideData[],
+				faqs: [] as FAQ[],
 			};
 
 		// Convert Slide[] to SlideData[]
@@ -51,11 +54,15 @@ const ClassDetails = () => {
 			updatedAt: slide.updatedAt
 		})) || [];
 
+		// Get FAQs if they exist
+		const faqsData: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
+
 		return {
 			currentClass: modules[moduleIndex].classes[classIndex],
 			moduleIndex,
 			classIndex,
 			slides: slidesData,
+			faqs: faqsData,
 		};
 	}, [modules, moduleId, classId]);
 
@@ -152,6 +159,9 @@ const ClassDetails = () => {
 						)}
 					</div>
 				</div>
+				
+				{/* Add ChatBot to the main page as well */}
+				{faqs.length > 0 && <ChatBot faqs={faqs} />}
 			</div>
 			
 			{/* Presentation Mode */}
@@ -159,6 +169,7 @@ const ClassDetails = () => {
 				<PresentationView 
 					slides={slides}
 					title={currentClass.title}
+					faqs={faqs}
 					onClose={closePresentation}
 				/>
 			)}

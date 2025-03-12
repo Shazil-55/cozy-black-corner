@@ -7,7 +7,7 @@ import ModuleCard from './syllabus/ModuleCard';
 import EditDialog from './syllabus/EditDialog';
 import ClassDetailsPanel from './syllabus/ClassDetailsPanel';
 import PresentationView from './syllabus/PresentationView';
-import { SlideData } from '@/services/courseService';
+import { SlideData, FAQ } from '@/services/courseService';
 
 interface SyllabusPreviewProps {
   modules: Module[];
@@ -34,6 +34,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
     title: string;
     corePoints: string[];
     slides: SlideData[];
+    faqs: FAQ[];
   } | null>(null);
 
   // Dialog state
@@ -86,13 +87,17 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
       createdAt: slide.createdAt,
       updatedAt: slide.updatedAt
     })) || [];
+
+    // Get FAQs for this class if they exist
+    const faqs: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
     
     setSelectedClass({
       moduleId,
       classId,
       title: classItem.title,
       corePoints: classItem.corePoints,
-      slides: slidesData
+      slides: slidesData,
+      faqs: faqs
     });
   };
 
@@ -190,6 +195,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
         <PresentationView 
           slides={selectedClass.slides}
           title={selectedClass.title}
+          faqs={selectedClass.faqs}
           onClose={closePresentation}
         />
       )}

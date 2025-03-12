@@ -52,6 +52,15 @@ export interface QuizQuestion {
   updatedAt: string;
 }
 
+export interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  classId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ClassDetailsResponse {
   data: {
     id: string;
@@ -62,6 +71,7 @@ export interface ClassDetailsResponse {
     createdAt: string;
     updatedAt: string;
     slides: SlideData[];
+    faqs: FAQ[];
     assessment: {
       quiz: QuizQuestion[];
     };

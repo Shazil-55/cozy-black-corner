@@ -3,15 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, X, Maximize2, Minimize2, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { SlideData } from '@/services/courseService';
+import { SlideData, FAQ } from '@/services/courseService';
+import ChatBot from './ChatBot';
 
 interface PresentationViewProps {
   slides: SlideData[];
   title: string;
+  faqs: FAQ[];
   onClose: () => void;
 }
 
-const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onClose }) => {
+const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, faqs = [], onClose }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(false);
@@ -229,6 +231,9 @@ const PresentationView: React.FC<PresentationViewProps> = ({ slides, title, onCl
           </Button>
         </div>
       </div>
+
+      {/* Add the ChatBot component */}
+      <ChatBot faqs={faqs} />
     </div>
   );
 };
