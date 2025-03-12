@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({
   onClose,
 }) => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [imageLoading, setImageLoading] = useState(false);
 
   useEffect(() => {
     // Reset to the first slide when the slides prop changes
@@ -36,6 +38,22 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 
   const currentSlide = slides[currentSlideIndex];
 
+  // Handle image loading
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    console.error("Failed to load image:", currentSlide?.imageUrl);
+  };
+
+  useEffect(() => {
+    if (currentSlide?.imageUrl) {
+      setImageLoading(true);
+    }
+  }, [currentSlideIndex, currentSlide]);
+
   return (
     <div className="fixed inset-0 bg-black/95 z-50 flex flex-col">
       {/* Header */}
@@ -47,16 +65,29 @@ const PresentationView: React.FC<PresentationViewProps> = ({
       </div>
 
       {/* Slide Content */}
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center p-4">
         {currentSlide ? (
-          <div className="max-w-4xl mx-auto p-8 bg-white rounded-lg shadow-xl text-gray-800">
-            <h3 className="text-2xl font-bold mb-4">{currentSlide.title}</h3>
-            <img
-              src={currentSlide.imageUrl || undefined}
-              alt={currentSlide.title}
-              className="w-full h-auto rounded-md mb-4"
-            />
-            <p className="text-lg">{currentSlide.content}</p>
+          <div className="max-w-4xl w-full mx-auto p-8 bg-white rounded-lg shadow-xl text-gray-800 min-h-[70vh] max-h-[80vh] overflow-auto">
+            <h3 className="text-2xl font-bold mb-6">{currentSlide.title}</h3>
+            
+            {currentSlide.imageUrl && (
+              <div className="flex justify-center mb-6">
+                {imageLoading && (
+                  <div className="w-full max-w-md h-48 bg-gray-200 rounded-md animate-pulse flex items-center justify-center">
+                    <span className="text-gray-500">Loading image...</span>
+                  </div>
+                )}
+                <img
+                  src={currentSlide.imageUrl}
+                  alt={currentSlide.title}
+                  className={`max-w-md max-h-80 rounded-md object-contain ${imageLoading ? 'hidden' : 'block'}`}
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                />
+              </div>
+            )}
+            
+            <div className="text-lg leading-relaxed">{currentSlide.content}</div>
           </div>
         ) : (
           <div className="text-white text-xl">No slides available.</div>

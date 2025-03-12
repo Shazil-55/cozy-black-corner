@@ -75,7 +75,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
     const classItem = modules[moduleIndex].classes[classIndex];
     
     // Convert Slide[] to SlideData[] and ensure imageUrl is handled properly
-    const slidesData: SlideData[] = modules[moduleIndex].slides?.[classIndex].map(slide => ({
+    const slidesData: SlideData[] = modules[moduleIndex].slides?.[classIndex]?.map(slide => ({
       id: slide.id,
       title: slide.title,
       slideNo: slide.slideNo,
@@ -159,6 +159,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
                 title={selectedClass.title}
                 corePoints={selectedClass.corePoints}
                 slides={selectedClass.slides}
+                faqs={selectedClass.faqs}
                 onBack={clearSelectedClass}
                 onStartPresentation={startPresentation}
               />

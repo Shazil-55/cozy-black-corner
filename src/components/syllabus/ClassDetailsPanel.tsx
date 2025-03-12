@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { ArrowLeft, BookText, Play } from 'lucide-react';
+import { ArrowLeft, BookText, Play, Presentation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SlideCard from './SlideCard';
 import { SlideData, FAQ } from '@/services/courseService';

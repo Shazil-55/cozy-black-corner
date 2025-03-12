@@ -152,7 +152,7 @@ const ClassDetails = () => {
 							</div>
 						) : (
 							<div className="space-y-4">
-								{slides.map((slide, index) => (
+								{slides.map((slide) => (
 									<SlideCard key={slide.id} slide={slide} slideNumber={slide.slideNo} />
 								))}
 							</div>
@@ -161,7 +161,7 @@ const ClassDetails = () => {
 				</div>
 				
 				{/* Add ChatBot to the main page as well */}
-				{faqs.length > 0 && <ChatBot faqs={faqs} />}
+				{faqs && faqs.length > 0 && <ChatBot faqs={faqs} />}
 			</div>
 			
 			{/* Presentation Mode */}
