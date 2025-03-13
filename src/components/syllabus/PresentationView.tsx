@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, X, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,8 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 	};
 
 	// Get current slide or null for intro slide
-	const currentSlide = currentSlideIndex >= 0 ? slides[currentSlideIndex] : null;
+	const currentSlide =
+		currentSlideIndex >= 0 ? slides[currentSlideIndex] : null;
 
 	// Handle image loading
 	const handleImageLoad = () => {
@@ -58,14 +58,33 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 	// Render intro slide
 	const renderIntroSlide = () => {
 		return (
-			<div className="flex items-center justify-center h-full">
-				<div 
-					className="w-full h-full bg-cover bg-center relative"
-					style={{ backgroundImage: `url(/firstSlide.png)` }}
-				>
-					<div className="absolute inset-0 bg-[#01304b]/80 flex flex-col items-center justify-center text-white p-8">
-						<h1 className="text-4xl md:text-6xl font-bold mb-4 text-center">{title}</h1>
-						<p className="text-xl md:text-2xl text-center">
+			<div className="flex items-center justify-center h-[50vh]">
+				<div className="w-full h-[50vh] relative">
+					<img
+						src="/firstSlide.png"
+						alt="Presentation Background"
+						className="w-[130vh] h-[50vh] object-cover"
+						style={{
+							position: "relative",
+							zIndex: 1,
+						}}
+					/>
+					<div
+						style={{
+							position: "absolute",
+							top: "50%",
+							left: "50%",
+							transform: "translate(-50%, -50%)",
+							zIndex: 2,
+							textAlign: "center",
+							color: "white",
+							// backgroundColor: "rgba(1, 48, 75, 0.8)",
+							padding: "2rem",
+							borderRadius: "8px",
+						}}
+					>
+						<h1 className="text-xl md:text-2xl font-bold mb-4">{title}</h1>
+						<p className="text-sm md:text-md">
 							Click "Next" to begin the presentation
 						</p>
 					</div>
@@ -77,18 +96,22 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 	// Render content slide
 	const renderContentSlide = () => {
 		if (!currentSlide) return null;
-		
+
 		return (
 			<div className="bg-[#01304b] text-white rounded-lg overflow-hidden w-full max-w-6xl mx-auto">
 				{/* Slide header */}
 				<div className="bg-[#01304b]/80 p-4 border-b border-white/10">
 					<h3 className="text-2xl font-bold">{currentSlide.title}</h3>
 				</div>
-				
+
 				{/* Slide content */}
 				<div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 					{/* Image section on right (or top on mobile) */}
-					<div className={`flex flex-col ${currentSlide.imageUrl ? 'md:order-2' : 'md:col-span-2'}`}>
+					<div
+						className={`flex flex-col ${
+							currentSlide.imageUrl ? "md:order-2" : "md:col-span-2"
+						}`}
+					>
 						{currentSlide.imageUrl && (
 							<div className="h-64 md:h-full flex items-center justify-center p-2 bg-white/5 rounded-lg">
 								{imageLoading && (
@@ -99,7 +122,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 								<img
 									src={currentSlide.imageUrl}
 									alt={currentSlide.title}
-									className={`max-w-full max-h-full rounded-md object-contain ${
+									className={`w-64 h-64 rounded-md  ${
 										imageLoading ? "hidden" : "block"
 									}`}
 									onLoad={handleImageLoad}
@@ -108,13 +131,23 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 							</div>
 						)}
 					</div>
-					
+
 					{/* Content section */}
-					<div className={`flex-1 ${currentSlide.imageUrl ? 'md:order-1' : 'md:col-span-2'}`}>
-						<div className="text-lg leading-relaxed">
+					<div
+						className={`flex-1 ${
+							currentSlide.imageUrl ? "md:order-1" : "md:col-span-2"
+						}`}
+					>
+						<div className="text-lg mt-5 leading-relaxed">
 							{currentSlide.content}
 						</div>
 					</div>
+				</div>
+				<div className="text-2xl ps-5 leading-relaxed">
+					<strong>Example :</strong>
+				</div>
+				<div className="text-lg  p-5 leading-relaxed">
+					{currentSlide.example}
 				</div>
 			</div>
 		);
@@ -132,9 +165,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 
 			{/* Slide Content */}
 			<div className="flex-1 flex items-center justify-center p-4">
-				{currentSlideIndex === -1 
-					? renderIntroSlide() 
-					: renderContentSlide()}
+				{currentSlideIndex === -1 ? renderIntroSlide() : renderContentSlide()}
 			</div>
 
 			{/* Navigation Controls - Centered at the bottom */}
@@ -149,8 +180,8 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 					Previous
 				</Button>
 				<span className="text-white text-sm">
-					{currentSlideIndex === -1 
-						? "Intro" 
+					{currentSlideIndex === -1
+						? "Intro"
 						: `Slide ${currentSlideIndex + 1} of ${slides.length}`}
 				</span>
 				<Button

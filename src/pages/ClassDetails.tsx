@@ -51,6 +51,7 @@ const ClassDetails = () => {
 					voiceoverScript: slide.voiceoverScript,
 					imageUrl: slide.imageUrl,
 					content: slide.content,
+					example: slide.example,
 					classId: slide.classId,
 					createdAt: slide.createdAt,
 					updatedAt: slide.updatedAt,

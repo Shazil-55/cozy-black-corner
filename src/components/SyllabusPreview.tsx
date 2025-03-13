@@ -92,6 +92,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 				voiceoverScript: slide.voiceoverScript,
 				imageUrl: slide.imageUrl || null, // Ensure null is explicitly used when no image
 				content: slide.content,
+				example: slide.example,
 				classId: slide.classId,
 				createdAt: slide.createdAt,
 				updatedAt: slide.updatedAt,

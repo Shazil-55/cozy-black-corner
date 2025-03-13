@@ -11,6 +11,7 @@ export interface Lesson {
 }
 
 export interface Slide {
+	[x: string]: any;
 	id: string;
 	title: string;
 	slideNo: number;
