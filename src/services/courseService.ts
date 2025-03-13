@@ -1,3 +1,4 @@
+
 import api from "./api";
 
 export interface ClassData {
@@ -48,6 +49,18 @@ export interface QuizQuestion {
 	id: string;
 	question: string;
 	classId: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface QuizQuestionWithOptions {
+	id: number;
+	question: string;
+	option1: string;
+	option2: string;
+	option3: string;
+	option4: string;
+	classId: number;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -111,6 +124,16 @@ export const courseService = {
 			return response.data;
 		} catch (error) {
 			console.error("Error fetching class details:", error);
+			throw error;
+		}
+	},
+
+	async getQuizQuestions(classId: string): Promise<QuizQuestionWithOptions[]> {
+		try {
+			const response = await api.get(`/user/quiz/${classId}`);
+			return response.data.data;
+		} catch (error) {
+			console.error("Error fetching quiz questions:", error);
 			throw error;
 		}
 	},
