@@ -1,14 +1,17 @@
+
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, X, Volume2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Volume2, FileQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SlideData, FAQ } from "@/services/courseService";
 import ChatBot from "./ChatBot";
+import { Link } from "react-router-dom";
 
 export interface PresentationViewProps {
 	slides: SlideData[];
 	title: string;
 	faqs: FAQ[];
 	onClose: () => void;
+	classId: string; // Add classId prop
 }
 
 const PresentationView: React.FC<PresentationViewProps> = ({
@@ -16,9 +19,11 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 	title,
 	faqs,
 	onClose,
+	classId,
 }) => {
 	const [currentSlideIndex, setCurrentSlideIndex] = useState(-1); // Start at -1 for intro slide
 	const [imageLoading, setImageLoading] = useState(false);
+	const totalSlides = slides.length + 1; // +1 for the quiz slide at the end
 
 	useEffect(() => {
 		// Reset to the intro slide when the slides prop changes
@@ -31,13 +36,15 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 
 	const goToNextSlide = () => {
 		setCurrentSlideIndex((prevIndex) =>
-			Math.min(prevIndex + 1, slides.length - 1)
+			Math.min(prevIndex + 1, slides.length) // Allow going to quiz slide (index = slides.length)
 		);
 	};
 
 	// Get current slide or null for intro slide
 	const currentSlide =
-		currentSlideIndex >= 0 ? slides[currentSlideIndex] : null;
+		currentSlideIndex >= 0 && currentSlideIndex < slides.length 
+			? slides[currentSlideIndex] 
+			: null;
 
 	// Handle image loading
 	const handleImageLoad = () => {
@@ -78,7 +85,6 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 							zIndex: 2,
 							textAlign: "center",
 							color: "white",
-							// backgroundColor: "rgba(1, 48, 75, 0.8)",
 							padding: "2rem",
 							borderRadius: "8px",
 						}}
@@ -88,6 +94,45 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 							Click "Next" to begin the presentation
 						</p>
 					</div>
+				</div>
+			</div>
+		);
+	};
+
+	// Render quiz slide
+	const renderQuizSlide = () => {
+		return (
+			<div className="bg-[#01304b] text-white rounded-lg overflow-hidden w-full max-w-6xl mx-auto">
+				{/* Slide header */}
+				<div className="bg-[#01304b]/80 p-4 border-b border-white/10">
+					<h3 className="text-2xl font-bold">Quiz Time!</h3>
+				</div>
+
+				{/* Quiz content */}
+				<div className="p-8 flex flex-col items-center">
+					<div className="text-center mb-8">
+						<p className="text-xl mb-6">Ready to test your knowledge?</p>
+						<p className="mb-4">
+							You've completed the lesson. Now it's time to test what you've learned.
+						</p>
+						<div className="bg-white/10 p-4 rounded-lg mb-6 text-left">
+							<h4 className="font-semibold mb-2">Before you start:</h4>
+							<ul className="list-disc list-inside space-y-2">
+								<li>The quiz will test your understanding of key concepts from this lesson</li>
+								<li>Read each question carefully before answering</li>
+								<li>You can review your answers before final submission</li>
+								<li>Take your time and do your best!</li>
+							</ul>
+						</div>
+					</div>
+					<Link to={`/quiz/${classId}`}>
+						<Button 
+							className="bg-green-600 hover:bg-green-700 text-white font-medium px-8 py-3 rounded-lg flex items-center gap-2"
+						>
+							<FileQuestion className="w-5 h-5" />
+							Start Quiz
+						</Button>
+					</Link>
 				</div>
 			</div>
 		);
@@ -153,6 +198,16 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 		);
 	};
 
+	const renderCurrentSlide = () => {
+		if (currentSlideIndex === -1) {
+			return renderIntroSlide();
+		} else if (currentSlideIndex === slides.length) {
+			return renderQuizSlide();
+		} else {
+			return renderContentSlide();
+		}
+	};
+
 	return (
 		<div className="fixed inset-0 bg-black/95 z-50 flex flex-col">
 			{/* Header */}
@@ -165,7 +220,7 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 
 			{/* Slide Content */}
 			<div className="flex-1 flex items-center justify-center p-4">
-				{currentSlideIndex === -1 ? renderIntroSlide() : renderContentSlide()}
+				{renderCurrentSlide()}
 			</div>
 
 			{/* Navigation Controls - Centered at the bottom */}
@@ -182,12 +237,14 @@ const PresentationView: React.FC<PresentationViewProps> = ({
 				<span className="text-white text-sm">
 					{currentSlideIndex === -1
 						? "Intro"
+						: currentSlideIndex === slides.length
+						? "Quiz"
 						: `Slide ${currentSlideIndex + 1} of ${slides.length}`}
 				</span>
 				<Button
 					variant="secondary"
 					onClick={goToNextSlide}
-					disabled={currentSlideIndex === slides.length - 1}
+					disabled={currentSlideIndex === slides.length}
 					className="px-8"
 				>
 					Next

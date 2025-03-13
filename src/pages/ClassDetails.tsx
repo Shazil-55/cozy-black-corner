@@ -1,6 +1,7 @@
+
 import React, { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Presentation, BookText, Play } from "lucide-react";
+import { ArrowLeft, Presentation, BookText, Play, FileQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSyllabusGenerator } from "@/hooks/useSyllabusGenerator";
 import SlideCard from "@/components/syllabus/SlideCard";
@@ -129,16 +130,26 @@ const ClassDetails = () => {
 									{slides.length} {slides.length === 1 ? "slide" : "slides"}
 								</div>
 
-								{slides.length > 0 && (
-									<Button
-										variant="default"
-										onClick={startPresentation}
-										className="bg-talentlms-blue hover:bg-talentlms-darkBlue text-white"
-									>
-										<Play className="w-4 h-4 mr-2" />
-										Start Presentation
-									</Button>
-								)}
+								<div className="flex gap-3">
+									{slides.length > 0 && (
+										<>
+											<Button
+												variant="default"
+												onClick={startPresentation}
+												className="bg-talentlms-blue hover:bg-talentlms-darkBlue text-white"
+											>
+												<Play className="w-4 h-4 mr-2" />
+												Start Presentation
+											</Button>
+											<Link to={`/quiz/${classId}`}>
+												<Button className="bg-green-600 hover:bg-green-700">
+													<FileQuestion className="w-4 h-4 mr-2" />
+													Start Quiz
+												</Button>
+											</Link>
+										</>
+									)}
+								</div>
 							</div>
 						</div>
 					</div>
@@ -164,6 +175,18 @@ const ClassDetails = () => {
 								))}
 							</div>
 						)}
+						
+						{/* Quiz Button at the bottom */}
+						{slides.length > 0 && (
+							<div className="mt-8 flex justify-center">
+								<Link to={`/quiz/${classId}`}>
+									<Button className="bg-green-600 hover:bg-green-700 px-6 py-2 flex items-center gap-2">
+										<FileQuestion className="w-5 h-5" />
+										Start Quiz
+									</Button>
+								</Link>
+							</div>
+						)}
 					</div>
 				</div>
 
@@ -178,6 +201,7 @@ const ClassDetails = () => {
 					title={currentClass.title}
 					faqs={faqs}
 					onClose={closePresentation}
+					classId={classId || ""}
 				/>
 			)}
 		</>

@@ -264,6 +264,7 @@ const CourseDetails: React.FC = () => {
 										title={classData.data.title}
 										corePoints={classData.data.concepts}
 										slides={classData.data.slides || []}
+										faqs={classData.data.faqs || []}
 										onBack={clearSelectedClass}
 										onStartPresentation={() =>
 											startPresentation(
@@ -317,6 +318,7 @@ const CourseDetails: React.FC = () => {
 					title={presentationTitle}
 					faqs={presentationFaqs}
 					onClose={closePresentationMode}
+					classId={classData?.data?.id || ""}
 				/>
 			)}
 		</div>

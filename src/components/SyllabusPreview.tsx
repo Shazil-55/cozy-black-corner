@@ -29,11 +29,9 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 	const [expandedModules, setExpandedModules] = useState<
 		Record<string, boolean>
 	>(
-		// Initialize all modules as expanded
 		modules.reduce((acc, module) => ({ ...acc, [module.id]: true }), {})
 	);
 
-	// Selected class state
 	const [selectedClass, setSelectedClass] = useState<{
 		moduleId: string;
 		classId: string;
@@ -43,7 +41,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 		faqs: FAQ[];
 	} | null>(null);
 
-	// Dialog state
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [dialogType, setDialogType] = useState<"module" | "lesson">("module");
 	const [editingModule, setEditingModule] = useState<string>("");
@@ -51,10 +48,8 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 	const [editTitle, setEditTitle] = useState("");
 	const [editDescription, setEditDescription] = useState("");
 
-	// Presentation state
 	const [isPresentationMode, setIsPresentationMode] = useState(false);
 
-	// Toggle module expansion
 	const toggleModule = (moduleId: string) => {
 		setExpandedModules((prev) => ({
 			...prev,
@@ -62,7 +57,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 		}));
 	};
 
-	// Open module edit dialog
 	const openModuleEdit = (moduleId: string, title: string) => {
 		setDialogType("module");
 		setEditingModule(moduleId);
@@ -70,7 +64,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 		setDialogOpen(true);
 	};
 
-	// Handle class selection
 	const handleClassSelect = (moduleId: string, classId: string) => {
 		const moduleIndex = modules.findIndex((m) => m.id === moduleId);
 		if (moduleIndex === -1) return;
@@ -82,7 +75,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 
 		const classItem = modules[moduleIndex].classes[classIndex];
 
-		// Convert Slide[] to SlideData[] and ensure imageUrl is handled properly
 		const slidesData: SlideData[] =
 			modules[moduleIndex].slides?.[classIndex]?.map((slide) => ({
 				id: slide.id,
@@ -90,7 +82,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 				slideNo: slide.slideNo,
 				visualPrompt: slide.visualPrompt,
 				voiceoverScript: slide.voiceoverScript,
-				imageUrl: slide.imageUrl || null, // Ensure null is explicitly used when no image
+				imageUrl: slide.imageUrl || null,
 				content: slide.content,
 				example: slide.example,
 				classId: slide.classId,
@@ -98,7 +90,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 				updatedAt: slide.updatedAt,
 			})) || [];
 
-		// Get FAQs for this class if they exist
 		const faqs: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
 
 		setSelectedClass({
@@ -111,7 +102,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 		});
 	};
 
-	// Save changes
 	const saveChanges = () => {
 		if (dialogType === "module") {
 			onModuleUpdate(editingModule, editTitle);
@@ -121,19 +111,16 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 		setDialogOpen(false);
 	};
 
-	// Clear selected class
 	const clearSelectedClass = () => {
 		setSelectedClass(null);
 	};
 
-	// Start presentation
 	const startPresentation = () => {
 		if (selectedClass?.slides.length) {
 			setIsPresentationMode(true);
 		}
 	};
 
-	// Close presentation
 	const closePresentation = () => {
 		setIsPresentationMode(false);
 	};
@@ -141,7 +128,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 	return (
 		<>
 			<div className="bg-white overflow-hidden">
-				{/* Header */}
 				<div className="bg-talentlms-blue p-4 flex items-center justify-between">
 					<div className="flex items-center space-x-3">
 						<BookText className="w-6 h-6 text-white" />
@@ -191,7 +177,6 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 				)}
 			</div>
 
-			{/* Edit Dialog */}
 			<EditDialog
 				open={dialogOpen}
 				onOpenChange={setDialogOpen}
@@ -203,13 +188,13 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 				onSave={saveChanges}
 			/>
 
-			{/* Presentation Mode */}
 			{isPresentationMode && selectedClass && (
 				<PresentationView
 					slides={selectedClass.slides}
 					title={selectedClass.title}
 					faqs={selectedClass.faqs}
 					onClose={closePresentation}
+					classId={selectedClass.classId}
 				/>
 			)}
 		</>
