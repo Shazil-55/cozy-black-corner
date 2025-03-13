@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Award, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
@@ -73,7 +72,7 @@ const Quiz: React.FC = () => {
 
   // Calculate score and submit quiz
   const handleSubmitQuiz = () => {
-    if (!questions) return;
+    if (!questions || questions.length === 0) return;
 
     const answeredQuestions = Object.keys(selectedAnswers).length;
     const totalQuestions = questions.length;
@@ -143,7 +142,7 @@ const Quiz: React.FC = () => {
   }
 
   // Quiz completed state
-  if (isSubmitted) {
+  if (isSubmitted && questions) {
     const answeredQuestions = Object.keys(selectedAnswers).length;
     const score = Math.round((answeredQuestions / questions.length) * 100);
     
@@ -208,8 +207,71 @@ const Quiz: React.FC = () => {
     );
   }
 
+  // Handle case when questions array is empty
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="max-w-4xl mx-auto px-4">
+          <Link
+            to={`/class/${classId}`}
+            className="inline-flex items-center text-talentlms-blue mb-4 hover:underline"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back to Class
+          </Link>
+
+          <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+            <CardHeader>
+              <CardTitle className="flex items-center text-amber-600 dark:text-amber-400">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                No Quiz Questions Available
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 dark:text-gray-300">
+                There are no quiz questions available for this class yet. Please check back later.
+              </p>
+            </CardContent>
+            <CardFooter>
+              <Button onClick={() => navigate(`/class/${classId}`)}>
+                Return to Class
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Make sure we have questions and a valid current question index
+  if (currentQuestionIndex >= questions.length) {
+    setCurrentQuestionIndex(0);
+  }
+
   // Get current question
   const currentQuestion = questions[currentQuestionIndex];
+  
+  // Make sure we have a valid current question
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex items-center justify-center h-[60vh]">
+            <div className="text-center">
+              <AlertCircle className="w-12 h-12 mx-auto text-amber-500 mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Question Not Found</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                There was an issue loading this quiz question.
+              </p>
+              <Button onClick={() => navigate(`/class/${classId}`)}>
+                Return to Class
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">

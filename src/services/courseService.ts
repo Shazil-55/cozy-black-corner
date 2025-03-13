@@ -131,10 +131,14 @@ export const courseService = {
 	async getQuizQuestions(classId: string): Promise<QuizQuestionWithOptions[]> {
 		try {
 			const response = await api.get(`/user/quiz/${classId}`);
-			return response.data.data;
+			if (response.data && response.data.data) {
+				return response.data.data;
+			}
+			return [];
 		} catch (error) {
 			console.error("Error fetching quiz questions:", error);
-			throw error;
+			// Return an empty array instead of throwing to avoid breaking the UI
+			return [];
 		}
 	},
 };
