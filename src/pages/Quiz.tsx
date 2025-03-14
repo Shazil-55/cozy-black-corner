@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Award, AlertCircle, Clock, CheckCircle2, Medal, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,9 @@ const optionNumberToLetter = {
 const Quiz: React.FC = () => {
   const { classId } = useParams<{ classId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const viewResults = searchParams.get('view') === 'results';
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -36,6 +39,14 @@ const Quiz: React.FC = () => {
     enabled: !!classId,
   });
 
+  // Check if we should directly show results based on URL parameter
+  useEffect(() => {
+    if (viewResults) {
+      setIsSubmitted(true);
+      handleViewResults();
+    }
+  }, [viewResults]);
+  
   // Timer for the quiz
   React.useEffect(() => {
     if (!isSubmitted && questions && questions.length > 0) {

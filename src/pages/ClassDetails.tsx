@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useSyllabusGenerator } from "@/hooks/useSyllabusGenerator";
 import SlideCard from "@/components/syllabus/SlideCard";
 import PresentationView from "@/components/syllabus/PresentationView";
-import { SlideData, FAQ } from "@/services/courseService";
+import { SlideData, FAQ, UserTest } from "@/services/courseService";
 import ChatBot from "@/components/syllabus/ChatBot";
 
 const ClassDetails = () => {
