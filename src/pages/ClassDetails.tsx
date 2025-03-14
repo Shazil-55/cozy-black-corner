@@ -1,6 +1,6 @@
 
-import React, { useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useMemo, useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Presentation, BookText, Play, FileQuestion, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSyllabusGenerator } from "@/hooks/useSyllabusGenerator";
@@ -8,6 +8,9 @@ import SlideCard from "@/components/syllabus/SlideCard";
 import PresentationView from "@/components/syllabus/PresentationView";
 import { SlideData, FAQ, UserTest } from "@/services/courseService";
 import ChatBot from "@/components/syllabus/ChatBot";
+import { useQuery } from "@tanstack/react-query";
+import { courseService } from "@/services/courseService";
+import { toast } from "sonner";
 
 const ClassDetails = () => {
 	const { moduleId, classId } = useParams<{
@@ -15,7 +18,24 @@ const ClassDetails = () => {
 		classId: string;
 	}>();
 	const { modules } = useSyllabusGenerator();
+	const navigate = useNavigate();
 	const [isPresentationMode, setIsPresentationMode] = useState(false);
+	const [courseId, setCourseId] = useState<string | null>(null);
+
+	// Fetch class details to get courseId
+	const { isLoading: isLoadingClassDetails } = useQuery({
+		queryKey: ['classDetails', classId],
+		queryFn: () => courseService.getClassDetails(classId || ''),
+		enabled: !!classId,
+		onSuccess: (data) => {
+			if (data?.courseId) {
+				setCourseId(data.courseId);
+			}
+		},
+		onError: () => {
+			toast.error("Could not load class details");
+		}
+	});
 
 	const { currentClass, moduleIndex, classIndex, slides, faqs, userTest } =
 		useMemo(() => {
@@ -83,6 +103,15 @@ const ClassDetails = () => {
 		setIsPresentationMode(false);
 	};
 
+	const navigateToCourse = () => {
+		if (courseId) {
+			navigate(`/course/${courseId}`);
+		} else {
+			navigate('/');
+			toast.error("Couldn't find the course. Redirecting to home.");
+		}
+	};
+
 	if (!currentClass) {
 		return (
 			<div className="container mx-auto p-8 text-center">
@@ -100,13 +129,13 @@ const ClassDetails = () => {
 				<div className="max-w-5xl mx-auto px-4">
 					{/* Header */}
 					<div className="mb-6">
-						<Link
-							to="/"
+						<button
+							onClick={navigateToCourse}
 							className="inline-flex items-center text-talentlms-blue mb-4 hover:underline"
 						>
 							<ArrowLeft className="w-4 h-4 mr-1" />
-							Back to Syllabus
-						</Link>
+							Back to Course
+						</button>
 
 						<div className="bg-white rounded-lg p-6 shadow-subtle">
 							<div className="flex items-center space-x-3 mb-4">

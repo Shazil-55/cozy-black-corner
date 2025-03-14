@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Award, AlertCircle, Clock, CheckCircle2, Medal, Trophy } from "lucide-react";
@@ -31,12 +30,25 @@ const Quiz: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [courseId, setCourseId] = useState<string | null>(null);
   
   // Fetch quiz questions from API
   const { data: questions, isLoading, error } = useQuery({
     queryKey: ['quizQuestions', classId],
     queryFn: () => courseService.getQuizQuestions(classId || ''),
     enabled: !!classId,
+  });
+
+  // Fetch class details to get courseId
+  const { data: classDetails } = useQuery({
+    queryKey: ['classDetails', classId],
+    queryFn: () => courseService.getClassDetails(classId || ''),
+    enabled: !!classId,
+    onSuccess: (data) => {
+      if (data?.courseId) {
+        setCourseId(data.courseId);
+      }
+    }
   });
 
   // Check if we should directly show results based on URL parameter
@@ -146,6 +158,17 @@ const Quiz: React.FC = () => {
     }
   };
 
+  // Function to navigate back to course details
+  const navigateToCourse = () => {
+    if (courseId) {
+      navigate(`/course/${courseId}`);
+    } else {
+      // Fallback to home if courseId isn't available
+      navigate('/');
+      toast.error("Couldn't find the course. Redirecting to home.");
+    }
+  };
+
   // Render loading state
   if (isLoading) {
     return (
@@ -168,13 +191,13 @@ const Quiz: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-4xl mx-auto px-4">
-          <Link
-            to={`/class/${classId}`}
+          <button
+            onClick={navigateToCourse}
             className="inline-flex items-center text-talentlms-blue mb-4 hover:underline"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Class
-          </Link>
+            Back to Course
+          </button>
 
           <Card className="border-red-200 bg-red-50 dark:bg-red-900/20">
             <CardHeader>
@@ -207,13 +230,13 @@ const Quiz: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-4xl mx-auto px-4">
-          <Link
-            to={`/class/${classId}`}
+          <button
+            onClick={navigateToCourse}
             className="inline-flex items-center text-talentlms-blue mb-4 hover:underline"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Class
-          </Link>
+            Back to Course
+          </button>
 
           <Card className="overflow-hidden border-2 border-green-200 shadow-lg">
             <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-8 text-white">
@@ -264,8 +287,8 @@ const Quiz: React.FC = () => {
             </CardContent>
             
             <CardFooter className="flex justify-center space-x-4 p-6 bg-gray-50 dark:bg-gray-800/50">
-              <Button onClick={() => navigate(`/class/${classId}`)}>
-                Return to Class
+              <Button onClick={navigateToCourse}>
+                Return to Course
               </Button>
             </CardFooter>
           </Card>
@@ -282,13 +305,13 @@ const Quiz: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-4xl mx-auto px-4">
-          <Link
-            to={`/class/${classId}`}
+          <button
+            onClick={navigateToCourse}
             className="inline-flex items-center text-talentlms-blue mb-4 hover:underline"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Class
-          </Link>
+            Back to Course
+          </button>
 
           <Card className="overflow-hidden border-2 border-blue-200 shadow-md">
             <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white">
@@ -329,9 +352,9 @@ const Quiz: React.FC = () => {
               </Button>
               <Button 
                 variant="outline" 
-                onClick={() => navigate(`/class/${classId}`)}
+                onClick={navigateToCourse}
               >
-                Return to Class
+                Return to Course
               </Button>
             </CardFooter>
           </Card>
@@ -345,13 +368,13 @@ const Quiz: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-4xl mx-auto px-4">
-          <Link
-            to={`/class/${classId}`}
+          <button
+            onClick={navigateToCourse}
             className="inline-flex items-center text-talentlms-blue mb-4 hover:underline"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Class
-          </Link>
+            Back to Course
+          </button>
 
           <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
             <CardHeader>
@@ -366,8 +389,8 @@ const Quiz: React.FC = () => {
               </p>
             </CardContent>
             <CardFooter>
-              <Button onClick={() => navigate(`/class/${classId}`)}>
-                Return to Class
+              <Button onClick={navigateToCourse}>
+                Return to Course
               </Button>
             </CardFooter>
           </Card>
@@ -396,8 +419,8 @@ const Quiz: React.FC = () => {
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 There was an issue loading this quiz question.
               </p>
-              <Button onClick={() => navigate(`/class/${classId}`)}>
-                Return to Class
+              <Button onClick={navigateToCourse}>
+                Return to Course
               </Button>
             </div>
           </div>
@@ -411,13 +434,13 @@ const Quiz: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4">
         {/* Header with navigation */}
         <div className="mb-6 flex justify-between items-center">
-          <Link
-            to={`/class/${classId}`}
+          <button
+            onClick={navigateToCourse}
             className="inline-flex items-center text-talentlms-blue hover:underline"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Exit Quiz
-          </Link>
+          </button>
           
           <div className="flex items-center space-x-2 bg-white dark:bg-gray-800 py-1 px-3 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">
             <Clock className="w-4 h-4 text-amber-500" />
