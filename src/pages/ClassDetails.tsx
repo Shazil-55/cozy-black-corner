@@ -62,8 +62,8 @@ const ClassDetails = () => {
 			// Get FAQs if they exist
 			const faqsData: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
 			
-			// Get userTest if it exists
-			const userTestData = modules[moduleIndex].userTests?.[classIndex];
+			// Get userTest if it exists, safely handle the optional property
+			const userTestData = modules[moduleIndex].userTests?.[classIndex]?.[0];
 
 			return {
 				currentClass: modules[moduleIndex].classes[classIndex],

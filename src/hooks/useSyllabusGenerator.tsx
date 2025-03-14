@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import api from "@/services/api";
-import { SlideData, FAQ } from "@/services/courseService";
+import { SlideData, FAQ, UserTest } from "@/services/courseService";
 
 export interface Lesson {
 	id: string;
@@ -38,6 +38,7 @@ export interface Module {
 	classes: Class[];
 	slides: Slide[][];
 	faqs: FAQ[][];
+	userTests?: UserTest[][];
 	lessons: Lesson[]; // Keep for backwards compatibility
 }
 
@@ -116,6 +117,7 @@ export function useSyllabusGenerator() {
 						classes: [],
 						slides: [],
 						faqs: [], // Initialize the faqs array
+						userTests: [], // Initialize the userTests array
 						lessons: [], // Keep for backwards compatibility
 					};
 
@@ -149,6 +151,9 @@ export function useSyllabusGenerator() {
 
 						// Initialize empty FAQs array for each class
 						module.faqs.push([]);
+
+						// Initialize empty userTests array for each class
+						module.userTests?.push([]);
 
 						classItem.slides.forEach((slide: any) => {
 							module.lessons.push({

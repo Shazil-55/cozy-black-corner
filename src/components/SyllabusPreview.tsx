@@ -94,8 +94,8 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 
 		const faqs: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
 		
-		// Get userTest if it exists
-		const userTest = modules[moduleIndex].userTests?.[classIndex];
+		// Get userTest if it exists, safely handling the optional property
+		const userTest = modules[moduleIndex].userTests?.[classIndex]?.[0];
 
 		setSelectedClass({
 			moduleId,
