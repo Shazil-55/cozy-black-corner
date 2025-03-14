@@ -10,6 +10,14 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { courseService, QuizQuestionWithOptions, QuizAnswer, QuizSubmissionRequest } from "@/services/courseService";
 
+// Map option numbers to letters
+const optionNumberToLetter = {
+  option1: "a",
+  option2: "b",
+  option3: "c",
+  option4: "d"
+};
+
 const Quiz: React.FC = () => {
   const { classId } = useParams<{ classId: string }>();
   const navigate = useNavigate();
@@ -101,10 +109,10 @@ const Quiz: React.FC = () => {
     try {
       setIsSubmitting(true);
 
-      // Format the answers for API submission
-      const formattedAnswers: QuizAnswer[] = Object.entries(selectedAnswers).map(([questionId, optionMarked]) => ({
+      // Format the answers for API submission and convert option1/2/3/4 to a/b/c/d
+      const formattedAnswers: QuizAnswer[] = Object.entries(selectedAnswers).map(([questionId, optionNumber]) => ({
         id: questionId,
-        optionMarked: optionMarked
+        optionMarked: optionNumberToLetter[optionNumber as keyof typeof optionNumberToLetter] || optionNumber
       }));
 
       const submissionPayload: QuizSubmissionRequest = {

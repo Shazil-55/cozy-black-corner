@@ -67,7 +67,7 @@ export interface QuizQuestionWithOptions {
 
 export interface QuizAnswer {
 	id: string | number;
-	optionMarked: string;
+	optionMarked: string; // Now can be "a", "b", "c", "d" instead of "option1", "option2", etc.
 }
 
 export interface QuizSubmissionRequest {
