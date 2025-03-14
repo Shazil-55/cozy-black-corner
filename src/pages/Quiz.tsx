@@ -1,12 +1,14 @@
+
 import React, { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, Award, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Award, AlertCircle, Clock, CheckCircle2, Medal, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { courseService, QuizQuestionWithOptions } from "@/services/courseService";
+import { courseService, QuizQuestionWithOptions, QuizAnswer, QuizSubmissionRequest } from "@/services/courseService";
 
 const Quiz: React.FC = () => {
   const { classId } = useParams<{ classId: string }>();
@@ -15,6 +17,9 @@ const Quiz: React.FC = () => {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const [showResults, setShowResults] = useState(false);
+  const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Fetch quiz questions from API
   const { data: questions, isLoading, error } = useQuery({
@@ -82,10 +87,44 @@ const Quiz: React.FC = () => {
       return;
     }
 
-    // In a real app, we would submit answers to an API endpoint here
-    // For now, we'll just show completion message
     setIsSubmitted(true);
     toast.success("Quiz submitted successfully!");
+  };
+
+  // View quiz results by calling the API
+  const handleViewResults = async () => {
+    if (!classId || !questions || questions.length === 0) {
+      toast.error("Cannot submit quiz answers. Missing data.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Format the answers for API submission
+      const formattedAnswers: QuizAnswer[] = Object.entries(selectedAnswers).map(([questionId, optionMarked]) => ({
+        id: questionId,
+        optionMarked: optionMarked
+      }));
+
+      const submissionPayload: QuizSubmissionRequest = {
+        classId: classId,
+        answers: formattedAnswers
+      };
+
+      // Call the submit API
+      const response = await courseService.submitQuizAnswers(submissionPayload);
+      
+      // Set the quiz score from the API response
+      setQuizScore(response.data.score);
+      setShowResults(true);
+      toast.success("Quiz results fetched successfully!");
+    } catch (error) {
+      console.error("Error submitting quiz answers:", error);
+      toast.error("Failed to fetch quiz results. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Render loading state
@@ -141,10 +180,10 @@ const Quiz: React.FC = () => {
     );
   }
 
-  // Quiz completed state
-  if (isSubmitted && questions) {
+  // Quiz completed with results
+  if (isSubmitted && questions && showResults) {
     const answeredQuestions = Object.keys(selectedAnswers).length;
-    const score = Math.round((answeredQuestions / questions.length) * 100);
+    const percentageCompleted = Math.round((answeredQuestions / questions.length) * 100);
     
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -157,8 +196,83 @@ const Quiz: React.FC = () => {
             Back to Class
           </Link>
 
-          <Card className="overflow-hidden border-2 border-green-200 shadow-md">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white">
+          <Card className="overflow-hidden border-2 border-green-200 shadow-lg">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-8 text-white">
+              <div className="flex justify-center mb-4">
+                <Trophy className="w-20 h-20 text-yellow-300 drop-shadow-lg" />
+              </div>
+              <h2 className="text-3xl font-bold text-center mb-2">Quiz Completed!</h2>
+              <p className="text-center text-green-100">You've successfully completed this assessment</p>
+            </div>
+            
+            <CardContent className="pt-8 px-8">
+              <div className="flex flex-col items-center mb-8">
+                <div className="relative">
+                  <div className="w-32 h-32 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4 border-4 border-emerald-500">
+                    <span className="text-4xl font-bold text-emerald-600 dark:text-emerald-400">{quizScore}</span>
+                  </div>
+                  <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 rounded-full w-10 h-10 flex items-center justify-center">
+                    <Medal className="w-6 h-6" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Your Score</h3>
+                <p className="text-gray-500 dark:text-gray-400">out of 10 points possible</p>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="bg-gray-100 dark:bg-gray-800 p-5 rounded-lg">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">Questions Answered:</span>
+                    <span className="font-medium">{answeredQuestions}/{questions.length}</span>
+                  </div>
+                  <Progress value={percentageCompleted} className="h-2" />
+                </div>
+                
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-medium text-blue-700 dark:text-blue-400 mb-2 flex items-center">
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    Performance Summary
+                  </h4>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {quizScore && quizScore >= 8 ? 
+                      "Excellent work! You've demonstrated a strong understanding of the material." :
+                      quizScore && quizScore >= 5 ?
+                      "Good job! You have a solid grasp of the concepts, but there's room for improvement." :
+                      "You've completed the quiz. Consider reviewing the material again to strengthen your understanding."}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+            
+            <CardFooter className="flex justify-center space-x-4 p-6 bg-gray-50 dark:bg-gray-800/50">
+              <Button onClick={() => navigate(`/class/${classId}`)}>
+                Return to Class
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Quiz completed state (before viewing results)
+  if (isSubmitted && questions) {
+    const answeredQuestions = Object.keys(selectedAnswers).length;
+    const percentageCompleted = Math.round((answeredQuestions / questions.length) * 100);
+    
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="max-w-4xl mx-auto px-4">
+          <Link
+            to={`/class/${classId}`}
+            className="inline-flex items-center text-talentlms-blue mb-4 hover:underline"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back to Class
+          </Link>
+
+          <Card className="overflow-hidden border-2 border-blue-200 shadow-md">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white">
               <div className="flex justify-center mb-4">
                 <Award className="w-16 h-16" />
               </div>
@@ -174,12 +288,12 @@ const Quiz: React.FC = () => {
                 <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-700 dark:text-gray-300">Completion:</span>
-                    <span className="font-medium">{score}%</span>
+                    <span className="font-medium">{percentageCompleted}%</span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                     <div 
                       className="bg-talentlms-blue h-2.5 rounded-full" 
-                      style={{ width: `${score}%` }}
+                      style={{ width: `${percentageCompleted}%` }}
                     ></div>
                   </div>
                 </div>
@@ -187,17 +301,17 @@ const Quiz: React.FC = () => {
             </CardContent>
             <CardFooter className="flex justify-center space-x-2 bg-gray-50 dark:bg-gray-800/50 py-4">
               <Button 
-                variant="outline" 
-                onClick={() => {
-                  setCurrentQuestionIndex(0);
-                  setSelectedAnswers({});
-                  setIsSubmitted(false);
-                  setTimeRemaining(600);
-                }}
+                variant="default"
+                onClick={handleViewResults}
+                disabled={isSubmitting}
+                className="bg-emerald-600 hover:bg-emerald-700"
               >
-                Retake Quiz
+                {isSubmitting ? "Loading..." : "View Results"}
               </Button>
-              <Button onClick={() => navigate(`/class/${classId}`)}>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(`/class/${classId}`)}
+              >
                 Return to Class
               </Button>
             </CardFooter>

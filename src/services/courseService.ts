@@ -65,6 +65,22 @@ export interface QuizQuestionWithOptions {
 	updatedAt: string;
 }
 
+export interface QuizAnswer {
+	id: string | number;
+	optionMarked: string;
+}
+
+export interface QuizSubmissionRequest {
+	classId: string;
+	answers: QuizAnswer[];
+}
+
+export interface QuizSubmissionResponse {
+	data: {
+		score: number;
+	};
+}
+
 export interface FAQ {
 	id: string;
 	question: string;
@@ -139,6 +155,16 @@ export const courseService = {
 			console.error("Error fetching quiz questions:", error);
 			// Return an empty array instead of throwing to avoid breaking the UI
 			return [];
+		}
+	},
+
+	async submitQuizAnswers(payload: QuizSubmissionRequest): Promise<QuizSubmissionResponse> {
+		try {
+			const response = await api.post<QuizSubmissionResponse>(`/user/submit-quiz`, payload);
+			return response.data;
+		} catch (error) {
+			console.error("Error submitting quiz answers:", error);
+			throw error;
 		}
 	},
 };
