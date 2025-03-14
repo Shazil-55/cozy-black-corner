@@ -1,9 +1,9 @@
 
 import React from "react";
-import { ArrowLeft, Presentation, FileQuestion } from "lucide-react";
+import { ArrowLeft, Presentation, FileQuestion, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SlideCard from "./SlideCard";
-import { SlideData, FAQ } from "@/services/courseService";
+import { SlideData, FAQ, UserTest } from "@/services/courseService";
 import { Link } from "react-router-dom";
 
 interface ClassDetailsPanelProps {
@@ -11,6 +11,7 @@ interface ClassDetailsPanelProps {
   corePoints: string[];
   slides: SlideData[];
   faqs?: FAQ[];
+  userTest?: UserTest;
   onBack: () => void;
   onStartPresentation: () => void;
 }
@@ -20,6 +21,7 @@ const ClassDetailsPanel: React.FC<ClassDetailsPanelProps> = ({
   corePoints,
   slides,
   faqs = [],
+  userTest,
   onBack,
   onStartPresentation,
 }) => {
@@ -84,15 +86,24 @@ const ClassDetailsPanel: React.FC<ClassDetailsPanelProps> = ({
           </div>
         </div>
 
-        {/* Quiz Button at the bottom */}
+        {/* Quiz Button at the bottom - conditionally show based on userTest */}
         {slides.length > 0 && (
           <div className="mt-8 flex justify-center">
-            <Link to={`/quiz/${classId}`}>
-              <Button className="bg-green-600 hover:bg-green-700 px-6 py-2 flex items-center gap-2">
-                <FileQuestion className="w-5 h-5" />
-                Start Quiz
-              </Button>
-            </Link>
+            {userTest ? (
+              <Link to={`/quiz/${classId}?view=results`}>
+                <Button className="bg-amber-500 hover:bg-amber-600 px-6 py-2 flex items-center gap-2">
+                  <Trophy className="w-5 h-5" />
+                  View Results
+                </Button>
+              </Link>
+            ) : (
+              <Link to={`/quiz/${classId}`}>
+                <Button className="bg-green-600 hover:bg-green-700 px-6 py-2 flex items-center gap-2">
+                  <FileQuestion className="w-5 h-5" />
+                  Start Quiz
+                </Button>
+              </Link>
+            )}
           </div>
         )}
       </div>

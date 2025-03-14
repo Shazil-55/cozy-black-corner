@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Presentation, BookText, Play, FileQuestion } from "lucide-react";
+import { ArrowLeft, Presentation, BookText, Play, FileQuestion, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSyllabusGenerator } from "@/hooks/useSyllabusGenerator";
 import SlideCard from "@/components/syllabus/SlideCard";
@@ -17,7 +17,7 @@ const ClassDetails = () => {
 	const { modules } = useSyllabusGenerator();
 	const [isPresentationMode, setIsPresentationMode] = useState(false);
 
-	const { currentClass, moduleIndex, classIndex, slides, faqs } =
+	const { currentClass, moduleIndex, classIndex, slides, faqs, userTest } =
 		useMemo(() => {
 			const moduleIndex = modules.findIndex((m) => m.id === moduleId);
 			if (moduleIndex === -1)
@@ -27,6 +27,7 @@ const ClassDetails = () => {
 					classIndex: -1,
 					slides: [] as SlideData[],
 					faqs: [] as FAQ[],
+					userTest: undefined,
 				};
 
 			const classIndex = modules[moduleIndex].classes.findIndex(
@@ -39,8 +40,8 @@ const ClassDetails = () => {
 					classIndex: -1,
 					slides: [] as SlideData[],
 					faqs: [] as FAQ[],
+					userTest: undefined,
 				};
-			console.log("Modules", modules[moduleIndex].faqs?.[classIndex]);
 
 			// Convert Slide[] to SlideData[]
 			const slidesData: SlideData[] =
@@ -60,6 +61,9 @@ const ClassDetails = () => {
 
 			// Get FAQs if they exist
 			const faqsData: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
+			
+			// Get userTest if it exists
+			const userTestData = modules[moduleIndex].userTests?.[classIndex];
 
 			return {
 				currentClass: modules[moduleIndex].classes[classIndex],
@@ -67,6 +71,7 @@ const ClassDetails = () => {
 				classIndex,
 				slides: slidesData,
 				faqs: faqsData,
+				userTest: userTestData,
 			};
 		}, [modules, moduleId, classId]);
 
@@ -141,12 +146,21 @@ const ClassDetails = () => {
 												<Play className="w-4 h-4 mr-2" />
 												Start Presentation
 											</Button>
-											<Link to={`/quiz/${classId}`}>
-												<Button className="bg-green-600 hover:bg-green-700">
-													<FileQuestion className="w-4 h-4 mr-2" />
-													Start Quiz
-												</Button>
-											</Link>
+											{userTest ? (
+												<Link to={`/quiz/${classId}?view=results`}>
+													<Button className="bg-amber-500 hover:bg-amber-600">
+														<Trophy className="w-4 h-4 mr-2" />
+														View Results
+													</Button>
+												</Link>
+											) : (
+												<Link to={`/quiz/${classId}`}>
+													<Button className="bg-green-600 hover:bg-green-700">
+														<FileQuestion className="w-4 h-4 mr-2" />
+														Start Quiz
+													</Button>
+												</Link>
+											)}
 										</>
 									)}
 								</div>
@@ -176,15 +190,24 @@ const ClassDetails = () => {
 							</div>
 						)}
 						
-						{/* Quiz Button at the bottom */}
+						{/* Quiz Button at the bottom - conditional based on userTest */}
 						{slides.length > 0 && (
 							<div className="mt-8 flex justify-center">
-								<Link to={`/quiz/${classId}`}>
-									<Button className="bg-green-600 hover:bg-green-700 px-6 py-2 flex items-center gap-2">
-										<FileQuestion className="w-5 h-5" />
-										Start Quiz
-									</Button>
-								</Link>
+								{userTest ? (
+									<Link to={`/quiz/${classId}?view=results`}>
+										<Button className="bg-amber-500 hover:bg-amber-600 px-6 py-2 flex items-center gap-2">
+											<Trophy className="w-5 h-5" />
+											View Results
+										</Button>
+									</Link>
+								) : (
+									<Link to={`/quiz/${classId}`}>
+										<Button className="bg-green-600 hover:bg-green-700 px-6 py-2 flex items-center gap-2">
+											<FileQuestion className="w-5 h-5" />
+											Start Quiz
+										</Button>
+									</Link>
+								)}
 							</div>
 						)}
 					</div>

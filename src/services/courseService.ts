@@ -81,6 +81,15 @@ export interface QuizSubmissionResponse {
 	};
 }
 
+export interface UserTest {
+    id: string;
+    classId: string;
+    userId: string;
+    score: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface FAQ {
 	id: string;
 	question: string;
@@ -104,6 +113,7 @@ export interface ClassDetailsResponse {
 		assessment: {
 			quiz: QuizQuestion[];
 		};
+		userTest?: UserTest; // Added userTest as an optional property
 	};
 }
 

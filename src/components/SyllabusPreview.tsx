@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Module } from "@/hooks/useSyllabusGenerator";
 import { BookText, RefreshCw } from "lucide-react";
@@ -6,7 +7,7 @@ import ModuleCard from "./syllabus/ModuleCard";
 import EditDialog from "./syllabus/EditDialog";
 import ClassDetailsPanel from "./syllabus/ClassDetailsPanel";
 import PresentationView from "./syllabus/PresentationView";
-import { SlideData, FAQ } from "@/services/courseService";
+import { SlideData, FAQ, UserTest } from "@/services/courseService";
 
 interface SyllabusPreviewProps {
 	modules: Module[];
@@ -39,6 +40,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 		corePoints: string[];
 		slides: SlideData[];
 		faqs: FAQ[];
+		userTest?: UserTest;
 	} | null>(null);
 
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -91,6 +93,9 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 			})) || [];
 
 		const faqs: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
+		
+		// Get userTest if it exists
+		const userTest = modules[moduleIndex].userTests?.[classIndex];
 
 		setSelectedClass({
 			moduleId,
@@ -99,6 +104,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 			corePoints: classItem.corePoints,
 			slides: slidesData,
 			faqs: faqs,
+			userTest: userTest,
 		});
 	};
 
@@ -158,6 +164,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 								corePoints={selectedClass.corePoints}
 								slides={selectedClass.slides}
 								faqs={selectedClass.faqs}
+								userTest={selectedClass.userTest}
 								onBack={clearSelectedClass}
 								onStartPresentation={startPresentation}
 							/>
