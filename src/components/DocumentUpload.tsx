@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 export type FileStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 interface DocumentUploadProps {
-  onFileAccepted: (file: File) => void;
+  onFileAccepted: (file: File, characterCount?: number) => void;
   status?: FileStatus;
   progress?: number;
   maxSize?: number; // in bytes

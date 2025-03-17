@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { ClassSelector } from "@/components/ClassSelector";
 import { LoadingState } from "@/components/LoadingState";
@@ -20,6 +20,11 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/AuthContext";
 import { Link } from "react-router-dom";
+import { readFileContent } from "@/utils/fileProcessor";
+
+const CHARS_PER_CLASS = 5000;
+const DEFAULT_MIN_CLASSES = 1;
+const MAX_CLASSES = 200;
 
 const Index = () => {
 	const {
@@ -28,6 +33,7 @@ const Index = () => {
 		modules,
 		status,
 		progress,
+		progressMessage,
 		error,
 		setNumClasses,
 		handleFileUpload,
@@ -40,10 +46,11 @@ const Index = () => {
 	const [uploadStatus, setUploadStatus] = useState<
 		"idle" | "uploading" | "success" | "error"
 	>("idle");
+	const [minClasses, setMinClasses] = useState(DEFAULT_MIN_CLASSES);
 	const isMobile = useIsMobile();
 	const { isAuthenticated } = useAuth();
 
-	const handleFileSelected = (selectedFile: File) => {
+	const handleFileSelected = async (selectedFile: File) => {
 		if (!isAuthenticated) {
 			toast.error("Please log in to upload documents", {
 				description: "You need to be logged in to use this feature.",
@@ -58,17 +65,50 @@ const Index = () => {
 		setUploadStatus("uploading");
 		setUploadProgress(0);
 
-		const interval = setInterval(() => {
-			setUploadProgress((prev) => {
-				if (prev >= 100) {
-					clearInterval(interval);
-					setUploadStatus("success");
-					handleFileUpload(selectedFile);
-					return 100;
-				}
-				return prev + 5;
+		try {
+			// Start a progress indicator
+			const progressInterval = setInterval(() => {
+				setUploadProgress((prev) => {
+					if (prev >= 90) {
+						clearInterval(progressInterval);
+						return 90;
+					}
+					return prev + 5;
+				});
+			}, 100);
+
+			// Process the file to get character count
+			const fileResult = await readFileContent(selectedFile);
+			
+			// Calculate minimum number of classes based on character count
+			const calculatedMinClasses = Math.max(
+				DEFAULT_MIN_CLASSES,
+				Math.ceil(fileResult.characterCount / CHARS_PER_CLASS)
+			);
+			
+			setMinClasses(calculatedMinClasses);
+			
+			// If current numClasses is less than calculated minimum, update it
+			if (numClasses < calculatedMinClasses) {
+				setNumClasses(calculatedMinClasses);
+				toast.info(`Minimum classes set to ${calculatedMinClasses} based on document length`, {
+					duration: 5000,
+				});
+			}
+			
+			clearInterval(progressInterval);
+			setUploadProgress(100);
+			setUploadStatus("success");
+			
+			// Pass the file to the syllabus generator
+			handleFileUpload(selectedFile);
+			
+		} catch (error) {
+			setUploadStatus("error");
+			toast.error("Error processing file", {
+				description: error instanceof Error ? error.message : "Unknown error occurred",
 			});
-		}, 100);
+		}
 	};
 
 	const handleGenerate = () => {
@@ -216,8 +256,8 @@ const Index = () => {
 								<ClassSelector
 									value={numClasses}
 									onChange={setNumClasses}
-									min={1}
-									max={50}
+									min={minClasses}
+									max={MAX_CLASSES}
 								/>
 
 								<div className="mt-6">
@@ -247,6 +287,7 @@ const Index = () => {
 										: "Generating syllabus..."
 								}
 								progress={progress}
+								statusMessage={progressMessage}
 							/>
 						</div>
 					) : (

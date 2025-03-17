@@ -1,8 +1,10 @@
-import { useState, useCallback } from "react";
+
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import api from "@/services/api";
 import { SlideData, FAQ, UserTest } from "@/services/courseService";
+import { useSocketProgress } from "./useSocketProgress";
 
 export interface Lesson {
 	id: string;
@@ -49,13 +51,20 @@ export function useSyllabusGenerator() {
 	const [numClasses, setNumClasses] = useState<number>(10);
 	const [modules, setModules] = useState<Module[]>([]);
 	const [status, setStatus] = useState<AnalysisState>("idle");
-	const [progress, setProgress] = useState<number>(0);
 	const [error, setError] = useState<string | null>(null);
+	
+	// Use our socket progress hook
+	const { 
+		socketId, 
+		isConnected, 
+		progressPercent, 
+		progressStatus, 
+		progressMessage 
+	} = useSocketProgress();
 
 	const handleFileUpload = useCallback((file: File) => {
 		setFile(file);
 		setStatus("idle");
-		setProgress(0);
 		setError(null);
 	}, []);
 
@@ -65,33 +74,64 @@ export function useSyllabusGenerator() {
 			return;
 		}
 
+		if (!socketId || !isConnected) {
+			toast.error("Unable to connect to server. Please try again later.");
+			return;
+		}
+
 		setStatus("analyzing");
-		setProgress(10);
 		setError(null);
 
 		try {
-			const progressInterval = setInterval(() => {
-				setProgress((prev) => {
-					if (prev >= 90) {
-						clearInterval(progressInterval);
-						return 90;
-					}
-					return prev + Math.random() * 5;
-				});
-			}, 300);
-
 			const formData = new FormData();
 			formData.append("pdfFile", file);
 			formData.append("noOfClasses", numClasses.toString());
+			formData.append("socketId", socketId);
 
+			// Make the initial request to start processing
 			const response = await api.post("/user/generate-content", formData, {
 				headers: {
 					"Content-Type": "multipart/form-data",
 				},
 			});
 
-			const syllabusData = response.data;
+			if (response.data.message) {
+				toast.info(response.data.message);
+				setStatus("generating");
+			}
 
+			// The socket will handle progress updates from here
+		} catch (err) {
+			console.error("Error generating syllabus:", err);
+			setError(
+				err instanceof Error ? err.message : "An unknown error occurred"
+			);
+			setStatus("error");
+			toast.error("Failed to generate syllabus. Please try again.");
+		}
+	}, [file, numClasses, socketId, isConnected]);
+
+	// Watch for status changes from socket
+	useEffect(() => {
+		if (progressStatus === 'completed') {
+			// Fetch the completed syllabus data
+			fetchCompletedSyllabus();
+		} else if (progressStatus === 'error') {
+			setStatus('error');
+			setError(progressMessage);
+			toast.error(progressMessage);
+		} else if (progressStatus === 'processing' || progressStatus === 'starting') {
+			setStatus('generating');
+		}
+	}, [progressStatus, progressMessage]);
+
+	// Function to fetch completed syllabus
+	const fetchCompletedSyllabus = async () => {
+		try {
+			// Get the latest syllabus
+			const response = await api.get("/user/latest-syllabus");
+			const syllabusData = response.data;
+			
 			const CLASSES_PER_MODULE = 4;
 			const generatedModules: Module[] = [];
 
@@ -168,20 +208,16 @@ export function useSyllabusGenerator() {
 				}
 			}
 
-			clearInterval(progressInterval);
 			setModules(generatedModules);
 			setStatus("complete");
-			setProgress(100);
 			toast.success("Syllabus generated successfully!");
 		} catch (err) {
-			console.error("Error generating syllabus:", err);
-			setError(
-				err instanceof Error ? err.message : "An unknown error occurred"
-			);
+			console.error("Error fetching completed syllabus:", err);
+			setError(err instanceof Error ? err.message : "An unknown error occurred");
 			setStatus("error");
-			toast.error("Failed to generate syllabus. Please try again.");
+			toast.error("Failed to retrieve syllabus. Please try again.");
 		}
-	}, [file, numClasses]);
+	};
 
 	const updateModuleTitle = useCallback((moduleId: string, title: string) => {
 		setModules((prevModules) =>
@@ -221,7 +257,8 @@ export function useSyllabusGenerator() {
 		numClasses,
 		modules,
 		status,
-		progress,
+		progress: progressPercent,
+		progressMessage,
 		error,
 		setNumClasses,
 		handleFileUpload,

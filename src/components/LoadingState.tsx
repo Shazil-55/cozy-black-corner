@@ -8,6 +8,7 @@ interface LoadingStateProps {
   progress?: number;
   isIndeterminate?: boolean;
   className?: string;
+  statusMessage?: string;
 }
 
 export const LoadingState = ({
@@ -15,6 +16,7 @@ export const LoadingState = ({
   progress = 0,
   isIndeterminate = false,
   className,
+  statusMessage,
 }: LoadingStateProps) => {
   const steps = [
     "Analyzing document structure...",
@@ -76,7 +78,7 @@ export const LoadingState = ({
       <div className="text-center space-y-1 max-w-md">
         <h3 className="font-medium text-xl text-talentlms-darkBlue">{message}</h3>
         <p className="text-muted-foreground animate-fade-in">
-          {steps[currentStep]}
+          {statusMessage || steps[currentStep]}
         </p>
       </div>
       

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAnimationClasses } from '@/lib/animation';
@@ -21,22 +21,70 @@ export const ClassSelector = ({
   className,
   label = "How many classes should this syllabus cover?"
 }: ClassSelectorProps) => {
+  // Internal state to manage input value while typing
+  const [inputValue, setInputValue] = useState<string>(value.toString());
+
+  // Ensure value is within bounds when min/max change
+  React.useEffect(() => {
+    if (value < min) {
+      onChange(min);
+      setInputValue(min.toString());
+    } else if (value > max) {
+      onChange(max);
+      setInputValue(max.toString());
+    } else {
+      setInputValue(value.toString());
+    }
+  }, [min, max, value, onChange]);
+
   const increment = () => {
     if (value < max) {
-      onChange(value + 1);
+      const newValue = value + 1;
+      onChange(newValue);
+      setInputValue(newValue.toString());
     }
   };
 
   const decrement = () => {
     if (value > min) {
-      onChange(value - 1);
+      const newValue = value - 1;
+      onChange(newValue);
+      setInputValue(newValue.toString());
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = parseInt(e.target.value, 10);
-    if (!isNaN(newValue) && newValue >= min && newValue <= max) {
+    const newInputValue = e.target.value;
+    setInputValue(newInputValue);
+  };
+
+  // Handle input blur to validate the entered value
+  const handleBlur = () => {
+    const newValue = parseInt(inputValue, 10);
+    
+    if (isNaN(newValue)) {
+      // If the input is not a valid number, revert to the previous value
+      setInputValue(value.toString());
+      return;
+    }
+    
+    // Apply min/max constraints
+    if (newValue < min) {
+      onChange(min);
+      setInputValue(min.toString());
+    } else if (newValue > max) {
+      onChange(max);
+      setInputValue(max.toString());
+    } else {
       onChange(newValue);
+      setInputValue(newValue.toString());
+    }
+  };
+
+  // Handle key press to update on Enter key
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleBlur();
     }
   };
 
@@ -49,11 +97,11 @@ export const ClassSelector = ({
       <div className="flex items-center space-x-2">
         <div className="relative flex-1 max-w-xs">
           <input
-            type="number"
-            value={value}
+            type="text"
+            value={inputValue}
             onChange={handleChange}
-            min={min}
-            max={max}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
             className={cn(
               "w-full py-2.5 px-4 rounded-md border border-gray-200 focus-ring",
               "text-center text-lg font-medium appearance-none transition-all",
