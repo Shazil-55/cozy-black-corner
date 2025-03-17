@@ -49,7 +49,9 @@ export function useSocketProgress() {
     socketConnection.on('progress', (data: ProgressUpdate) => {
       console.log('Progress update:', data);
       setProgressData(data);
-      updateProgressToast(data);
+      
+      // Don't show toast notifications - we'll use the ProcessingScreen instead
+      // updateProgressToast(data);
     });
 
     setSocket(socketConnection);

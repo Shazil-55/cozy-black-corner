@@ -58,6 +58,25 @@ const Index = () => {
 	// Determine if we should show the processing screen
 	const isProcessing = progressStatus === 'processing' || progressStatus === 'starting';
 
+	// Store last processing state in session storage
+	useEffect(() => {
+		if (isProcessing) {
+			sessionStorage.setItem('processingActive', 'true');
+		} else if (progressStatus === 'completed' || progressStatus === 'error') {
+			sessionStorage.removeItem('processingActive');
+		}
+	}, [isProcessing, progressStatus]);
+
+	// Check for active processing when component mounts
+	useEffect(() => {
+		const wasProcessing = sessionStorage.getItem('processingActive') === 'true';
+		if (wasProcessing && progressStatus === 'idle') {
+			// If we have a record of processing but our socket shows idle,
+			// we probably lost connection and reconnected. Show the processing screen.
+			console.log('Reconnected during active processing');
+		}
+	}, [progressStatus]);
+
 	const handleFileSelected = async (selectedFile: File) => {
 		if (!isAuthenticated) {
 			toast.error("Please log in to upload documents", {
@@ -150,10 +169,15 @@ const Index = () => {
 
 	const [selectedItem, setSelectedItem] = useState<string | undefined>();
 
+	// Check if we should show the processing screen
+	const shouldShowProcessing = isProcessing || 
+		(sessionStorage.getItem('processingActive') === 'true' && status !== 'complete');
+
+	// Only show normal UI if no processing is happening
 	return (
 		<div className="flex min-h-screen bg-gray-50">
 			{/* Sidebar */}
-			{modules.length > 0 && (
+			{modules.length > 0 && !shouldShowProcessing && (
 				<Sidebar
 					items={sidebarItems}
 					onSelect={setSelectedItem}
@@ -164,13 +188,18 @@ const Index = () => {
 			<main
 				className={cn(
 					"flex-1 px-6 py-6 md:py-8 max-w-full",
-					modules.length > 0 && !isMobile
+					modules.length > 0 && !isMobile && !shouldShowProcessing
 				)}
 			>
 				<div className="max-w-4xl mx-auto">
 					{/* Header */}
 					<div className="mb-8 text-center">
-						{status === "idle" || status === "error" ? (
+						{shouldShowProcessing ? (
+							<h1 className="text-2xl font-medium tracking-tight mb-3 text-talentlms-darkBlue flex items-center justify-center">
+								<BookText className="w-6 h-6 mr-2 text-talentlms-blue" />
+								AI Syllabus Generator
+							</h1>
+						) : status === "idle" || status === "error" ? (
 							<>
 								<div className="flex justify-center mb-4">
 									<div className="w-14 h-14 rounded-full bg-talentlms-blue flex items-center justify-center">
@@ -195,7 +224,7 @@ const Index = () => {
 					</div>
 
 					{/* Main content */}
-					{isProcessing ? (
+					{shouldShowProcessing ? (
 						<ProcessingScreen 
 							progress={progressPercent}
 							message="Generating syllabus..."
