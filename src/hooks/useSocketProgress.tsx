@@ -73,7 +73,7 @@ export function useSocketProgress() {
   const updateProgressToast = useCallback((data: ProgressUpdate) => {
     const numericProgress = parseFloat(data.progress.match(/(\d+)%/)?.[1] || '0');
     
-    // Don't show toast for idle status
+    // Dismiss any existing toasts if we're idle
     if (data.status === 'idle') {
       if (toastIdRef.current) {
         toast.dismiss(toastIdRef.current);
@@ -82,7 +82,7 @@ export function useSocketProgress() {
       return;
     }
     
-    // If a toast is already showing, update it
+    // For all other statuses, manage the toast
     if (toastIdRef.current) {
       // If process completed or errored, dismiss after delay
       if (data.status === 'completed' || data.status === 'error') {
@@ -122,7 +122,6 @@ export function useSocketProgress() {
       }
     } else {
       // Create a new toast if none exists and status is not idle
-      // The TypeScript error was here - we need to explicitly handle all status types
       if (data.status === 'starting' || data.status === 'processing' || 
           data.status === 'completed' || data.status === 'error') {
         toastIdRef.current = toast.custom(
@@ -134,6 +133,7 @@ export function useSocketProgress() {
             />
           ),
           {
+            id: undefined,
             duration: Infinity,
             position: 'top-right',
           }

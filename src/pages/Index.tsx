@@ -3,10 +3,12 @@ import React, { useState, useMemo, useEffect } from "react";
 import { DocumentUpload } from "@/components/DocumentUpload";
 import { ClassSelector } from "@/components/ClassSelector";
 import { LoadingState } from "@/components/LoadingState";
+import { ProcessingScreen } from "@/components/ProcessingScreen";
 import SyllabusPreview from "@/components/SyllabusPreview";
 import { Sidebar } from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { useSyllabusGenerator } from "@/hooks/useSyllabusGenerator";
+import { useSocketProgress } from "@/hooks/useSocketProgress";
 import { toast } from "sonner";
 import {
 	BookOpen,
@@ -42,6 +44,9 @@ const Index = () => {
 		updateLesson,
 	} = useSyllabusGenerator();
 
+	// Get global progress state
+	const { progressStatus, progressPercent, progressMessage: globalProgressMessage } = useSocketProgress();
+
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [uploadStatus, setUploadStatus] = useState<
 		"idle" | "uploading" | "success" | "error"
@@ -49,6 +54,9 @@ const Index = () => {
 	const [minClasses, setMinClasses] = useState(DEFAULT_MIN_CLASSES);
 	const isMobile = useIsMobile();
 	const { isAuthenticated } = useAuth();
+
+	// Determine if we should show the processing screen
+	const isProcessing = progressStatus === 'processing' || progressStatus === 'starting';
 
 	const handleFileSelected = async (selectedFile: File) => {
 		if (!isAuthenticated) {
@@ -187,7 +195,13 @@ const Index = () => {
 					</div>
 
 					{/* Main content */}
-					{status === "idle" || status === "error" ? (
+					{isProcessing ? (
+						<ProcessingScreen 
+							progress={progressPercent}
+							message="Generating syllabus..."
+							classInfo={globalProgressMessage}
+						/>
+					) : status === "idle" || status === "error" ? (
 						<div className="space-y-6">
 							{/* Step 1: Upload Document */}
 							<div className="bg-white rounded-md p-6 border border-gray-200 shadow-subtle hover:shadow-md transition-shadow">
