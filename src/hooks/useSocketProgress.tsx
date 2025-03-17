@@ -1,6 +1,8 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { toast } from 'sonner';
+import { ProgressToast } from '@/components/ProgressToast';
 
 export type ProgressStatus = 'idle' | 'starting' | 'processing' | 'completed' | 'error';
 
@@ -22,6 +24,7 @@ export function useSocketProgress() {
     message: 'Ready to start processing',
   });
   const [isConnected, setIsConnected] = useState(false);
+  const toastIdRef = useRef<string | number | undefined>(undefined);
 
   // Connect to the socket server
   useEffect(() => {
@@ -46,6 +49,7 @@ export function useSocketProgress() {
     socketConnection.on('progress', (data: ProgressUpdate) => {
       console.log('Progress update:', data);
       setProgressData(data);
+      updateProgressToast(data);
     });
 
     setSocket(socketConnection);
@@ -64,6 +68,69 @@ export function useSocketProgress() {
     }
     return 0;
   }, [progressData.progress]);
+
+  // Update or create progress toast
+  const updateProgressToast = useCallback((data: ProgressUpdate) => {
+    const numericProgress = parseFloat(data.progress.match(/(\d+)%/)?.[1] || '0');
+    
+    // Don't show toast for idle status
+    if (data.status === 'idle') {
+      if (toastIdRef.current) {
+        toast.dismiss(toastIdRef.current);
+        toastIdRef.current = undefined;
+      }
+      return;
+    }
+    
+    // If a toast is already showing, update it
+    if (toastIdRef.current) {
+      // If process completed or errored, dismiss after delay
+      if (data.status === 'completed' || data.status === 'error') {
+        toast.custom(
+          <ProgressToast
+            progress={numericProgress}
+            status={data.status}
+            message={data.message}
+          />,
+          {
+            id: toastIdRef.current,
+            duration: 5000, // Auto-dismiss after 5 seconds
+          }
+        );
+        
+        // Reset the toast ID after dismissal
+        setTimeout(() => {
+          toastIdRef.current = undefined;
+        }, 5000);
+      } else {
+        // Just update the existing toast
+        toast.custom(
+          <ProgressToast
+            progress={numericProgress}
+            status={data.status}
+            message={data.message}
+          />,
+          {
+            id: toastIdRef.current,
+            duration: Infinity, // Keep showing while processing
+          }
+        );
+      }
+    } else if (data.status !== 'idle') {
+      // Create a new toast if none exists and we're not idle
+      toastIdRef.current = toast.custom(
+        <ProgressToast
+          progress={numericProgress}
+          status={data.status}
+          message={data.message}
+        />,
+        {
+          duration: Infinity,
+          position: 'top-right',
+        }
+      );
+    }
+  }, []);
 
   return {
     socket,

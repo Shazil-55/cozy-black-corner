@@ -5,6 +5,8 @@ import { FileText, Upload, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
 import { cn } from '@/lib/utils';
+import { useSocketProgress } from '@/hooks/useSocketProgress';
+import { readFileContent } from '@/utils/fileProcessor';
 
 export type FileStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -24,14 +26,37 @@ export const DocumentUpload = ({
   className,
 }: DocumentUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
+  const { socket } = useSocketProgress();
   
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       const selectedFile = acceptedFiles[0];
       setFile(selectedFile);
-      onFileAccepted(selectedFile);
+      
+      // If we have a socket, use it to track progress
+      if (socket) {
+        socket.emit('progress', {
+          progress: '0%',
+          status: 'starting',
+          message: `Processing ${selectedFile.name}`
+        });
+        
+        try {
+          // Process file with socket for progress updates
+          const result = await readFileContent(selectedFile, socket);
+          onFileAccepted(selectedFile, result.characterCount);
+        } catch (error) {
+          console.error("Error processing file:", error);
+          toast.error("Error processing file", {
+            description: error instanceof Error ? error.message : "Unknown error occurred",
+          });
+        }
+      } else {
+        // Fallback if no socket is available
+        onFileAccepted(selectedFile);
+      }
     }
-  }, [onFileAccepted]);
+  }, [onFileAccepted, socket]);
   
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     onDrop,
