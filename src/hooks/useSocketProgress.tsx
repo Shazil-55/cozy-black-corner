@@ -87,11 +87,13 @@ export function useSocketProgress() {
       // If process completed or errored, dismiss after delay
       if (data.status === 'completed' || data.status === 'error') {
         toast.custom(
-          <ProgressToast
-            progress={numericProgress}
-            status={data.status}
-            message={data.message}
-          />,
+          (id) => (
+            <ProgressToast
+              progress={numericProgress}
+              status={data.status}
+              message={data.message}
+            />
+          ),
           {
             id: toastIdRef.current,
             duration: 5000, // Auto-dismiss after 5 seconds
@@ -105,11 +107,13 @@ export function useSocketProgress() {
       } else {
         // Just update the existing toast
         toast.custom(
-          <ProgressToast
-            progress={numericProgress}
-            status={data.status}
-            message={data.message}
-          />,
+          (id) => (
+            <ProgressToast
+              progress={numericProgress}
+              status={data.status}
+              message={data.message}
+            />
+          ),
           {
             id: toastIdRef.current,
             duration: Infinity, // Keep showing while processing
@@ -119,11 +123,13 @@ export function useSocketProgress() {
     } else if (data.status !== 'idle') {
       // Create a new toast if none exists and we're not idle
       toastIdRef.current = toast.custom(
-        <ProgressToast
-          progress={numericProgress}
-          status={data.status}
-          message={data.message}
-        />,
+        (id) => (
+          <ProgressToast
+            progress={numericProgress}
+            status={data.status}
+            message={data.message}
+          />
+        ),
         {
           duration: Infinity,
           position: 'top-right',
