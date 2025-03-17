@@ -264,7 +264,7 @@ const Quiz: React.FC = () => {
             </CardContent>
             
             <CardFooter className="flex justify-center space-x-4 p-6 bg-gray-50 dark:bg-gray-800/50">
-              <Button onClick={() => navigate(`/class/${classId}`)}>
+              <Button onClick={() => navigate(`/course/${classId}`)}>
                 Return to Class
               </Button>
             </CardFooter>
