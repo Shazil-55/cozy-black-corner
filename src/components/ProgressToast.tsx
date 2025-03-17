@@ -13,7 +13,7 @@ interface ProgressToastProps {
 
 export const ProgressToast = ({ progress, status, message }: ProgressToastProps) => {
   return (
-    <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto flex flex-col overflow-hidden border border-gray-100 dark:border-gray-700">
+    <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto flex flex-col overflow-hidden border border-gray-100 dark:border-gray-700 z-50">
       <div className="p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0 mr-3">
@@ -66,4 +66,4 @@ export const ProgressToast = ({ progress, status, message }: ProgressToastProps)
       </div>
     </div>
   );
-};
+}

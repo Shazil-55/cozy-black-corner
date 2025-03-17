@@ -88,6 +88,12 @@ export function useSyllabusGenerator() {
 			formData.append("noOfClasses", numClasses.toString());
 			formData.append("socketId", socketId);
 
+			// Show initial toast notification
+			toast.info("Starting to process your document", {
+				description: "You'll see progress updates as we work on your syllabus",
+				duration: 3000,
+			});
+
 			// Make the initial request to start processing
 			const response = await api.post("/user/generate-content", formData, {
 				headers: {
