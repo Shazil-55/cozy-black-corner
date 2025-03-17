@@ -120,21 +120,25 @@ export function useSocketProgress() {
           }
         );
       }
-    } else if (data.status !== 'idle') {
-      // Create a new toast if none exists and we're not idle
-      toastIdRef.current = toast.custom(
-        (id) => (
-          <ProgressToast
-            progress={numericProgress}
-            status={data.status}
-            message={data.message}
-          />
-        ),
-        {
-          duration: Infinity,
-          position: 'top-right',
-        }
-      );
+    } else {
+      // Create a new toast if none exists and status is not idle
+      // The TypeScript error was here - we need to explicitly handle all status types
+      if (data.status === 'starting' || data.status === 'processing' || 
+          data.status === 'completed' || data.status === 'error') {
+        toastIdRef.current = toast.custom(
+          (id) => (
+            <ProgressToast
+              progress={numericProgress}
+              status={data.status}
+              message={data.message}
+            />
+          ),
+          {
+            duration: Infinity,
+            position: 'top-right',
+          }
+        );
+      }
     }
   }, []);
 
