@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { LoadingState } from "@/components/LoadingState";
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isAddingUser, setIsAddingUser] = useState(false);
 
   // Fetch users with react-query
   const { data: users = [], isLoading, error, refetch } = useQuery({
@@ -29,12 +31,16 @@ const Users = () => {
 
   const handleAddUser = async (newUser: CreateUserPayload) => {
     try {
+      setIsAddingUser(true);
       await userService.createUser(newUser);
       
       toast.success("User added successfully");
-      refetch(); // Refresh the user list
+      // Reset form, close dialog, and refresh users
+      setIsAddingUser(false);
       setIsAddUserOpen(false);
+      refetch(); // Refresh the user list
     } catch (error) {
+      setIsAddingUser(false);
       toast.error("Failed to add user", {
         description: error instanceof Error ? error.message : "Unknown error occurred",
       });
@@ -119,7 +125,12 @@ const Users = () => {
       </div>
 
       {isLoading ? (
-        <LoadingState variant="spinner" message="Loading users" />
+        <LoadingState 
+          variant="spinner" 
+          message="Loading users" 
+          statusMessage="Fetching user data from server..."
+          progress={70}
+        />
       ) : (
         <UserTable 
           users={filteredUsers} 
@@ -133,6 +144,7 @@ const Users = () => {
         isOpen={isAddUserOpen} 
         onClose={() => setIsAddUserOpen(false)} 
         onSubmit={handleAddUser}
+        isLoading={isAddingUser}
       />
     </div>
   );

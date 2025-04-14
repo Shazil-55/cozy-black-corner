@@ -51,7 +51,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
+import { LoadingState } from "@/components/LoadingState";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserTableProps {
   users: ApiUser[];
@@ -235,11 +236,18 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
                           disabled={isAddingParent && selectedUserId === user.id}
                         >
                           {isAddingParent && selectedUserId === user.id ? (
-                            <Spinner size="sm" className="mr-1" />
+                            <div className="flex items-center">
+                              <div className="w-3.5 h-3.5 mr-1">
+                                <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                              </div>
+                              Adding...
+                            </div>
                           ) : (
-                            <UserPlus className="mr-1 h-3.5 w-3.5" />
+                            <>
+                              <UserPlus className="mr-1 h-3.5 w-3.5" />
+                              Add Parent
+                            </>
                           )}
-                          Add Parent
                         </Button>
                       )
                     ) : (
@@ -325,15 +333,24 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
           <DialogHeader>
             <DialogTitle>Add Parent Information</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              placeholder="Enter parent's name"
-              value={parentName}
-              onChange={(e) => setParentName(e.target.value)}
-              className="w-full"
-              disabled={isAddingParent}
-            />
-          </div>
+          {isAddingParent ? (
+            <div className="py-6">
+              <LoadingState 
+                variant="minimal" 
+                message="Adding parent information..." 
+              />
+            </div>
+          ) : (
+            <div className="py-4">
+              <Input
+                placeholder="Enter parent's name"
+                value={parentName}
+                onChange={(e) => setParentName(e.target.value)}
+                className="w-full"
+                disabled={isAddingParent}
+              />
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setParentDialogOpen(false)} disabled={isAddingParent}>
               Cancel
@@ -342,14 +359,7 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
               onClick={handleAddParent} 
               disabled={!parentName.trim() || isAddingParent}
             >
-              {isAddingParent ? (
-                <>
-                  <Spinner size="sm" className="mr-2" />
-                  Saving...
-                </>
-              ) : (
-                'Save'
-              )}
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
