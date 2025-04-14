@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,7 +22,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -31,39 +30,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { User } from "@/pages/Users";
+import { ApiUser } from "@/services/userService";
 
 interface EditUserDialogProps {
-  user: User;
+  user: ApiUser;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (user: User) => void;
+  onSubmit: (user: ApiUser) => void;
 }
 
 // Form schema for validation
 const formSchema = z.object({
-  id: z.string(),
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Invalid email address"),
-  type: z.string().min(1, "User type is required"),
-  bio: z.string().optional(),
-  status: z.enum(["active", "inactive"]),
-  registrationDate: z.string(),
-  lastLogin: z.string(),
-  // Password is optional for editing
-  password: z.string().optional()
-    .refine(val => !val || val.length >= 8, {
-      message: "Password must be at least 8 characters if provided"
-    })
-    .refine(val => !val || /[A-Z]/.test(val), {
-      message: "Password must contain at least one uppercase letter if provided"
-    })
-    .refine(val => !val || /[a-z]/.test(val), {
-      message: "Password must contain at least one lowercase letter if provided"
-    })
-    .refine(val => !val || /[0-9]/.test(val), {
-      message: "Password must contain at least one number if provided"
-    }),
+  role: z.string().min(1, "User type is required"),
+  status: z.enum(["Active", "Inactive"]).default("Active"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -77,107 +58,79 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      id: user.id,
       name: user.name,
       email: user.email,
-      type: user.type,
-      bio: "",
+      role: user.role,
       status: user.status,
-      registrationDate: user.registrationDate,
-      lastLogin: user.lastLogin,
-      password: "",
     },
   });
 
-  // Update form when user changes
-  useEffect(() => {
-    form.reset({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      type: user.type,
-      bio: "",
-      status: user.status,
-      registrationDate: user.registrationDate,
-      lastLogin: user.lastLogin,
-      password: "",
-    });
-  }, [user, form]);
-
   const handleSubmit = (values: FormValues) => {
-    const updatedUser: User = {
-      ...values,
-      // Only include necessary fields
-      id: user.id,
+    onSubmit({
+      ...user,
       name: values.name,
       email: values.email,
-      type: values.type,
-      registrationDate: user.registrationDate,
-      lastLogin: user.lastLogin,
+      role: values.role,
       status: values.status,
-    };
-    
-    onSubmit(updatedUser);
+    });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="text-xl">Edit user</DialogTitle>
           <DialogDescription>
-            Update user details and access settings.
+            Update user information and access settings.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Name Field */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter full name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Email Field */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="name@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* User Type Field */}
+            {/* Name Field */}
             <FormField
               control={form.control}
-              name="type"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>User Type <span className="text-red-500">*</span></FormLabel>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter full name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Email Field */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="name@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* User Role Field */}
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>User Role</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select user type" />
+                        <SelectValue placeholder="Select user role" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -191,43 +144,6 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
               )}
             />
 
-            {/* Password Field (Optional for Edit) */}
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password (leave blank to keep current)</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="Enter new password" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Password must be at least 8 characters and include uppercase, lowercase, and numbers.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Bio Field */}
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bio</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Short description about the user (optional)"
-                      className="min-h-[100px]"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {/* User Status */}
             <FormField
               control={form.control}
@@ -236,16 +152,16 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value === "active"}
+                      checked={field.value === "Active"}
                       onCheckedChange={(checked) => {
-                        field.onChange(checked ? "active" : "inactive");
+                        field.onChange(checked ? "Active" : "Inactive");
                       }}
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormLabel>Active Account</FormLabel>
                     <FormDescription>
-                      Enable this to allow the user to access the system.
+                      Enable this to allow the user to sign in.
                     </FormDescription>
                   </div>
                 </FormItem>

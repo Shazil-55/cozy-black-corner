@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { UserTable } from "@/components/users/UserTable";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { toast } from "sonner";
-import { userService, ApiUser } from "@/services/userService";
+import { userService, ApiUser, CreateUserPayload } from "@/services/userService";
 import { useQuery } from "@tanstack/react-query";
+import { LoadingState } from "@/components/LoadingState";
 
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,15 +28,9 @@ const Users = () => {
     }
   }, [error]);
 
-  const handleAddUser = async (newUser: { name: string; email: string; type: string; status: "active" | "inactive" }) => {
+  const handleAddUser = async (newUser: CreateUserPayload) => {
     try {
-      await userService.createUser({
-        name: newUser.name,
-        email: newUser.email,
-        password: "defaultPassword", // This would typically be handled differently
-        type: newUser.type,
-        status: newUser.status,
-      });
+      await userService.createUser(newUser);
       
       toast.success("User added successfully");
       refetch(); // Refresh the user list
@@ -64,7 +59,7 @@ const Users = () => {
       await userService.updateUserById(updatedUser.id, {
         name: updatedUser.name,
         email: updatedUser.email,
-        type: updatedUser.role,
+        role: updatedUser.role,
         status: updatedUser.status.toLowerCase() as "active" | "inactive",
       });
       
@@ -123,9 +118,7 @@ const Users = () => {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        </div>
+        <LoadingState variant="spinner" message="Loading users" />
       ) : (
         <UserTable 
           users={filteredUsers} 

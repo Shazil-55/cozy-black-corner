@@ -1,3 +1,4 @@
+
 import api from './api';
 import { z } from 'zod';
 
@@ -19,7 +20,8 @@ export interface CreateUserPayload {
   name: string;
   email: string;
   password: string;
-  type: string;
+  username?: string;
+  role: string;
   bio?: string;
   status: "active" | "inactive";
 }
@@ -64,7 +66,7 @@ export const userService = {
 
   createUser: async (payload: CreateUserPayload): Promise<any> => {
     try {
-      const response = await api.post('/users', payload);
+      const response = await api.post('/administrator/user', payload);
       return response.data;
     } catch (error) {
       throw error;

@@ -31,19 +31,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { User } from "@/pages/Users";
+import { CreateUserPayload } from "@/services/userService";
 
 interface AddUserDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (user: Omit<User, "id" | "registrationDate" | "lastLogin">) => void;
+  onSubmit: (user: Omit<CreateUserPayload, "id" | "registrationDate" | "lastLogin">) => void;
 }
 
 // Form schema for validation
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Invalid email address"),
-  type: z.string().min(1, "User type is required"),
+  username: z.string().min(2, "Username is required"),
+  role: z.string().min(1, "User role is required"),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -66,7 +67,8 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
     defaultValues: {
       name: "",
       email: "",
-      type: "",
+      username: "",
+      role: "",
       password: "",
       bio: "",
       status: "active",
@@ -78,7 +80,8 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
     const userData = {
       name: values.name,
       email: values.email,
-      type: values.type,
+      username: values.username,
+      role: values.role,
       password: values.password,
       bio: values.bio || "",
       status: values.status,
@@ -132,32 +135,49 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
               />
             </div>
 
-            {/* User Type Field */}
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>User Type <span className="text-red-500">*</span></FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Username Field */}
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select user type" />
-                      </SelectTrigger>
+                      <Input placeholder="unique_username" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Administrator">Administrator</SelectItem>
-                      <SelectItem value="Instructor">Instructor</SelectItem>
-                      <SelectItem value="Learner">Learner</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* User Role Field */}
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>User Role <span className="text-red-500">*</span></FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select user role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Administrator">Administrator</SelectItem>
+                        <SelectItem value="Instructor">Instructor</SelectItem>
+                        <SelectItem value="Learner">Learner</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Password Field */}
             <FormField

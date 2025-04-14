@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   MoreHorizontal, 
@@ -51,6 +50,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 interface UserTableProps {
   users: ApiUser[];
@@ -67,6 +67,7 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
   const [parentDialogOpen, setParentDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [parentName, setParentName] = useState("");
+  const [isAddingParent, setIsAddingParent] = useState(false);
   
   const handleSort = (column: keyof ApiUser) => {
     if (sortBy === column) {
@@ -108,10 +109,14 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
 
   const handleAddParent = () => {
     if (selectedUserId && parentName.trim()) {
-      onAddParent(selectedUserId, parentName);
-      setParentDialogOpen(false);
-      setParentName("");
-      setSelectedUserId(null);
+      setIsAddingParent(true);
+      onAddParent(selectedUserId, parentName)
+        .finally(() => {
+          setParentDialogOpen(false);
+          setParentName("");
+          setSelectedUserId(null);
+          setIsAddingParent(false);
+        });
     }
   };
 
@@ -220,8 +225,13 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
                           size="sm" 
                           className="h-8 text-xs" 
                           onClick={() => openParentDialog(user.id)}
+                          disabled={isAddingParent && selectedUserId === user.id}
                         >
-                          <UserPlus className="mr-1 h-3.5 w-3.5" />
+                          {isAddingParent && selectedUserId === user.id ? (
+                            <Spinner size="sm" className="mr-1" />
+                          ) : (
+                            <UserPlus className="mr-1 h-3.5 w-3.5" />
+                          )}
                           Add Parent
                         </Button>
                       )
@@ -314,14 +324,25 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
               value={parentName}
               onChange={(e) => setParentName(e.target.value)}
               className="w-full"
+              disabled={isAddingParent}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setParentDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setParentDialogOpen(false)} disabled={isAddingParent}>
               Cancel
             </Button>
-            <Button onClick={handleAddParent} disabled={!parentName.trim()}>
-              Save
+            <Button 
+              onClick={handleAddParent} 
+              disabled={!parentName.trim() || isAddingParent}
+            >
+              {isAddingParent ? (
+                <>
+                  <Spinner size="sm" className="mr-2" />
+                  Saving...
+                </>
+              ) : (
+                'Save'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
