@@ -1,70 +1,166 @@
-
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import { Navbar } from "./components/Navbar";
+import { OnboardingProvider } from "./context/OnboardingContext";
+import { RoleProvider } from "./context/RoleContext";
+import { LoadingState } from "./components/LoadingState";
 import { useSocketProgress } from "./hooks/useSocketProgress";
+import MainLayout from "./layouts/MainLayout";
+import Dashboard from "./pages/Dashboard";
+import InstructorDashboard from "./pages/InstructorDashboard";
+import LearnerDashboard from "./pages/LearnerDashboard";
+import UploadSyllabus from "./pages/UploadSyllabus";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import ClassDetails from "./pages/ClassDetails";
 import Courses from "./pages/Courses";
 import CourseDetails from "./pages/CourseDetails";
 import Quiz from "./pages/Quiz";
+import Profile from "./pages/Profile";
+import Users from "./pages/Users";
+import Step1Goals from "./pages/onboarding/Step1Goals";
+import Step2Users from "./pages/onboarding/Step2Users";
+import Step3Industry from "./pages/onboarding/Step3Industry";
 
+// Create a new QueryClient instance
 const queryClient = new QueryClient();
 
-const AppContent = () => {
-  // Initialize the socket progress hook at the app level
-  useSocketProgress();
-  
+// Main App component
+const App = () => {
   return (
     <BrowserRouter>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 pt-16">
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/course/:courseId" element={<CourseDetails />} />
-          <Route path="/class/:moduleId/:classId" element={<ClassDetails />} />
-          <Route path="/quiz/:classId" element={<Quiz />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AuthProvider>
+            <RoleProvider>
+              <OnboardingProvider>
+                <TooltipProvider>
+                  <Sonner 
+                    position="top-right"
+                    expand={true}
+                    closeButton={true}
+                    richColors={true}
+                    toastOptions={{
+                      duration: 5000,
+                      classNames: {
+                        toast: "group border-b border-border shadow-lg rounded-lg overflow-hidden",
+                        title: "font-medium text-foreground",
+                        description: "text-muted-foreground text-sm", 
+                        actionButton: "bg-primary text-primary-foreground",
+                        cancelButton: "bg-muted text-muted-foreground",
+                        success: "!bg-green-50 !text-green-600 dark:!bg-green-900/30 dark:!text-green-400 border-l-4 border-green-500",
+                        error: "!bg-red-50 !text-red-600 dark:!bg-red-900/30 dark:!text-red-400 border-l-4 border-red-500",
+                        warning: "!bg-amber-50 !text-amber-600 dark:!bg-amber-900/30 dark:!text-amber-400 border-l-4 border-amber-500",
+                        info: "!bg-blue-50 !text-blue-600 dark:!bg-blue-900/30 dark:!text-blue-400 border-l-4 border-blue-500",
+                      }
+                    }}
+                  />
+                  <AppRoutes />
+                </TooltipProvider>
+              </OnboardingProvider>
+            </RoleProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner 
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              classNames: {
-                toast: "dynamic-toast !rounded-lg !border !shadow-subtle",
-                title: "text-foreground",
-                description: "text-muted-foreground"
-              }
-            }}
-          />
-          <AppContent />
-        </TooltipProvider>
-      </ThemeProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+// Component that handles routes and authentication
+const AppRoutes = () => {
+  // Initialize the socket progress hook at the app level
+  useSocketProgress();
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  return (
+    <>
+      <Routes>
+        {/* Protected routes - Main Layout */}
+        <Route element={<PrivateRoute><MainLayout /></PrivateRoute>}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
+          <Route path="/learner-dashboard" element={<LearnerDashboard />} />
+          <Route path="/upload-syllabus" element={<UploadSyllabus />} />
+          <Route path="/courses" element={<Courses />} />
+          <Route path="/course/:courseId" element={<CourseDetails />} />
+          <Route path="/class/:moduleId/:classId" element={<ClassDetails />} />
+          <Route path="/quiz/:classId" element={<Quiz />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/users" element={<Users />} />
+        </Route>
+        
+        {/* Onboarding routes */}
+        <Route path="/onboarding/step1" element={<PrivateRoute><Step1Goals /></PrivateRoute>} />
+        <Route path="/onboarding/step2" element={<PrivateRoute><Step2Users /></PrivateRoute>} />
+        <Route path="/onboarding/step3" element={<PrivateRoute><Step3Industry /></PrivateRoute>} />
+        
+        {/* Public routes */}
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+        <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
+        
+        {/* Catch-all route */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+};
+
+// Private route component to handle authentication
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingState 
+          message="Loading your dashboard" 
+          progress={75} 
+          variant="spinner" 
+          className="py-8 max-w-md"
+        />
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Public route that redirects authenticated users
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingState 
+          message="Checking authentication" 
+          progress={60} 
+          variant="spinner" 
+          className="py-8 max-w-md"
+        />
+      </div>
+    );
+  }
+  
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 export default App;

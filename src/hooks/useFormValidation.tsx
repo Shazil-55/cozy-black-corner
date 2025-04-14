@@ -100,5 +100,6 @@ export const useFormValidation = <T extends Record<string, any>>(initialValues: 
     validateForm,
     resetForm,
     setValues,
+    setErrors, // Expose setErrors function
   };
 };

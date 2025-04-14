@@ -1,7 +1,8 @@
+
 import axios from "axios";
 import { toast } from "sonner";
 
-const API_BASE_URL = 'https://lms-backend-l6o9.onrender.com/api/v_1/internal';
+const API_BASE_URL = import.meta.env.VITE_API_PROD_URL || "https://dev-api.ilmee.ai/api/v_1/internal";
 // const API_BASE_URL = "http://localhost:8000/api/v_1/internal";
 
 const api = axios.create({
@@ -25,7 +26,9 @@ api.interceptors.request.use(
 
 // Response interceptor
 api.interceptors.response.use(
-	(response) => response,
+	(response) => {
+		return response;
+	},
 	(error) => {
 		const errorMessage = error.response?.data?.message || "An error occurred";
 		console.error("API Error:", errorMessage);

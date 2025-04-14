@@ -12,15 +12,15 @@ export const ThemeToggle: React.FC = () => {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button 
-          variant="ghost" 
+          variant="outline" 
           size="icon" 
           onClick={toggleTheme}
-          className="w-9 h-9 rounded-full"
+          className="w-9 h-9 rounded-full bg-white/90 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all"
         >
           {theme === 'light' ? (
-            <Moon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="h-[1.2rem] w-[1.2rem] text-gray-800 dark:text-gray-300" />
           ) : (
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <Sun className="h-[1.2rem] w-[1.2rem] text-amber-500" />
           )}
           <span className="sr-only">Toggle theme</span>
         </Button>

@@ -13,7 +13,7 @@ interface ProgressToastProps {
 
 export const ProgressToast = ({ progress, status, message }: ProgressToastProps) => {
   return (
-    <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto flex flex-col overflow-hidden border border-gray-100 dark:border-gray-700 z-50">
+    <div className="w-full bg-card shadow-md rounded-lg overflow-hidden border border-border border-l-4 border-l-blue-500 dark:border-l-blue-400">
       <div className="p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0 mr-3">
@@ -27,7 +27,7 @@ export const ProgressToast = ({ progress, status, message }: ProgressToastProps)
               </div>
             ) : (
               <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <Loader2 className="h-5 w-5 text-talentlms-blue animate-spin" />
+                <Loader2 className="h-5 w-5 text-blue-600 dark:text-blue-400 animate-spin" />
               </div>
             )}
           </div>
@@ -37,24 +37,24 @@ export const ProgressToast = ({ progress, status, message }: ProgressToastProps)
                 "text-sm font-medium",
                 status === 'completed' ? "text-green-600 dark:text-green-400" : 
                 status === 'error' ? "text-red-600 dark:text-red-400" : 
-                "text-talentlms-blue"
+                "text-blue-600 dark:text-blue-400"
               )}>
                 {status === 'completed' ? 'Processing Complete' : 
                  status === 'error' ? 'Processing Failed' : 
                  'Processing in Progress'}
               </h3>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              <span className="text-xs font-medium text-muted-foreground">
                 {Math.round(progress)}%
               </span>
             </div>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-300 truncate">
+            <p className="mt-1 text-sm text-foreground truncate">
               {message}
             </p>
             <div className="mt-2">
               <Progress 
                 value={progress} 
                 className={cn(
-                  "h-1.5",
+                  "h-2",
                   status === 'completed' ? "bg-green-100 dark:bg-green-900/30" : 
                   status === 'error' ? "bg-red-100 dark:bg-red-900/30" : 
                   "bg-blue-100 dark:bg-blue-900/30"

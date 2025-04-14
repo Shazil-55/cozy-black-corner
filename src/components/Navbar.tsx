@@ -1,104 +1,70 @@
-
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { BookText, LogIn, UserPlus, LogOut, User, LayoutGrid } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { BookText, Menu } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { UserNav } from "@/components/user/UserNav";
+import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useRole } from "@/context/RoleContext";
+import { cn } from "@/lib/utils";
 
 export const Navbar: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth();
-  const location = useLocation();
+	const { toggleSidebar, state } = useSidebar();
+	const isCollapsed = state === "collapsed";
+	const isMobile = useIsMobile();
+	const { role } = useRole();
+	const location = useLocation();
+	
+	// Check if this is a learner route
+	const isLearnerRoute = role === 'learner' || location.pathname.includes('learner-dashboard');
 
-  return (
-    <header className="border-b border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800 shadow-sm transition-colors duration-200">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-2 text-talentlms-darkBlue dark:text-white hover:text-talentlms-blue dark:hover:text-talentlms-lightBlue transition-colors">
-              <BookText className="h-6 w-6" />
-              <span className="text-lg font-medium tracking-tight">AI Syllabus Generator</span>
-            </Link>
-          </div>
-          
-          <nav className="hidden md:flex items-center space-x-4">
-            <Link
-              to="/"
-              className={cn(
-                "px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                location.pathname === "/" 
-                  ? "text-talentlms-blue dark:text-talentlms-lightBlue" 
-                  : "text-gray-600 dark:text-gray-300 hover:text-talentlms-blue dark:hover:text-talentlms-lightBlue hover:bg-gray-50 dark:hover:bg-gray-800"
-              )}
-            >
-              Home
-            </Link>
-            
-            {isAuthenticated && (
-              <Link
-                to="/courses"
-                className={cn(
-                  "px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                  location.pathname === "/courses" 
-                    ? "text-talentlms-blue dark:text-talentlms-lightBlue" 
-                    : "text-gray-600 dark:text-gray-300 hover:text-talentlms-blue dark:hover:text-talentlms-lightBlue hover:bg-gray-50 dark:hover:bg-gray-800"
-                )}
-              >
-                <span className="flex items-center">
-                  <LayoutGrid className="h-4 w-4 mr-1.5" />
-                  My Courses
-                </span>
-              </Link>
-            )}
-          </nav>
-          
-          <div className="flex items-center space-x-3">
-            <ThemeToggle />
-            
-            {isAuthenticated ? (
-              <>
-                <div className="hidden md:flex items-center mr-2 text-sm text-muted-foreground dark:text-gray-300">
-                  <User className="mr-1 h-4 w-4 text-talentlms-blue dark:text-talentlms-lightBlue" />
-                  <span>{user?.name}</span>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={logout}
-                  className="flex items-center gap-1 text-gray-700 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:text-white hover:text-talentlms-blue"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">Logout</span>
-                </Button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-gray-700 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:text-white hover:text-talentlms-blue"
-                  >
-                    <LogIn className="h-4 w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Login</span>
-                  </Button>
-                </Link>
-                <Link to="/register">
-                  <Button 
-                    variant="default" 
-                    size="sm"
-                    className="bg-talentlms-blue hover:bg-talentlms-darkBlue dark:bg-talentlms-blue/80 dark:hover:bg-talentlms-blue"
-                  >
-                    <UserPlus className="h-4 w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Register</span>
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </header>
-  );
+	return (
+		<header className={cn(
+			"sticky top-0 z-50 w-full border-b transition-colors duration-200",
+			isLearnerRoute 
+				? "border-indigo-100 bg-white/80 backdrop-blur-md dark:bg-gray-900/80 dark:border-indigo-900/30" 
+				: "border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-800 shadow-sm"
+		)}>
+			<div className="mx-auto px-3 sm:px-4 lg:px-4">
+				<div className="flex h-16 items-center justify-between">
+					<div className="flex items-center space-x-4">
+						{!isMobile && !isLearnerRoute && (
+							<Button
+								onClick={toggleSidebar}
+								variant="ghost"
+								size="icon"
+								className="h-8 w-8 rounded-md hover:bg-primary/20 text-primary"
+								aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+							>
+								<Menu className="h-5 w-5" />
+							</Button>
+						)}
+						<Link
+							to="/"
+							className={cn(
+								"flex items-center gap-2 transition-colors",
+								isLearnerRoute
+									? "text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300"
+									: "text-talentlms-darkBlue dark:text-white hover:text-talentlms-blue dark:hover:text-talentlms-lightBlue"
+							)}
+						>
+							<BookText className="h-6 w-6" />
+							<span className={cn(
+								"text-lg font-medium tracking-tight",
+								isLearnerRoute && "font-bold"
+							)}>
+								{isLearnerRoute ? "Learning Portal" : "Ilmee"}
+							</span>
+						</Link>
+					</div>
+
+					<div className="flex items-center space-x-4">
+						{!isLearnerRoute && <ThemeToggle />}
+						<UserNav />
+					</div>
+				</div>
+			</div>
+		</header>
+	);
 };

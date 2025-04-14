@@ -65,10 +65,10 @@ export default {
 				},
 				// TalentLMS inspired colors
 				talentlms: {
-					blue: '#1565C0',        // Darker blue from TalentLMS
+					blue: '#1976D2',        // Brighter blue that looks better in dark mode
 					lightBlue: '#e5f0ff',
 					darkBlue: '#0D47A1',    // Even darker blue for headers
-					navBlue: '#1976D2',     // Medium blue for navigation
+					navBlue: '#2196F3',     // Medium blue for navigation
 					orange: '#FF7043',      // TalentLMS orange accent
 					lightOrange: '#FFE0B2',
 					gray: '#F5F5F7',
