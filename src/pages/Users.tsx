@@ -32,7 +32,11 @@ const Users = () => {
   const handleAddUser = async (newUser: CreateUserPayload) => {
     try {
       setIsAddingUser(true);
-      await userService.createUser(newUser);
+      // Send status with first letter capitalized
+      await userService.createUser({
+        ...newUser,
+        status: newUser.status.charAt(0).toUpperCase() + newUser.status.slice(1) as "Active" | "Inactive"
+      });
       
       toast.success("User added successfully");
       // Reset form, close dialog, and refresh users
@@ -65,7 +69,8 @@ const Users = () => {
         name: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,
-        status: updatedUser.status.toLowerCase() as "active" | "inactive",
+        // Send status with first letter capitalized
+        status: updatedUser.status as "Active" | "Inactive",
       });
       
       toast.success("User updated successfully");
@@ -125,12 +130,31 @@ const Users = () => {
       </div>
 
       {isLoading ? (
-        <LoadingState 
-          variant="spinner" 
-          message="Loading users" 
-          statusMessage="Fetching user data from server..."
-          progress={70}
-        />
+        <div className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-full bg-muted animate-pulse"></div>
+            <div className="space-y-2">
+              <div className="h-4 w-[250px] bg-muted animate-pulse rounded"></div>
+              <div className="h-4 w-[200px] bg-muted animate-pulse rounded"></div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-full bg-muted animate-pulse"></div>
+            <div className="space-y-2">
+              <div className="h-4 w-[250px] bg-muted animate-pulse rounded"></div>
+              <div className="h-4 w-[200px] bg-muted animate-pulse rounded"></div>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-full bg-muted animate-pulse"></div>
+            <div className="space-y-2">
+              <div className="h-4 w-[250px] bg-muted animate-pulse rounded"></div>
+              <div className="h-4 w-[200px] bg-muted animate-pulse rounded"></div>
+            </div>
+          </div>
+          <div className="h-10 w-full bg-muted animate-pulse rounded"></div>
+          <div className="h-10 w-full bg-muted animate-pulse rounded"></div>
+        </div>
       ) : (
         <UserTable 
           users={filteredUsers} 

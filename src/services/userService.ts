@@ -23,7 +23,7 @@ export interface CreateUserPayload {
   username?: string;
   role: string;
   bio?: string;
-  status: "active" | "inactive";
+  status: "Active" | "Inactive";
 }
 
 export interface ApiUser {
