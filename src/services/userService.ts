@@ -1,4 +1,3 @@
-
 import api from './api';
 import { z } from 'zod';
 
@@ -25,6 +24,16 @@ export interface CreateUserPayload {
   status: "active" | "inactive";
 }
 
+export interface ApiUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  registrationDate: string;
+  parentName?: string;
+}
+
 export const userService = {
   updateUser: async (payload: UpdateUserPayload): Promise<any> => {
     try {
@@ -44,11 +53,10 @@ export const userService = {
     }
   },
 
-  // New functions for user management
-  getAllUsers: async (): Promise<any> => {
+  getAllUsers: async (): Promise<ApiUser[]> => {
     try {
-      const response = await api.get('/users');
-      return response.data;
+      const response = await api.get('/administrator/users');
+      return response.data.data;
     } catch (error) {
       throw error;
     }
@@ -84,6 +92,15 @@ export const userService = {
   deleteUser: async (userId: string): Promise<any> => {
     try {
       const response = await api.delete(`/users/${userId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  addParentName: async (userId: string, parentName: string): Promise<any> => {
+    try {
+      const response = await api.put(`/users/${userId}/parent`, { parentName });
       return response.data;
     } catch (error) {
       throw error;

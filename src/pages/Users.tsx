@@ -1,98 +1,92 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserTable } from "@/components/users/UserTable";
 import { AddUserDialog } from "@/components/users/AddUserDialog";
 import { toast } from "sonner";
-
-// Dummy data for initial development
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  type: string;
-  registrationDate: string;
-  lastLogin: string;
-  status: "active" | "inactive";
-};
-
-const initialUsers: User[] = [
-  {
-    id: "1",
-    name: "Sarah Thompson",
-    email: "sarah.thompson@example.com",
-    type: "Administrator",
-    registrationDate: "2023-02-15",
-    lastLogin: "2023-04-08 10:23",
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Michael Chen",
-    email: "m.chen@example.com",
-    type: "Instructor",
-    registrationDate: "2023-03-20",
-    lastLogin: "2023-04-07 14:45",
-    status: "active",
-  },
-  {
-    id: "3",
-    name: "Jessica Rodriguez",
-    email: "j.rodriguez@example.com",
-    type: "Learner",
-    registrationDate: "2023-02-28",
-    lastLogin: "2023-04-06 09:15",
-    status: "active",
-  },
-  {
-    id: "4",
-    name: "David Williams",
-    email: "d.williams@example.com",
-    type: "Instructor",
-    registrationDate: "2023-01-10",
-    lastLogin: "2023-04-05 11:30",
-    status: "inactive",
-  },
-  {
-    id: "5",
-    name: "Emily Johnson",
-    email: "e.johnson@example.com",
-    type: "Learner",
-    registrationDate: "2023-03-05",
-    lastLogin: "2023-04-08 08:55",
-    status: "active",
-  },
-];
+import { userService, ApiUser } from "@/services/userService";
+import { useQuery } from "@tanstack/react-query";
 
 const Users = () => {
-  const [users, setUsers] = useState<User[]>(initialUsers);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
-  const handleAddUser = (newUser: Omit<User, "id" | "registrationDate" | "lastLogin">) => {
-    // In a real application, this would be handled by an API call
-    const user: User = {
-      ...newUser,
-      id: Math.random().toString(36).substring(2, 9),
-      registrationDate: new Date().toISOString().split('T')[0],
-      lastLogin: "Never",
-    };
-    
-    setUsers([...users, user]);
-    toast.success("User added successfully");
-    setIsAddUserOpen(false);
+  // Fetch users with react-query
+  const { data: users = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['users'],
+    queryFn: userService.getAllUsers,
+  });
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to fetch users", {
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
+  }, [error]);
+
+  const handleAddUser = async (newUser: { name: string; email: string; type: string; status: "active" | "inactive" }) => {
+    try {
+      await userService.createUser({
+        name: newUser.name,
+        email: newUser.email,
+        password: "defaultPassword", // This would typically be handled differently
+        type: newUser.type,
+        status: newUser.status,
+      });
+      
+      toast.success("User added successfully");
+      refetch(); // Refresh the user list
+      setIsAddUserOpen(false);
+    } catch (error) {
+      toast.error("Failed to add user", {
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
   };
 
-  const handleDeleteUser = (id: string) => {
-    setUsers(users.filter(user => user.id !== id));
-    toast.success("User deleted successfully");
+  const handleDeleteUser = async (id: string) => {
+    try {
+      await userService.deleteUser(id);
+      toast.success("User deleted successfully");
+      refetch(); // Refresh the user list
+    } catch (error) {
+      toast.error("Failed to delete user", {
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
   };
 
-  const handleUpdateUser = (updatedUser: User) => {
-    setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user));
-    toast.success("User updated successfully");
+  const handleUpdateUser = async (updatedUser: ApiUser) => {
+    try {
+      await userService.updateUserById(updatedUser.id, {
+        name: updatedUser.name,
+        email: updatedUser.email,
+        type: updatedUser.role,
+        status: updatedUser.status.toLowerCase() as "active" | "inactive",
+      });
+      
+      toast.success("User updated successfully");
+      refetch(); // Refresh the user list
+    } catch (error) {
+      toast.error("Failed to update user", {
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
+  };
+
+  const handleAddParent = async (userId: string, parentName: string) => {
+    try {
+      await userService.addParentName(userId, parentName);
+      toast.success("Parent added successfully");
+      refetch(); // Refresh the user list
+    } catch (error) {
+      toast.error("Failed to add parent", {
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -100,7 +94,7 @@ const Users = () => {
     return (
       user.name.toLowerCase().includes(searchLower) ||
       user.email.toLowerCase().includes(searchLower) ||
-      user.type.toLowerCase().includes(searchLower)
+      user.role.toLowerCase().includes(searchLower)
     );
   });
 
@@ -128,11 +122,18 @@ const Users = () => {
         </Button>
       </div>
 
-      <UserTable 
-        users={filteredUsers} 
-        onDelete={handleDeleteUser} 
-        onUpdate={handleUpdateUser}
-      />
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        </div>
+      ) : (
+        <UserTable 
+          users={filteredUsers} 
+          onDelete={handleDeleteUser} 
+          onUpdate={handleUpdateUser}
+          onAddParent={handleAddParent}
+        />
+      )}
 
       <AddUserDialog 
         isOpen={isAddUserOpen} 

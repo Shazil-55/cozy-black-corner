@@ -2,8 +2,8 @@
 import axios from "axios";
 import { toast } from "sonner";
 
+// Using the environment variable for API base URL
 const API_BASE_URL = import.meta.env.VITE_API_PROD_URL || "https://dev-api.ilmee.ai/api/v_1/internal";
-// const API_BASE_URL = "http://localhost:8000/api/v_1/internal";
 
 const api = axios.create({
 	baseURL: API_BASE_URL,

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   MoreHorizontal, 
@@ -5,8 +6,8 @@ import {
   Edit, 
   Trash, 
   Check, 
-  X, 
-  ChevronDown 
+  X,
+  UserPlus
 } from "lucide-react";
 import { 
   Table, 
@@ -33,8 +34,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { User } from "@/pages/Users";
-import { EditUserDialog } from "./EditUserDialog";
 import { Badge } from "@/components/ui/badge";
 import { 
   Tooltip,
@@ -42,20 +41,34 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { EditUserDialog } from "./EditUserDialog";
+import { ApiUser } from "@/services/userService";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface UserTableProps {
-  users: User[];
+  users: ApiUser[];
   onDelete: (id: string) => void;
-  onUpdate: (user: User) => void;
+  onUpdate: (user: ApiUser) => void;
+  onAddParent: (userId: string, parentName: string) => void;
 }
 
-export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate }) => {
-  const [sortBy, setSortBy] = useState<keyof User>("name");
+export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate, onAddParent }) => {
+  const [sortBy, setSortBy] = useState<keyof ApiUser>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const [userToEdit, setUserToEdit] = useState<ApiUser | null>(null);
+  const [parentDialogOpen, setParentDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [parentName, setParentName] = useState("");
   
-  const handleSort = (column: keyof User) => {
+  const handleSort = (column: keyof ApiUser) => {
     if (sortBy === column) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
@@ -74,26 +87,13 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate 
   });
 
   const formatDate = (dateString: string) => {
-    if (dateString === "Never") return "Never";
-    
     try {
-      if (dateString.includes(":")) {
-        const date = new Date(dateString.replace(" ", "T"));
-        return new Intl.DateTimeFormat('en-US', { 
-          year: 'numeric', 
-          month: 'short', 
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }).format(date);
-      } else {
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('en-US', { 
-          year: 'numeric', 
-          month: 'short', 
-          day: 'numeric'
-        }).format(date);
-      }
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric'
+      }).format(date);
     } catch (e) {
       return dateString;
     }
@@ -106,19 +106,33 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate 
     }
   };
 
+  const handleAddParent = () => {
+    if (selectedUserId && parentName.trim()) {
+      onAddParent(selectedUserId, parentName);
+      setParentDialogOpen(false);
+      setParentName("");
+      setSelectedUserId(null);
+    }
+  };
+
+  const openParentDialog = (userId: string) => {
+    setSelectedUserId(userId);
+    setParentDialogOpen(true);
+  };
+
   return (
     <>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[250px]">
+              <TableHead className="w-[200px]">
                 <Button 
                   variant="ghost" 
                   onClick={() => handleSort("name")}
                   className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
                 >
-                  User
+                  Name
                   <ArrowUpDown className="h-3.5 w-3.5" />
                 </Button>
               </TableHead>
@@ -135,30 +149,20 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate 
               <TableHead>
                 <Button 
                   variant="ghost" 
-                  onClick={() => handleSort("type")}
+                  onClick={() => handleSort("role")}
                   className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
                 >
-                  Type
+                  Role
                   <ArrowUpDown className="h-3.5 w-3.5" />
                 </Button>
               </TableHead>
-              <TableHead>
+              <TableHead className="w-[150px]">
                 <Button 
                   variant="ghost" 
                   onClick={() => handleSort("registrationDate")}
                   className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
                 >
                   Registration
-                  <ArrowUpDown className="h-3.5 w-3.5" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => handleSort("lastLogin")}
-                  className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
-                >
-                  Last login
                   <ArrowUpDown className="h-3.5 w-3.5" />
                 </Button>
               </TableHead>
@@ -172,6 +176,7 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate 
                   <ArrowUpDown className="h-3.5 w-3.5" />
                 </Button>
               </TableHead>
+              <TableHead className="w-[150px]">Parent</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -187,24 +192,42 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate 
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.type}</TableCell>
+                  <TableCell>{user.role}</TableCell>
                   <TableCell>{formatDate(user.registrationDate)}</TableCell>
-                  <TableCell>{formatDate(user.lastLogin)}</TableCell>
                   <TableCell>
                     <Badge 
-                      variant={user.status === "active" ? "default" : "outline"}
-                      className={user.status === "active" 
+                      variant={user.status.toLowerCase() === "active" ? "default" : "outline"}
+                      className={user.status.toLowerCase() === "active" 
                         ? "bg-green-100 text-green-800 hover:bg-green-100 hover:text-green-800" 
                         : "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800"
                       }
                     >
-                      {user.status === "active" ? (
+                      {user.status.toLowerCase() === "active" ? (
                         <Check className="mr-1 h-3 w-3" />
                       ) : (
                         <X className="mr-1 h-3 w-3" />
                       )}
-                      {user.status === "active" ? "Active" : "Inactive"}
+                      {user.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {user.role === "Learner" ? (
+                      user.parentName ? (
+                        <span className="text-sm">{user.parentName}</span>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-xs" 
+                          onClick={() => openParentDialog(user.id)}
+                        >
+                          <UserPlus className="mr-1 h-3.5 w-3.5" />
+                          Add Parent
+                        </Button>
+                      )
+                    ) : (
+                      <span className="text-xs text-gray-400">N/A</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <TooltipProvider>
@@ -279,6 +302,30 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate 
           }} 
         />
       )}
+
+      <Dialog open={parentDialogOpen} onOpenChange={setParentDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Parent Information</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              placeholder="Enter parent's name"
+              value={parentName}
+              onChange={(e) => setParentName(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setParentDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddParent} disabled={!parentName.trim()}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
