@@ -61,7 +61,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({
       name: user.name,
       email: user.email,
       role: user.role,
-      status: user.status,
+      // Convert status to "Active" or "Inactive" explicitly to match the enum type
+      status: user.status === "active" ? "Active" : "Inactive",
     },
   });
 

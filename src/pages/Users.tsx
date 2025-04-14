@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -72,15 +71,17 @@ const Users = () => {
     }
   };
 
-  const handleAddParent = async (userId: string, parentName: string) => {
+  const handleAddParent = async (userId: string, parentName: string): Promise<any> => {
     try {
       await userService.addParentName(userId, parentName);
       toast.success("Parent added successfully");
       refetch(); // Refresh the user list
+      return Promise.resolve(); // Ensure we return a Promise
     } catch (error) {
       toast.error("Failed to add parent", {
         description: error instanceof Error ? error.message : "Unknown error occurred",
       });
+      return Promise.reject(error); // Return a rejected Promise on error
     }
   };
 

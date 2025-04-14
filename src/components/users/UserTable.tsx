@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   MoreHorizontal, 
@@ -56,7 +57,7 @@ interface UserTableProps {
   users: ApiUser[];
   onDelete: (id: string) => void;
   onUpdate: (user: ApiUser) => void;
-  onAddParent: (userId: string, parentName: string) => void;
+  onAddParent: (userId: string, parentName: string) => Promise<any>;
 }
 
 export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate, onAddParent }) => {
@@ -110,11 +111,17 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
   const handleAddParent = () => {
     if (selectedUserId && parentName.trim()) {
       setIsAddingParent(true);
+      // Fix: ensure onAddParent returns a Promise before calling finally
       onAddParent(selectedUserId, parentName)
-        .finally(() => {
+        .then(() => {
           setParentDialogOpen(false);
           setParentName("");
           setSelectedUserId(null);
+        })
+        .catch((error) => {
+          console.error("Error adding parent:", error);
+        })
+        .finally(() => {
           setIsAddingParent(false);
         });
     }
