@@ -59,9 +59,16 @@ interface UserTableProps {
   onDelete: (id: string) => void;
   onUpdate: (user: ApiUser) => void;
   onAddParent: (userId: string, parentName: string) => Promise<any>;
+  onCreateParent?: (learnerId: string) => void;
 }
 
-export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate, onAddParent }) => {
+export const UserTable: React.FC<UserTableProps> = ({ 
+  users, 
+  onDelete, 
+  onUpdate, 
+  onAddParent,
+  onCreateParent 
+}) => {
   const [sortBy, setSortBy] = useState<keyof ApiUser>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -131,6 +138,12 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
   const openParentDialog = (userId: string) => {
     setSelectedUserId(userId);
     setParentDialogOpen(true);
+  };
+  
+  const handleCreateProperParent = (learnerId: string) => {
+    if (onCreateParent) {
+      onCreateParent(learnerId);
+    }
   };
 
   return (
@@ -209,13 +222,13 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
                   <TableCell>{formatDate(user.registrationDate)}</TableCell>
                   <TableCell>
                     <Badge 
-                      variant={user.status.toLowerCase() === "active" ? "default" : "outline"}
-                      className={user.status.toLowerCase() === "active" 
+                      variant={user.status === "Active" ? "default" : "outline"}
+                      className={user.status === "Active"
                         ? "bg-green-100 text-green-800 hover:bg-green-100 hover:text-green-800" 
                         : "bg-gray-100 text-gray-800 hover:bg-gray-100 hover:text-gray-800"
                       }
                     >
-                      {user.status.toLowerCase() === "active" ? (
+                      {user.status === "Active" ? (
                         <Check className="mr-1 h-3 w-3" />
                       ) : (
                         <X className="mr-1 h-3 w-3" />
@@ -228,27 +241,41 @@ export const UserTable: React.FC<UserTableProps> = ({ users, onDelete, onUpdate,
                       user.parentName ? (
                         <span className="text-sm">{user.parentName}</span>
                       ) : (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 text-xs" 
-                          onClick={() => openParentDialog(user.id)}
-                          disabled={isAddingParent && selectedUserId === user.id}
-                        >
-                          {isAddingParent && selectedUserId === user.id ? (
-                            <div className="flex items-center">
-                              <div className="w-3.5 h-3.5 mr-1">
-                                <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 text-xs" 
+                            onClick={() => openParentDialog(user.id)}
+                            disabled={isAddingParent && selectedUserId === user.id}
+                          >
+                            {isAddingParent && selectedUserId === user.id ? (
+                              <div className="flex items-center">
+                                <div className="w-3.5 h-3.5 mr-1">
+                                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                                </div>
+                                Adding...
                               </div>
-                              Adding...
-                            </div>
-                          ) : (
-                            <>
+                            ) : (
+                              <>
+                                <UserPlus className="mr-1 h-3.5 w-3.5" />
+                                Quick Add
+                              </>
+                            )}
+                          </Button>
+                          
+                          {onCreateParent && (
+                            <Button 
+                              variant="default"
+                              size="sm" 
+                              className="h-8 text-xs" 
+                              onClick={() => handleCreateProperParent(user.id)}
+                            >
                               <UserPlus className="mr-1 h-3.5 w-3.5" />
-                              Add Parent
-                            </>
+                              Create Parent
+                            </Button>
                           )}
-                        </Button>
+                        </div>
                       )
                     ) : (
                       <span className="text-xs text-gray-400">N/A</span>

@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type UserRole = 'administrator' | 'instructor' | 'learner';
+export type UserRole = 'administrator' | 'instructor' | 'learner' | 'parent';
 
 interface RoleContextType {
   role: UserRole;
@@ -22,7 +22,8 @@ export const RoleProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const roleDisplayName: Record<UserRole, string> = {
     administrator: 'Administrator',
     instructor: 'Instructor',
-    learner: 'Learner'
+    learner: 'Learner',
+    parent: 'Parent'
   };
 
   // Save role to localStorage whenever it changes

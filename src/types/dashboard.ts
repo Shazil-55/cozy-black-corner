@@ -17,6 +17,7 @@ export interface AdminDashboardData {
   adminUsers: number;
   instructorUsers: number;
   learners: number;
+  parents?: number;
 }
 
 export interface InstructorDashboardData {
@@ -53,7 +54,26 @@ export interface LearnerDashboardData {
   }>;
 }
 
-export type DashboardResponse = AdminDashboardData | InstructorDashboardData | LearnerDashboardData | null;
+export interface ParentDashboardData {
+  children: number;
+  activeChildren: number;
+  totalCourses: number;
+  avgGrade: number;
+  childrenProgress: Array<{
+    childName: string;
+    coursesInProgress: number;
+    completedCourses: number;
+    overallProgress: number;
+  }>;
+  upcomingAssignments: Array<{
+    childName: string;
+    assignmentName: string;
+    dueDate: string;
+    completed: boolean;
+  }>;
+}
+
+export type DashboardResponse = AdminDashboardData | InstructorDashboardData | LearnerDashboardData | ParentDashboardData | null;
 
 export interface ApiResponse<T> {
   data: T;

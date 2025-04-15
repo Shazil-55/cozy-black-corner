@@ -26,6 +26,13 @@ export interface CreateUserPayload {
   status: "Active" | "Inactive";
 }
 
+export interface CreateParentPayload {
+  name: string;
+  email: string;
+  phone?: string;
+  learnerIds: string[];
+}
+
 export interface ApiUser {
   id: string;
   name: string;
@@ -34,6 +41,7 @@ export interface ApiUser {
   status: string;
   registrationDate: string;
   parentName?: string;
+  parentId?: string;
 }
 
 export const userService = {
@@ -108,4 +116,50 @@ export const userService = {
       throw error;
     }
   },
+  
+  // New functions for parent management
+  createParent: async (parentData: CreateParentPayload): Promise<any> => {
+    try {
+      const response = await api.post('/administrator/parent', parentData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  getLearnersByParentId: async (parentId: string): Promise<ApiUser[]> => {
+    try {
+      const response = await api.get(`/administrator/parent/${parentId}/learners`);
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  assignLearnerToParent: async (parentId: string, learnerId: string): Promise<any> => {
+    try {
+      const response = await api.post(`/administrator/parent/${parentId}/learner/${learnerId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  removeLearnerFromParent: async (parentId: string, learnerId: string): Promise<any> => {
+    try {
+      const response = await api.delete(`/administrator/parent/${parentId}/learner/${learnerId}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  getAllParents: async (): Promise<ApiUser[]> => {
+    try {
+      const response = await api.get('/administrator/parents');
+      return response.data.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 };
