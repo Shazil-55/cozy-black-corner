@@ -102,7 +102,9 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
 
   // Update form values when selected learners change
   useEffect(() => {
-    form.setValue("learnerIds", selectedLearnerIds);
+    if (selectedLearnerIds) {
+      form.setValue("learnerIds", selectedLearnerIds);
+    }
   }, [selectedLearnerIds, form]);
 
   const handleSubmit = async (values: FormValues) => {
@@ -110,7 +112,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
       name: values.name,
       email: values.email,
       phone: values.phone,
-      learnerIds: values.learnerIds,
+      learnerIds: values.learnerIds || [], // Ensure it's never undefined
     };
     
     await onSubmit(parentData);
@@ -118,6 +120,8 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
 
   const toggleLearner = (learnerId: string) => {
     setSelectedLearnerIds(current => {
+      if (!current) return [learnerId]; // Handle undefined case
+      
       // Create a new array to avoid mutating the state directly
       if (current.includes(learnerId)) {
         return current.filter(id => id !== learnerId);
@@ -128,7 +132,10 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
   };
 
   const removeLearner = (learnerId: string) => {
-    setSelectedLearnerIds(current => current.filter(id => id !== learnerId));
+    setSelectedLearnerIds(current => {
+      if (!current) return []; // Handle undefined case
+      return current.filter(id => id !== learnerId);
+    });
   };
 
   // Reset form when dialog closes
@@ -144,6 +151,12 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
       setDropdownOpen(false); // Ensure dropdown is closed when dialog is closed
     }
   }, [isOpen, form]);
+
+  // Safely get learner by ID, with null checks
+  const getLearnerById = (learnerId: string) => {
+    if (!Array.isArray(availableLearners)) return null;
+    return availableLearners.find(l => l && l.id === learnerId) || null;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -244,7 +257,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                         </FormDescription>
                       </div>
                       
-                      {availableLearners.length === 0 ? (
+                      {Array.isArray(availableLearners) && availableLearners.length === 0 ? (
                         <div className="text-sm text-muted-foreground">
                           No learners available to assign
                         </div>
@@ -260,47 +273,52 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                                 role="combobox"
                                 aria-expanded={dropdownOpen}
                                 className="w-full justify-between"
+                                type="button" // Prevent form submission
                               >
-                                {selectedLearnerIds.length > 0 
+                                {Array.isArray(selectedLearnerIds) && selectedLearnerIds.length > 0 
                                   ? `${selectedLearnerIds.length} learner${selectedLearnerIds.length > 1 ? 's' : ''} selected`
                                   : "Select learners..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-full p-0" side="bottom">
-                              <Command>
-                                <CommandInput placeholder="Search learners..." />
-                                <CommandEmpty>No learners found.</CommandEmpty>
-                                <CommandGroup className="max-h-64 overflow-auto">
-                                  {availableLearners.map((learner) => (
-                                    <CommandItem
-                                      key={learner.id}
-                                      value={learner.id}
-                                      onSelect={() => toggleLearner(learner.id)}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          selectedLearnerIds.includes(learner.id) 
-                                            ? "opacity-100" 
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                      <div className="flex flex-col">
-                                        <span>{learner.name}</span>
-                                        <span className="text-xs text-muted-foreground">{learner.email}</span>
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </Command>
+                              {Array.isArray(availableLearners) && (
+                                <Command>
+                                  <CommandInput placeholder="Search learners..." />
+                                  <CommandEmpty>No learners found.</CommandEmpty>
+                                  <CommandGroup className="max-h-64 overflow-auto">
+                                    {availableLearners.map((learner) => (
+                                      learner && (
+                                        <CommandItem
+                                          key={learner.id}
+                                          value={learner.id}
+                                          onSelect={() => toggleLearner(learner.id)}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              Array.isArray(selectedLearnerIds) && selectedLearnerIds.includes(learner.id) 
+                                                ? "opacity-100" 
+                                                : "opacity-0"
+                                            )}
+                                          />
+                                          <div className="flex flex-col">
+                                            <span>{learner.name}</span>
+                                            <span className="text-xs text-muted-foreground">{learner.email}</span>
+                                          </div>
+                                        </CommandItem>
+                                      )
+                                    ))}
+                                  </CommandGroup>
+                                </Command>
+                              )}
                             </PopoverContent>
                           </Popover>
 
-                          {selectedLearnerIds.length > 0 && (
+                          {Array.isArray(selectedLearnerIds) && selectedLearnerIds.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {selectedLearnerIds.map(learnerId => {
-                                const learner = availableLearners.find(l => l.id === learnerId);
+                                const learner = getLearnerById(learnerId);
                                 return learner ? (
                                   <Badge key={learner.id} variant="secondary" className="py-1">
                                     {learner.name}
@@ -329,7 +347,12 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                 <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading || availableLearners.length === 0}>Add Parent</Button>
+                <Button 
+                  type="submit" 
+                  disabled={isLoading || !Array.isArray(availableLearners) || availableLearners.length === 0}
+                >
+                  Add Parent
+                </Button>
               </DialogFooter>
             </form>
           </Form>
