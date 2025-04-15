@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -85,10 +85,11 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
   });
 
   // Filter learners to only include those with role "Learner"
-  // Ensure we have a valid array by providing a default empty array
-  const availableLearners = Array.isArray(learners) 
-    ? learners.filter(user => user.role === "Learner") 
-    : [];
+  // Use useMemo to avoid recomputing on every render
+  const availableLearners = useMemo(() => {
+    if (!Array.isArray(learners)) return [];
+    return learners.filter(user => user && user.role === "Learner");
+  }, [learners]);
   
   // Set initial selected learners when currentLearnerId changes or component mounts
   useEffect(() => {
@@ -140,6 +141,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
         learnerIds: [],
       });
       setSelectedLearnerIds([]);
+      setDropdownOpen(false); // Ensure dropdown is closed when dialog is closed
     }
   }, [isOpen, form]);
 
@@ -265,7 +267,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-full p-0">
+                            <PopoverContent className="w-full p-0" side="bottom">
                               <Command>
                                 <CommandInput placeholder="Search learners..." />
                                 <CommandEmpty>No learners found.</CommandEmpty>
