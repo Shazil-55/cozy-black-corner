@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   MoreHorizontal, 
@@ -119,7 +118,6 @@ export const UserTable: React.FC<UserTableProps> = ({
   const handleAddParent = () => {
     if (selectedUserId && parentName.trim()) {
       setIsAddingParent(true);
-      // Fix: ensure onAddParent returns a Promise before calling finally
       onAddParent(selectedUserId, parentName)
         .then(() => {
           setParentDialogOpen(false);
@@ -140,7 +138,7 @@ export const UserTable: React.FC<UserTableProps> = ({
     setParentDialogOpen(true);
   };
   
-  const handleCreateProperParent = (learnerId: string) => {
+  const handleCreateParent = (learnerId: string) => {
     if (onCreateParent) {
       onCreateParent(learnerId);
     }
@@ -241,41 +239,17 @@ export const UserTable: React.FC<UserTableProps> = ({
                       user.parentName ? (
                         <span className="text-sm">{user.parentName}</span>
                       ) : (
-                        <div className="flex space-x-2">
+                        onCreateParent && (
                           <Button 
-                            variant="outline" 
+                            variant="outline"
                             size="sm" 
                             className="h-8 text-xs" 
-                            onClick={() => openParentDialog(user.id)}
-                            disabled={isAddingParent && selectedUserId === user.id}
+                            onClick={() => handleCreateParent(user.id)}
                           >
-                            {isAddingParent && selectedUserId === user.id ? (
-                              <div className="flex items-center">
-                                <div className="w-3.5 h-3.5 mr-1">
-                                  <Skeleton className="h-3.5 w-3.5 rounded-full" />
-                                </div>
-                                Adding...
-                              </div>
-                            ) : (
-                              <>
-                                <UserPlus className="mr-1 h-3.5 w-3.5" />
-                                Quick Add
-                              </>
-                            )}
+                            <UserPlus className="mr-1 h-3.5 w-3.5" />
+                            Create Parent
                           </Button>
-                          
-                          {onCreateParent && (
-                            <Button 
-                              variant="default"
-                              size="sm" 
-                              className="h-8 text-xs" 
-                              onClick={() => handleCreateProperParent(user.id)}
-                            >
-                              <UserPlus className="mr-1 h-3.5 w-3.5" />
-                              Create Parent
-                            </Button>
-                          )}
-                        </div>
+                        )
                       )
                     ) : (
                       <span className="text-xs text-gray-400">N/A</span>
