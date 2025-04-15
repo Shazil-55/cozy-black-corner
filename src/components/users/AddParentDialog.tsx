@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,13 +24,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ApiUser, CreateParentPayload } from "@/services/userService";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 import {
   Command,
@@ -74,8 +67,8 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
   learners,
   currentLearnerId,
 }) => {
-  const [open, setOpen] = useState(false);
-  const [selectedLearners, setSelectedLearners] = useState<string[]>(
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedLearnerIds, setSelectedLearnerIds] = useState<string[]>(
     currentLearnerId ? [currentLearnerId] : []
   );
 
@@ -89,6 +82,22 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
     },
   });
 
+  // Filter learners to only include those with role "Learner"
+  const availableLearners = learners.filter(user => user.role === "Learner") || [];
+  
+  // Update form values when selected learners change
+  useEffect(() => {
+    form.setValue("learnerIds", selectedLearnerIds);
+  }, [selectedLearnerIds, form]);
+
+  // Set initial selected learners when currentLearnerId changes
+  useEffect(() => {
+    if (currentLearnerId) {
+      setSelectedLearnerIds([currentLearnerId]);
+      form.setValue("learnerIds", [currentLearnerId]);
+    }
+  }, [currentLearnerId, form]);
+
   const handleSubmit = async (values: FormValues) => {
     const parentData: CreateParentPayload = {
       name: values.name,
@@ -100,16 +109,9 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
     await onSubmit(parentData);
   };
 
-  // Filter learners to only include those with role "Learner"
-  const availableLearners = learners.filter(user => user.role === "Learner");
-  
-  // Set selected learners to form
-  React.useEffect(() => {
-    form.setValue("learnerIds", selectedLearners);
-  }, [selectedLearners, form]);
-
   const toggleLearner = (learnerId: string) => {
-    setSelectedLearners(current => {
+    setSelectedLearnerIds(current => {
+      // Create a new array to avoid mutating the state directly
       if (current.includes(learnerId)) {
         return current.filter(id => id !== learnerId);
       } else {
@@ -119,7 +121,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
   };
 
   const removeLearner = (learnerId: string) => {
-    setSelectedLearners(current => current.filter(id => id !== learnerId));
+    setSelectedLearnerIds(current => current.filter(id => id !== learnerId));
   };
 
   return (
@@ -223,16 +225,16 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                         </div>
                       ) : (
                         <div className="flex flex-col gap-2">
-                          <Popover open={open} onOpenChange={setOpen}>
+                          <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
                             <PopoverTrigger asChild>
                               <Button
                                 variant="outline"
                                 role="combobox"
-                                aria-expanded={open}
+                                aria-expanded={dropdownOpen}
                                 className="w-full justify-between"
                               >
-                                {selectedLearners.length > 0 
-                                  ? `${selectedLearners.length} learner${selectedLearners.length > 1 ? 's' : ''} selected`
+                                {selectedLearnerIds.length > 0 
+                                  ? `${selectedLearnerIds.length} learner${selectedLearnerIds.length > 1 ? 's' : ''} selected`
                                   : "Select learners..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
@@ -251,7 +253,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                                       <Check
                                         className={cn(
                                           "mr-2 h-4 w-4",
-                                          selectedLearners.includes(learner.id) 
+                                          selectedLearnerIds.includes(learner.id) 
                                             ? "opacity-100" 
                                             : "opacity-0"
                                         )}
@@ -267,9 +269,9 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                             </PopoverContent>
                           </Popover>
 
-                          {selectedLearners.length > 0 && (
+                          {selectedLearnerIds.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
-                              {selectedLearners.map(learnerId => {
+                              {selectedLearnerIds.map(learnerId => {
                                 const learner = availableLearners.find(l => l.id === learnerId);
                                 return learner ? (
                                   <Badge key={learner.id} variant="secondary" className="py-1">
