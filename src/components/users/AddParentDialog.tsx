@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,23 +22,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ApiUser, CreateParentPayload } from "@/services/userService";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Check, ChevronsUpDown, X } from "lucide-react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 interface AddParentDialogProps {
   isOpen: boolean;
@@ -64,106 +50,35 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
   onClose,
   onSubmit,
   isLoading = false,
-  learners = [], // Provide default empty array
+  learners,
   currentLearnerId,
 }) => {
-  // Initialize dropdown state
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  
-  // Always initialize as an empty array to avoid undefined
-  const [selectedLearnerIds, setSelectedLearnerIds] = useState<string[]>([]);
-
-  // Create form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
       phone: "",
-      learnerIds: [],
+      learnerIds: currentLearnerId ? [currentLearnerId] : [],
     },
   });
-
-  // Filter learners to only include those with role "Learner"
-  // Use useMemo to avoid recomputing on every render
-  const availableLearners = useMemo(() => {
-    if (!Array.isArray(learners)) return [];
-    return learners.filter(user => user && user.role === "Learner");
-  }, [learners]);
-  
-  // Set initial selected learners when currentLearnerId changes or component mounts
-  useEffect(() => {
-    if (isOpen && currentLearnerId) {
-      const newSelection = [currentLearnerId];
-      setSelectedLearnerIds(newSelection);
-      form.setValue("learnerIds", newSelection);
-    }
-  }, [currentLearnerId, form, isOpen]);
-
-  // Update form values when selected learners change
-  useEffect(() => {
-    if (selectedLearnerIds) {
-      form.setValue("learnerIds", selectedLearnerIds);
-    }
-  }, [selectedLearnerIds, form]);
 
   const handleSubmit = async (values: FormValues) => {
     const parentData: CreateParentPayload = {
       name: values.name,
       email: values.email,
       phone: values.phone,
-      learnerIds: values.learnerIds || [], // Ensure it's never undefined
+      learnerIds: values.learnerIds,
     };
     
     await onSubmit(parentData);
   };
 
-  const toggleLearner = (learnerId: string) => {
-    setSelectedLearnerIds(current => {
-      if (!current) return [learnerId]; // Handle undefined case
-      
-      // Create a new array to avoid mutating the state directly
-      if (current.includes(learnerId)) {
-        return current.filter(id => id !== learnerId);
-      } else {
-        return [...current, learnerId];
-      }
-    });
-  };
-
-  const removeLearner = (learnerId: string) => {
-    setSelectedLearnerIds(current => {
-      if (!current) return []; // Handle undefined case
-      return current.filter(id => id !== learnerId);
-    });
-  };
-
-  // Reset form when dialog closes
-  useEffect(() => {
-    if (!isOpen) {
-      form.reset({
-        name: "",
-        email: "",
-        phone: "",
-        learnerIds: [],
-      });
-      setSelectedLearnerIds([]);
-      setDropdownOpen(false); // Ensure dropdown is closed when dialog is closed
-    }
-  }, [isOpen, form]);
-
-  // Safely get learner by ID, with null checks
-  const getLearnerById = (learnerId: string) => {
-    if (!Array.isArray(availableLearners)) return null;
-    return availableLearners.find(l => l && l.id === learnerId) || null;
-  };
+  // Filter learners to only include those with role "Learner"
+  const availableLearners = learners.filter(user => user.role === "Learner");
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        onClose();
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">Add new parent</DialogTitle>
@@ -190,7 +105,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
             </div>
             <div className="space-y-2">
               <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-[100px] w-full rounded-md" />
+              <Skeleton className="h-[200px] w-full rounded-md" />
             </div>
           </div>
         ) : (
@@ -250,91 +165,57 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                   name="learnerIds"
                   render={() => (
                     <FormItem>
-                      <div className="mb-2">
+                      <div className="mb-4">
                         <FormLabel className="text-base">Assign Learners <span className="text-red-500">*</span></FormLabel>
                         <FormDescription>
                           Select the learners that this parent will have access to monitor
                         </FormDescription>
                       </div>
                       
-                      {Array.isArray(availableLearners) && availableLearners.length === 0 ? (
+                      {availableLearners.length === 0 ? (
                         <div className="text-sm text-muted-foreground">
                           No learners available to assign
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-2">
-                          <Popover 
-                            open={dropdownOpen} 
-                            onOpenChange={setDropdownOpen}
-                          >
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                aria-expanded={dropdownOpen}
-                                className="w-full justify-between"
-                                type="button" // Prevent form submission
-                              >
-                                {Array.isArray(selectedLearnerIds) && selectedLearnerIds.length > 0 
-                                  ? `${selectedLearnerIds.length} learner${selectedLearnerIds.length > 1 ? 's' : ''} selected`
-                                  : "Select learners..."}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-full p-0" side="bottom">
-                              {Array.isArray(availableLearners) && (
-                                <Command>
-                                  <CommandInput placeholder="Search learners..." />
-                                  <CommandEmpty>No learners found.</CommandEmpty>
-                                  <CommandGroup className="max-h-64 overflow-auto">
-                                    {availableLearners.map((learner) => (
-                                      learner && (
-                                        <CommandItem
-                                          key={learner.id}
-                                          value={learner.id}
-                                          onSelect={() => toggleLearner(learner.id)}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              "mr-2 h-4 w-4",
-                                              Array.isArray(selectedLearnerIds) && selectedLearnerIds.includes(learner.id) 
-                                                ? "opacity-100" 
-                                                : "opacity-0"
-                                            )}
-                                          />
-                                          <div className="flex flex-col">
-                                            <span>{learner.name}</span>
-                                            <span className="text-xs text-muted-foreground">{learner.email}</span>
-                                          </div>
-                                        </CommandItem>
-                                      )
-                                    ))}
-                                  </CommandGroup>
-                                </Command>
-                              )}
-                            </PopoverContent>
-                          </Popover>
-
-                          {Array.isArray(selectedLearnerIds) && selectedLearnerIds.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {selectedLearnerIds.map(learnerId => {
-                                const learner = getLearnerById(learnerId);
-                                return learner ? (
-                                  <Badge key={learner.id} variant="secondary" className="py-1">
-                                    {learner.name}
-                                    <button 
-                                      type="button"
-                                      className="ml-1 rounded-full hover:bg-muted"
-                                      onClick={() => removeLearner(learner.id)}
-                                    >
-                                      <X className="h-3 w-3" />
-                                      <span className="sr-only">Remove</span>
-                                    </button>
-                                  </Badge>
-                                ) : null;
-                              })}
-                            </div>
-                          )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {availableLearners.map((learner) => (
+                            <FormField
+                              key={learner.id}
+                              control={form.control}
+                              name="learnerIds"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={learner.id}
+                                    className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(learner.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, learner.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== learner.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                      <FormLabel className="text-sm font-medium">
+                                        {learner.name}
+                                      </FormLabel>
+                                      <FormDescription className="text-xs">
+                                        {learner.email}
+                                      </FormDescription>
+                                    </div>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
                         </div>
                       )}
                       <FormMessage />
@@ -347,12 +228,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                 <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={isLoading || !Array.isArray(availableLearners) || availableLearners.length === 0}
-                >
-                  Add Parent
-                </Button>
+                <Button type="submit" disabled={isLoading || availableLearners.length === 0}>Add Parent</Button>
               </DialogFooter>
             </form>
           </Form>
