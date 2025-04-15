@@ -64,11 +64,13 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
   onClose,
   onSubmit,
   isLoading = false,
-  learners,
+  learners = [], // Provide default empty array
   currentLearnerId,
 }) => {
-  // Initialize dropdownOpen and selectedLearnerIds states
+  // Initialize dropdown state
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  
+  // Always initialize as an empty array to avoid undefined
   const [selectedLearnerIds, setSelectedLearnerIds] = useState<string[]>([]);
 
   // Create form with default values
@@ -83,24 +85,23 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
   });
 
   // Filter learners to only include those with role "Learner"
-  const availableLearners = learners?.filter(user => user.role === "Learner") || [];
+  // Ensure we have a valid array by providing a default empty array
+  const availableLearners = Array.isArray(learners) 
+    ? learners.filter(user => user.role === "Learner") 
+    : [];
   
   // Set initial selected learners when currentLearnerId changes or component mounts
   useEffect(() => {
-    if (currentLearnerId) {
-      setSelectedLearnerIds([currentLearnerId]);
-      form.setValue("learnerIds", [currentLearnerId]);
-    } else {
-      setSelectedLearnerIds([]);
-      form.setValue("learnerIds", []);
+    if (isOpen && currentLearnerId) {
+      const newSelection = [currentLearnerId];
+      setSelectedLearnerIds(newSelection);
+      form.setValue("learnerIds", newSelection);
     }
   }, [currentLearnerId, form, isOpen]);
 
   // Update form values when selected learners change
   useEffect(() => {
-    if (selectedLearnerIds) {
-      form.setValue("learnerIds", selectedLearnerIds);
-    }
+    form.setValue("learnerIds", selectedLearnerIds);
   }, [selectedLearnerIds, form]);
 
   const handleSubmit = async (values: FormValues) => {
@@ -117,32 +118,37 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
   const toggleLearner = (learnerId: string) => {
     setSelectedLearnerIds(current => {
       // Create a new array to avoid mutating the state directly
-      const currentArray = current || [];
-      if (currentArray.includes(learnerId)) {
-        return currentArray.filter(id => id !== learnerId);
+      if (current.includes(learnerId)) {
+        return current.filter(id => id !== learnerId);
       } else {
-        return [...currentArray, learnerId];
+        return [...current, learnerId];
       }
     });
   };
 
   const removeLearner = (learnerId: string) => {
-    setSelectedLearnerIds(current => {
-      const currentArray = current || [];
-      return currentArray.filter(id => id !== learnerId);
-    });
+    setSelectedLearnerIds(current => current.filter(id => id !== learnerId));
   };
 
-  // Reset form when dialog closes or opens
+  // Reset form when dialog closes
   useEffect(() => {
     if (!isOpen) {
-      form.reset();
+      form.reset({
+        name: "",
+        email: "",
+        phone: "",
+        learnerIds: [],
+      });
       setSelectedLearnerIds([]);
     }
   }, [isOpen, form]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        onClose();
+      }
+    }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl">Add new parent</DialogTitle>
@@ -227,7 +233,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                 <FormField
                   control={form.control}
                   name="learnerIds"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
                       <div className="mb-2">
                         <FormLabel className="text-base">Assign Learners <span className="text-red-500">*</span></FormLabel>
@@ -242,7 +248,10 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                         </div>
                       ) : (
                         <div className="flex flex-col gap-2">
-                          <Popover open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                          <Popover 
+                            open={dropdownOpen} 
+                            onOpenChange={setDropdownOpen}
+                          >
                             <PopoverTrigger asChild>
                               <Button
                                 variant="outline"
@@ -250,7 +259,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                                 aria-expanded={dropdownOpen}
                                 className="w-full justify-between"
                               >
-                                {selectedLearnerIds && selectedLearnerIds.length > 0 
+                                {selectedLearnerIds.length > 0 
                                   ? `${selectedLearnerIds.length} learner${selectedLearnerIds.length > 1 ? 's' : ''} selected`
                                   : "Select learners..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -270,7 +279,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                                       <Check
                                         className={cn(
                                           "mr-2 h-4 w-4",
-                                          selectedLearnerIds?.includes(learner.id) 
+                                          selectedLearnerIds.includes(learner.id) 
                                             ? "opacity-100" 
                                             : "opacity-0"
                                         )}
@@ -286,7 +295,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                             </PopoverContent>
                           </Popover>
 
-                          {selectedLearnerIds && selectedLearnerIds.length > 0 && (
+                          {selectedLearnerIds.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-2">
                               {selectedLearnerIds.map(learnerId => {
                                 const learner = availableLearners.find(l => l.id === learnerId);
