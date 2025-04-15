@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Plus, Search, SlidersHorizontal, Users as UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,6 @@ const Users = () => {
   const [selectedLearnerId, setSelectedLearnerId] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<string>("all");
 
-  // Fetch users with react-query
   const { data: users = [], isLoading, error, refetch } = useQuery({
     queryKey: ['users'],
     queryFn: userService.getAllUsers,
@@ -40,17 +38,15 @@ const Users = () => {
   const handleAddUser = async (newUser: CreateUserPayload) => {
     try {
       setIsAddingUser(true);
-      // Send status with first letter capitalized
       await userService.createUser({
         ...newUser,
         status: newUser.status as "Active" | "Inactive"
       });
       
       toast.success("User added successfully");
-      // Reset form, close dialog, and refresh users
       setIsAddingUser(false);
       setIsAddUserOpen(false);
-      refetch(); // Refresh the user list
+      refetch();
     } catch (error) {
       setIsAddingUser(false);
       toast.error("Failed to add user", {
@@ -68,17 +64,17 @@ const Users = () => {
         description: "An email has been sent to the parent with login instructions."
       });
       
-      // Reset form, close dialog, and refresh users
       setIsAddingParent(false);
       setIsAddParentOpen(false);
       setSelectedLearnerId(undefined);
-      return refetch(); // Refresh the user list
+      await refetch();
+      return Promise.resolve();
     } catch (error) {
       setIsAddingParent(false);
       toast.error("Failed to add parent", {
         description: error instanceof Error ? error.message : "Unknown error occurred",
       });
-      throw error; // Re-throw to be handled by the component
+      return Promise.reject(error);
     }
   };
 
@@ -86,7 +82,7 @@ const Users = () => {
     try {
       await userService.deleteUser(id);
       toast.success("User deleted successfully");
-      refetch(); // Refresh the user list
+      refetch();
     } catch (error) {
       toast.error("Failed to delete user", {
         description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -100,12 +96,11 @@ const Users = () => {
         name: updatedUser.name,
         email: updatedUser.email,
         role: updatedUser.role,
-        // Send status with first letter capitalized
         status: updatedUser.status as "Active" | "Inactive",
       });
       
       toast.success("User updated successfully");
-      refetch(); // Refresh the user list
+      refetch();
     } catch (error) {
       toast.error("Failed to update user", {
         description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -117,13 +112,13 @@ const Users = () => {
     try {
       await userService.addParentName(userId, parentName);
       toast.success("Parent added successfully");
-      await refetch(); // Refresh the user list
-      return Promise.resolve(); // Ensure we return a Promise
+      await refetch();
+      return Promise.resolve();
     } catch (error) {
       toast.error("Failed to add parent", {
         description: error instanceof Error ? error.message : "Unknown error occurred",
       });
-      return Promise.reject(error); // Return a rejected Promise on error
+      return Promise.reject(error);
     }
   };
 
@@ -135,12 +130,10 @@ const Users = () => {
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase();
     
-    // First filter by tab
     if (activeTab !== "all" && user.role.toLowerCase() !== activeTab.toLowerCase()) {
       return false;
     }
     
-    // Then filter by search term
     return (
       user.name.toLowerCase().includes(searchLower) ||
       user.email.toLowerCase().includes(searchLower) ||
