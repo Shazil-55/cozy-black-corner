@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   MoreHorizontal, 
   ArrowUpDown, 
@@ -40,7 +41,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { EditUserDialog } from "./EditUserDialog";
 import { ApiUser } from "@/services/userService";
 import { 
   Dialog,
@@ -68,10 +68,10 @@ export const UserTable: React.FC<UserTableProps> = ({
   onAddParent,
   onCreateParent 
 }) => {
+  const navigate = useNavigate();
   const [sortBy, setSortBy] = useState<keyof ApiUser>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
-  const [userToEdit, setUserToEdit] = useState<ApiUser | null>(null);
   const [parentDialogOpen, setParentDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [parentName, setParentName] = useState("");
@@ -142,6 +142,10 @@ export const UserTable: React.FC<UserTableProps> = ({
     if (onCreateParent) {
       onCreateParent(learnerId);
     }
+  };
+  
+  const handleEditUser = (userId: string) => {
+    navigate(`/users/${userId}`);
   };
 
   return (
@@ -240,12 +244,12 @@ export const UserTable: React.FC<UserTableProps> = ({
                         <span className="text-sm">{user.parentName}</span>
                       ) : (
                         <div className="flex space-x-2">
-                          {onCreateParent && (
-                            <Button 
+                           {onCreateParent && (
+                             <Button 
                               variant="outline" 
-                              size="sm" 
-                              className="h-8 text-xs" 
-                              onClick={() => handleCreateProperParent(user.id)}
+                               size="sm" 
+                               className="h-8 text-xs" 
+                               onClick={() => handleCreateProperParent(user.id)}
                               disabled={isAddingParent && selectedUserId === user.id}
                             >
                               {isAddingParent && selectedUserId === user.id ? (
@@ -261,8 +265,8 @@ export const UserTable: React.FC<UserTableProps> = ({
                                   Create Parent
                                 </>
                               )}
-                            </Button>
-                          )}
+                             </Button>
+                           )}
                         </div>
                       )
                     ) : (
@@ -289,9 +293,9 @@ export const UserTable: React.FC<UserTableProps> = ({
                           </TooltipContent>
                         </Tooltip>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setUserToEdit(user)}>
+                          <DropdownMenuItem onClick={() => handleEditUser(user.id)}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                            View & Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => setUserToDelete(user.id)}
@@ -330,18 +334,6 @@ export const UserTable: React.FC<UserTableProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {userToEdit && (
-        <EditUserDialog 
-          user={userToEdit} 
-          isOpen={!!userToEdit} 
-          onClose={() => setUserToEdit(null)} 
-          onSubmit={(updatedUser) => {
-            onUpdate(updatedUser);
-            setUserToEdit(null);
-          }} 
-        />
-      )}
 
       <Dialog open={parentDialogOpen} onOpenChange={setParentDialogOpen}>
         <DialogContent className="sm:max-w-md">

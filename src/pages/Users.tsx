@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Plus, Search, SlidersHorizontal, Users as UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,11 @@ import { useQuery } from "@tanstack/react-query";
 import { LoadingState } from "@/components/LoadingState";
 import { AddParentDialog } from "@/components/users/AddParentDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserRoles } from "@/types/dashboard";
 import { UserPlus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Users = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isAddingUser, setIsAddingUser] = useState(false);
@@ -101,6 +103,9 @@ const Users = () => {
       
       toast.success("User updated successfully");
       refetch();
+      
+      // Navigate to the user details page after update
+      navigate(`/users/${updatedUser.id}`);
     } catch (error) {
       toast.error("Failed to update user", {
         description: error instanceof Error ? error.message : "Unknown error occurred",

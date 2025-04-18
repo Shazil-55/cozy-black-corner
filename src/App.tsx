@@ -1,3 +1,4 @@
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ import CourseDetails from "./pages/CourseDetails";
 import Quiz from "./pages/Quiz";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
+import UserDetails from "./pages/UserDetails";
 import Step1Goals from "./pages/onboarding/Step1Goals";
 import Step2Users from "./pages/onboarding/Step2Users";
 import Step3Industry from "./pages/onboarding/Step3Industry";
@@ -94,6 +96,7 @@ const AppRoutes = () => {
           <Route path="/quiz/:classId" element={<Quiz />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/users/:userId" element={<UserDetails />} />
         </Route>
         
         {/* Onboarding routes */}
