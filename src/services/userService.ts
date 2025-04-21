@@ -83,7 +83,7 @@ export const userService = {
 
   getUserById: async (userId: string): Promise<any> => {
     try {
-      const response = await api.get(`/users/${userId}`);
+      const response = await api.get(`/administrator/user/${userId}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -92,7 +92,7 @@ export const userService = {
 
   updateUserById: async (userId: string, payload: Partial<CreateUserPayload>): Promise<any> => {
     try {
-      const response = await api.put(`/users/${userId}`, payload);
+      const response = await api.put(`/administrator/users/${userId}`, payload);
       return response.data;
     } catch (error) {
       throw error;
