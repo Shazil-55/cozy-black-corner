@@ -8,8 +8,8 @@ function Skeleton({
   return (
     <div
       className={cn(
-        // Update to a more prominent, professional grey (light and elegant)
-        "animate-pulse rounded-md bg-[#ECECEC] dark:bg-[#222328] border border-[#D1D1D1] dark:border-[#313136]",
+        // Update to a more prominent, professional grey color with better visibility
+        "animate-pulse rounded-md bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600",
         className
       )}
       {...props}

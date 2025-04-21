@@ -24,7 +24,7 @@ export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user, onUserUpdated })
     name: user.name,
     email: user.email,
     role: user.role,
-    status: user.status,
+    status: user.status as "Active" | "Inactive", // Fix the type here
   });
   const [saving, setSaving] = useState(false);
 
@@ -53,22 +53,33 @@ export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user, onUserUpdated })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Special handling for status field to ensure it only accepts valid values
+    if (name === "status") {
+      // Only allow "Active" or "Inactive" values
+      const validStatus = value === "Active" || value === "Inactive" ? value : user.status;
+      setFormData(prev => ({ ...prev, [name]: validStatus }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Update user by id, only pass editable fields
-      await userService.updateUserById(user.id, {
+      // Ensure status is correctly typed before sending to API
+      const updatedData = {
         name: formData.name,
         email: formData.email,
         role: formData.role,
-        status: formData.status,
-      });
+        status: formData.status as "Active" | "Inactive",
+      };
+      
+      // Update user by id, only pass editable fields
+      await userService.updateUserById(user.id, updatedData);
       toast.success("User updated successfully!");
       setEditMode(false);
-      if (onUserUpdated) onUserUpdated(formData);
+      if (onUserUpdated) onUserUpdated(updatedData);
     } catch (error: any) {
       toast.error("Failed to update user", { description: error?.message });
     }
@@ -136,13 +147,16 @@ export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user, onUserUpdated })
             <div>
               <h4 className="text-sm font-medium text-muted-foreground">Status</h4>
               {editMode ? (
-                <Input
+                <select
                   name="status"
                   value={formData.status}
-                  onChange={handleInputChange}
-                  className="text-base"
+                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as "Active" | "Inactive" }))}
+                  className="w-full p-2 border rounded-md text-base"
                   required
-                />
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
               ) : (
                 <Badge 
                   variant={user.status === "Active" ? "default" : "outline"}
