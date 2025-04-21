@@ -2,7 +2,7 @@
 import React from "react";
 import { ApiUser } from "@/services/userService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
 interface UserInfoTabProps {
@@ -10,8 +10,29 @@ interface UserInfoTabProps {
 }
 
 export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user }) => {
-  const registrationDate = new Date(user.registrationDate);
-  const timeAgo = formatDistanceToNow(registrationDate, { addSuffix: true });
+  // Safely parse the date and provide a fallback for invalid dates
+  const formatDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      
+      if (!isValid(date)) {
+        return "Invalid date";
+      }
+      
+      const formattedDate = new Intl.DateTimeFormat('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }).format(date);
+      
+      const timeAgo = formatDistanceToNow(date, { addSuffix: true });
+      
+      return `${formattedDate} (${timeAgo})`;
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Unknown date";
+    }
+  };
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -57,11 +78,7 @@ export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user }) => {
           <div className="grid grid-cols-1 gap-4">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground">Registration Date</h4>
-              <p className="text-base">{new Intl.DateTimeFormat('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                }).format(registrationDate)} ({timeAgo})</p>
+              <p className="text-base">{formatDate(user.registrationDate)}</p>
             </div>
             
             {user.role === "Learner" && (
@@ -70,8 +87,6 @@ export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user }) => {
                 <p className="text-base">{user.parentName || "No parent assigned"}</p>
               </div>
             )}
-            
-            {/* Additional account details can be added here */}
           </div>
         </CardContent>
       </Card>

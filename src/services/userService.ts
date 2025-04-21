@@ -1,4 +1,3 @@
-
 import api from './api';
 import { z } from 'zod';
 
@@ -44,6 +43,31 @@ export interface ApiUser {
   parentId?: string;
 }
 
+// Updated interface to match the actual API response
+export interface UserDetailsResponse {
+  data: {
+    info: {
+      id: string;
+      email: string;
+      name: string;
+      role: string;
+      createdAt: string;
+      updatedAt: string;
+      username: string | null;
+      domain: string | null;
+      portalUsers: string | null;
+      industry: string | null;
+      profileImage: string | null;
+      bio: string | null;
+      mainGoal: string[] | null;
+      status: string;
+      parentId: string | null;
+    };
+    groups: any[]; // Can be made more specific based on actual data structure
+    courses: any[]; // Can be made more specific based on actual data structure
+  }
+}
+
 export const userService = {
   updateUser: async (payload: UpdateUserPayload): Promise<any> => {
     try {
@@ -81,9 +105,28 @@ export const userService = {
     }
   },
 
-  getUserById: async (userId: string): Promise<any> => {
+  getUserById: async (userId: string): Promise<ApiUser> => {
     try {
-      const response = await api.get(`/administrator/user/${userId}`);
+      const response = await api.get<UserDetailsResponse>(`/administrator/user/${userId}`);
+      // Transform the response to match the ApiUser format expected by components
+      return {
+        id: response.data.data.info.id,
+        name: response.data.data.info.name,
+        email: response.data.data.info.email,
+        role: response.data.data.info.role,
+        status: response.data.data.info.status,
+        registrationDate: response.data.data.info.createdAt,
+        parentId: response.data.data.info.parentId || undefined,
+        parentName: undefined // We don't have this info in the response
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getUserDetailsById: async (userId: string): Promise<UserDetailsResponse> => {
+    try {
+      const response = await api.get<UserDetailsResponse>(`/administrator/user/${userId}`);
       return response.data;
     } catch (error) {
       throw error;

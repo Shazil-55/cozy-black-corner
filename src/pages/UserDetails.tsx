@@ -4,7 +4,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit, UserPlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { userService, ApiUser } from "@/services/userService";
+import { userService, ApiUser, UserDetailsResponse } from "@/services/userService";
 import { LoadingState } from "@/components/LoadingState";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,6 +18,7 @@ const UserDetails = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const [user, setUser] = useState<ApiUser | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetailsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>("info");
 
@@ -28,7 +29,10 @@ const UserDetails = () => {
       try {
         setLoading(true);
         const userData = await userService.getUserById(userId);
+        const detailsData = await userService.getUserDetailsById(userId);
+        
         setUser(userData);
+        setUserDetails(detailsData);
       } catch (error) {
         toast.error("Failed to load user", {
           description: error instanceof Error ? error.message : "Unknown error occurred",
@@ -70,7 +74,7 @@ const UserDetails = () => {
     );
   }
 
-  if (!user) {
+  if (!user || !userDetails) {
     return (
       <div className="flex flex-col items-center justify-center h-96">
         <h2 className="text-2xl font-bold mb-4">User not found</h2>
