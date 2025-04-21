@@ -54,14 +54,11 @@ export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user, onUserUpdated })
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
-    // Special handling for status field to ensure it only accepts valid values
-    if (name === "status") {
-      // Only allow "Active" or "Inactive" values
-      const validStatus = value === "Active" || value === "Inactive" ? value : user.status;
-      setFormData(prev => ({ ...prev, [name]: validStatus }));
-    } else {
+    // For all fields except status, we can just update directly
+    if (name !== "status") {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+    // We don't handle status here since we're using a select element for it now
   };
 
   const handleSave = async () => {
@@ -150,7 +147,13 @@ export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user, onUserUpdated })
                 <select
                   name="status"
                   value={formData.status}
-                  onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as "Active" | "Inactive" }))}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Ensure we only set "Active" or "Inactive"
+                    if (value === "Active" || value === "Inactive") {
+                      setFormData(prev => ({ ...prev, status: value }));
+                    }
+                  }}
                   className="w-full p-2 border rounded-md text-base"
                   required
                 >
