@@ -1,18 +1,17 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, UserPlus } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { userService, ApiUser, UserDetailsResponse } from "@/services/userService";
 import { LoadingState } from "@/components/LoadingState";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserInfoTab } from "@/components/users/UserInfoTab";
 import { UserCoursesTab } from "@/components/users/UserCoursesTab";
 import { UserGroupsTab } from "@/components/users/UserGroupsTab";
+import { toast } from "sonner";
 
 const UserDetails = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -88,35 +87,27 @@ const UserDetails = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" asChild>
-            <Link to="/users" aria-label="Back to users">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">{user.name}</h1>
-              <Badge 
-                variant={user.status === "Active" ? "default" : "outline"}
-                className={user.status === "Active"
-                  ? "bg-green-100 text-green-800" 
-                  : "bg-gray-100 text-gray-800"
-                }
-              >
-                {user.status}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground">{user.email}</p>
-          </div>
-        </div>
-        
-        <Button className="hidden sm:flex">
-          <Edit className="mr-2 h-4 w-4" />
-          Edit user
+      <div className="flex items-center gap-4">
+        <Button variant="outline" size="icon" asChild>
+          <Link to="/users" aria-label="Back to users">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
         </Button>
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">{user.name}</h1>
+            <Badge 
+              variant={user.status === "Active" ? "default" : "outline"}
+              className={user.status === "Active"
+                ? "bg-green-100 text-green-800" 
+                : "bg-gray-100 text-gray-800"
+              }
+            >
+              {user.status}
+            </Badge>
+          </div>
+          <p className="text-muted-foreground">{user.email}</p>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -161,3 +152,4 @@ const UserDetails = () => {
 };
 
 export default UserDetails;
+

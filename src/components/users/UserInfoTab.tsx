@@ -4,6 +4,8 @@ import { ApiUser } from "@/services/userService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDistanceToNow, parseISO, isValid } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 
 interface UserInfoTabProps {
   user: ApiUser;
@@ -33,12 +35,16 @@ export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user }) => {
       return "Unknown date";
     }
   };
-  
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between p-6 border-b">
           <CardTitle className="text-lg">Basic Information</CardTitle>
+          <Button className="ml-auto" variant="default">
+            <Edit className="w-4 h-4 mr-2" />
+            Edit
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -93,3 +99,4 @@ export const UserInfoTab: React.FC<UserInfoTabProps> = ({ user }) => {
     </div>
   );
 };
+

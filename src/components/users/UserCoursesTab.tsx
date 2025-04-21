@@ -11,29 +11,21 @@ interface UserCoursesTabProps {
 export const UserCoursesTab: React.FC<UserCoursesTabProps> = ({ userId }) => {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
         <h2 className="text-xl font-medium">Enrolled Courses</h2>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
           Enroll to course
         </Button>
       </div>
-      
-      <Card className="bg-white border border-gray-200">
-        <CardContent className="p-0">
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-64 h-64 mb-6">
-              <img 
-                src="/public/lovable-uploads/9478ac6d-69e2-405f-b0a2-08927fd2e899.png" 
-                alt="No courses found" 
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <h3 className="text-xl font-bold mb-3">No results found</h3>
-            <CardDescription className="text-center mb-6">
-              Please try again with a different keyword or filter.
+      <Card>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-14">
+            <h3 className="text-lg font-semibold mb-1 text-gray-900">No enrolled courses</h3>
+            <CardDescription className="text-center mb-4 max-w-md">
+              Assign courses to this user from the available list or click below to enroll directly.
             </CardDescription>
-            <Button>
+            <Button variant="outline">
               <PlusCircle className="mr-2 h-4 w-4" />
               Enroll to course
             </Button>
