@@ -39,7 +39,7 @@ const Categories = () => {
     queryKey: ['categories'],
     queryFn: async () => {
       const response = await api.get('/administrator/categories');
-      return response.data;
+      return response.data.data;
     }
   });
 

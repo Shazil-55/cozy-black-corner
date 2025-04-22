@@ -135,7 +135,7 @@ export const userService = {
 
   updateUserById: async (userId: string, payload: Partial<CreateUserPayload>): Promise<any> => {
     try {
-      const response = await api.put(`/administrator/users/${userId}`, payload);
+      const response = await api.put(`/administrator/user/${userId}`, payload);
       return response.data;
     } catch (error) {
       throw error;
