@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Plus, Edit, Trash2, Search, SlidersHorizontal } from 'lucide-react';
+import { Plus, Edit, Search, SlidersHorizontal, ArrowUpDown, MoreHorizontal, Trash } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Table,
@@ -19,8 +19,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { LoadingState } from "@/components/LoadingState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +29,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { LoadingState } from "@/components/LoadingState";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import api from "@/services/api";
 
 interface Category {
@@ -45,6 +57,8 @@ const Categories = () => {
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
   const [categoryName, setCategoryName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "id">("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const queryClient = useQueryClient();
 
   // Fetch categories
@@ -108,6 +122,23 @@ const Categories = () => {
     }
   });
 
+  const handleSort = () => {
+    setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+  };
+
+  const sortedAndFilteredCategories = React.useMemo(() => {
+    if (!categories) return [];
+    
+    let filtered = categories.filter((category: Category) =>
+      category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    return filtered.sort((a: Category, b: Category) => {
+      const compareResult = a.name.localeCompare(b.name);
+      return sortDirection === "asc" ? compareResult : -compareResult;
+    });
+  }, [categories, searchTerm, sortDirection]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!categoryName.trim()) {
@@ -145,10 +176,6 @@ const Categories = () => {
     setCategoryName("");
   };
 
-  const filteredCategories = categories?.filter((category: Category) => 
-    category.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   if (isLoading) {
     return (
       <div className="container mx-auto py-10">
@@ -185,47 +212,71 @@ const Categories = () => {
         </Button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border shadow-sm">
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="text-right w-[100px]">Actions</TableHead>
+              <TableHead className="w-[80%]">
+                <Button 
+                  variant="ghost" 
+                  onClick={handleSort}
+                  className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
+                >
+                  Name
+                  <ArrowUpDown className="h-3.5 w-3.5" />
+                </Button>
+              </TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredCategories?.length > 0 ? (
-              filteredCategories.map((category: Category) => (
+            {sortedAndFilteredCategories.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={2} className="text-center h-24 text-muted-foreground">
+                  No categories found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              sortedAndFilteredCategories.map((category: Category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(category)}
-                      >
-                        <Edit className="h-4 w-4" />
-                        <span className="sr-only">Edit</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(category.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                        <span className="sr-only">Delete</span>
-                      </Button>
-                    </div>
+                    <TooltipProvider>
+                      <DropdownMenu>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                className="h-8 w-8 p-0"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Actions</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(category)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => handleDelete(category.id)}
+                            className="text-red-600"
+                          >
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TooltipProvider>
                   </TableCell>
                 </TableRow>
               ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={2} className="text-center py-6 text-muted-foreground">
-                  No categories found
-                </TableCell>
-              </TableRow>
             )}
           </TableBody>
         </Table>
