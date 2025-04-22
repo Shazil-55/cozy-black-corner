@@ -1,4 +1,3 @@
-
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -30,11 +29,10 @@ import UserDetails from "./pages/UserDetails";
 import Step1Goals from "./pages/onboarding/Step1Goals";
 import Step2Users from "./pages/onboarding/Step2Users";
 import Step3Industry from "./pages/onboarding/Step3Industry";
+import Categories from "./pages/Categories";
 
-// Create a new QueryClient instance
 const queryClient = new QueryClient();
 
-// Main App component
 const App = () => {
   return (
     <BrowserRouter>
@@ -75,22 +73,20 @@ const App = () => {
   );
 };
 
-// Component that handles routes and authentication
 const AppRoutes = () => {
-  // Initialize the socket progress hook at the app level
   useSocketProgress();
   const { isAuthenticated, isLoading } = useAuth();
   
   return (
     <>
       <Routes>
-        {/* Protected routes - Main Layout */}
         <Route element={<PrivateRoute><MainLayout /></PrivateRoute>}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
           <Route path="/learner-dashboard" element={<LearnerDashboard />} />
           <Route path="/upload-syllabus" element={<UploadSyllabus />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/categories" element={<Categories />} />
           <Route path="/course/:courseId" element={<CourseDetails />} />
           <Route path="/class/:moduleId/:classId" element={<ClassDetails />} />
           <Route path="/quiz/:classId" element={<Quiz />} />
@@ -99,25 +95,21 @@ const AppRoutes = () => {
           <Route path="/users/:userId" element={<UserDetails />} />
         </Route>
         
-        {/* Onboarding routes */}
         <Route path="/onboarding/step1" element={<PrivateRoute><Step1Goals /></PrivateRoute>} />
         <Route path="/onboarding/step2" element={<PrivateRoute><Step2Users /></PrivateRoute>} />
         <Route path="/onboarding/step3" element={<PrivateRoute><Step3Industry /></PrivateRoute>} />
         
-        {/* Public routes */}
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
         <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
         
-        {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
 };
 
-// Private route component to handle authentication
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
@@ -142,7 +134,6 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Public route that redirects authenticated users
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   

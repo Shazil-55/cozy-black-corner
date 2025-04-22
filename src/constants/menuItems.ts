@@ -1,4 +1,3 @@
-
 import { 
   Home, Users, LayoutGrid, Settings, HelpCircle, BookText, 
   Store, UsersRound, GitBranch, Zap, Bell, BarChart, 
@@ -17,6 +16,7 @@ export const adminMenuItems: MenuItem[] = [
   { title: "Users", icon: Users, url: "/users" },
   { title: "Courses", icon: LayoutGrid, url: "/courses" },
   { title: "Course store", icon: Store, url: "/course-store" },
+  { title: "Categories", icon: LayoutGrid, url: "/categories" },
   { title: "Groups", icon: UsersRound, url: "/groups" },
   { title: "Branches", icon: GitBranch, url: "/branches" },
   { title: "Automations", icon: Zap, url: "/automations" },
