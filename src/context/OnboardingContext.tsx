@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth, AuthContext } from './AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 import { userService } from '../services/userService';
 import { toast } from 'sonner';
 
@@ -32,7 +32,19 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [mainGoal, setMainGoal] = useState<string | null>(null);
   const [userRange, setUserRange] = useState<string | null>(null);
   const [industry, setIndustry] = useState<string | null>(null);
-  const navigate = useNavigate();
+  
+  // Use a try-catch for router hooks since we might be outside a router context
+  let navigate = undefined;
+  let location = undefined;
+  
+  try {
+    // This will throw an error if outside router context
+    navigate = useNavigate();
+    location = useLocation();
+  } catch (error) {
+    // We're outside of a router context, navigate will remain undefined
+    console.log("Router not available yet, navigation features disabled");
+  }
   
   // Use useAuth directly instead of accessing the context
   const auth = useAuth();
@@ -57,17 +69,18 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, []);
 
   // Safe reference to refreshUserData
-  const refreshUserData = auth.refreshUserData;
+  const refreshUserData = auth?.refreshUserData;
 
   // Redirect newly registered users to onboarding
   useEffect(() => {
-    if (auth.isAuthenticated && !isOnboardingComplete) {
+    // Only attempt navigation if we have navigate function and auth is initialized
+    if (navigate && auth?.isAuthenticated && !isOnboardingComplete) {
       // Check if we're not already on an onboarding page
-      if (!window.location.pathname.includes('/onboarding')) {
+      if (location && !location.pathname.includes('/onboarding')) {
         navigate('/onboarding/step1');
       }
     }
-  }, [auth.isAuthenticated, isOnboardingComplete, navigate]);
+  }, [auth?.isAuthenticated, isOnboardingComplete, navigate, location]);
 
   const completeOnboarding = async () => {
     try {
@@ -89,6 +102,11 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       localStorage.setItem('onboardingComplete', 'true');
       setIsOnboardingComplete(true);
       toast.success('Profile updated successfully!');
+      
+      // Only navigate if we have the navigate function
+      if (navigate) {
+        navigate('/');
+      }
     } catch (error) {
       console.error('Failed to complete onboarding:', error);
       toast.error('Failed to save your preferences. Please try again.');

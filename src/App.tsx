@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
@@ -43,8 +43,44 @@ import MainLayout from "./layouts/MainLayout";
 // Auth protection wrapper
 import { AuthLayout } from "./components/auth/AuthLayout";
 
-// Custom hooks
-import { useLocalStorage } from "./hooks/useLocalStorage";
+// Create a custom hook for localStorage
+const useLocalStorage = <T,>(
+  key: string, 
+  initialValue: T
+): [T, (value: T) => void] => {
+  // Get from local storage then parse stored json or return initialValue
+  const readValue = (): T => {
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.warn(`Error reading localStorage key "${key}":`, error);
+      return initialValue;
+    }
+  };
+
+  // State to store our value
+  const [storedValue, setStoredValue] = useState<T>(readValue);
+
+  // Return a wrapped version of useState's setter function that persists the new value to localStorage
+  const setValue = (value: T): void => {
+    try {
+      // Save state
+      setStoredValue(value);
+      // Save to local storage
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(value));
+      }
+    } catch (error) {
+      console.warn(`Error setting localStorage key "${key}":`, error);
+    }
+  };
+
+  return [storedValue, setValue];
+};
 
 import "./App.css";
 
@@ -56,6 +92,20 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// Define AuthContextType to match what's expected
+interface AuthContextType {
+  isAuthenticated: boolean;
+  user: any;
+  login: (emailOrUsername: string, password: string, domain?: string) => Promise<boolean>;
+  logout: () => void;
+  register?: (name: string, email: string, password: string, username: string, domain: string, profileImage?: string) => Promise<boolean>;
+  forgotPassword?: (email: string) => Promise<boolean>;
+  resetPassword?: (token: string, newPassword: string) => Promise<boolean>;
+  updateUserData?: (userData: any) => Promise<boolean>;
+  refreshUserData?: () => Promise<boolean>;
+  isLoading?: boolean;
+}
 
 function App() {
   // Mock authentication state (replace with actual auth logic)
@@ -85,6 +135,47 @@ function App() {
     }
   };
 
+  const register = async (name: string, email: string, password: string, username: string, domain: string, profileImage?: string): Promise<boolean> => {
+    try {
+      // Mock registration
+      setUser({
+        id: "user-123",
+        name: name,
+        email: email,
+        username: username,
+        role: "admin",
+        profileImage: profileImage
+      });
+      setToken("mock-token-123");
+      setIsAuthenticated(true);
+      return true;
+    } catch (error) {
+      console.error("Registration failed:", error);
+      return false;
+    }
+  };
+
+  const forgotPassword = async (email: string): Promise<boolean> => {
+    // Mock implementation
+    return true;
+  };
+
+  const resetPassword = async (token: string, newPassword: string): Promise<boolean> => {
+    // Mock implementation
+    return true;
+  };
+
+  const updateUserData = async (userData: any): Promise<boolean> => {
+    // Mock implementation
+    setUser({...user, ...userData});
+    return true;
+  };
+
+  const refreshUserData = async (): Promise<boolean> => {
+    // Mock implementation
+    return true;
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -102,13 +193,26 @@ function App() {
   // Get user role from stored user data
   const role = user?.role || "visitor";
 
+  const authContextValue: AuthContextType = {
+    isAuthenticated,
+    user,
+    login,
+    logout,
+    register,
+    forgotPassword,
+    resetPassword,
+    updateUserData,
+    refreshUserData,
+    isLoading: false
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
-          <RoleProvider>
-            <OnboardingProvider>
-              <BrowserRouter>
+        <AuthContext.Provider value={authContextValue}>
+          <BrowserRouter>
+            <RoleProvider initialRole={role}>
+              <OnboardingProvider>
                 <Routes>
                   {/* Public routes */}
                   <Route element={<MainLayout />}>
@@ -131,9 +235,9 @@ function App() {
                   >
                     {/* Onboarding routes */}
                     <Route path="/onboarding">
-                      <Route path="goals" element={<Step1Goals />} />
-                      <Route path="users" element={<Step2Users />} />
-                      <Route path="industry" element={<Step3Industry />} />
+                      <Route path="step1" element={<Step1Goals />} />
+                      <Route path="step2" element={<Step2Users />} />
+                      <Route path="step3" element={<Step3Industry />} />
                     </Route>
 
                     {/* Dashboard routes */}
@@ -170,10 +274,10 @@ function App() {
                   <Route path="/404" element={<NotFound />} />
                   <Route path="*" element={<Navigate to="/404" replace />} />
                 </Routes>
-              </BrowserRouter>
-              <Toaster position="top-right" />
-            </OnboardingProvider>
-          </RoleProvider>
+                <Toaster position="top-right" />
+              </OnboardingProvider>
+            </RoleProvider>
+          </BrowserRouter>
         </AuthContext.Provider>
       </ThemeProvider>
     </QueryClientProvider>

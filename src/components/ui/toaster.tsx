@@ -23,14 +23,14 @@ export function Toaster() {
             {...props}
             className={`${props.className} ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-900'} relative`}
           >
-            <div className="grid gap-1 pr-6">
+            <div className="grid gap-1 pr-8">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
             {action}
-            <ToastClose className="absolute top-2 right-2" />
+            <ToastClose className="absolute top-3 right-3" />
           </Toast>
         )
       })}
