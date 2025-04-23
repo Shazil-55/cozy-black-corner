@@ -25,6 +25,12 @@ import { CourseUsersTab } from "@/components/courses/CourseUsersTab";
 import { CourseFilesTab } from "@/components/courses/CourseFilesTab";
 import { CourseGroupsTab } from "@/components/courses/CourseGroupsTab";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CourseDetail {
   id: string;

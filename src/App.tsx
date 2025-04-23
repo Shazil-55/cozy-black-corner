@@ -1,8 +1,8 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toaster";
 
 import { AuthContext } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -43,44 +43,8 @@ import MainLayout from "./layouts/MainLayout";
 // Auth protection wrapper
 import { AuthLayout } from "./components/auth/AuthLayout";
 
-// Create a custom hook for localStorage
-const useLocalStorage = <T,>(
-  key: string, 
-  initialValue: T
-): [T, (value: T) => void] => {
-  // Get from local storage then parse stored json or return initialValue
-  const readValue = (): T => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
-    }
-  };
-
-  // State to store our value
-  const [storedValue, setStoredValue] = useState<T>(readValue);
-
-  // Return a wrapped version of useState's setter function that persists the new value to localStorage
-  const setValue = (value: T): void => {
-    try {
-      // Save state
-      setStoredValue(value);
-      // Save to local storage
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(value));
-      }
-    } catch (error) {
-      console.warn(`Error setting localStorage key "${key}":`, error);
-    }
-  };
-
-  return [storedValue, setValue];
-};
+// Custom hooks
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 import "./App.css";
 
@@ -209,8 +173,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AuthContext.Provider value={authContextValue}>
-          <BrowserRouter>
+        <BrowserRouter>
+          <AuthContext.Provider value={authContextValue}>
             <RoleProvider initialRole={role}>
               <OnboardingProvider>
                 <Routes>
@@ -274,11 +238,11 @@ function App() {
                   <Route path="/404" element={<NotFound />} />
                   <Route path="*" element={<Navigate to="/404" replace />} />
                 </Routes>
-                <Toaster position="top-right" />
+                <Toaster />
               </OnboardingProvider>
             </RoleProvider>
-          </BrowserRouter>
-        </AuthContext.Provider>
+          </AuthContext.Provider>
+        </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>
   );

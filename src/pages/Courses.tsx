@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
@@ -438,14 +437,14 @@ const Courses: React.FC = () => {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8"
+                                    className="h-8 w-8 p-0"
                                     onClick={() => handlePreviewCourse(course.id)}
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Preview</p>
+                                  <p>Preview course</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -456,14 +455,14 @@ const Courses: React.FC = () => {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8"
+                                    className="h-8 w-8 p-0"
                                     onClick={() => handleEditCourse(course.id)}
                                   >
                                     <Pencil className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Edit</p>
+                                  <p>Edit course</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -474,14 +473,14 @@ const Courses: React.FC = () => {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                    className="h-8 w-8 p-0 text-red-600"
                                     onClick={() => openDeleteDialog(course.id)}
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Delete</p>
+                                  <p>Delete course</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -612,7 +611,7 @@ const Courses: React.FC = () => {
                         >
                           Updated On
                           <ArrowUpDown className="h-3.5 w-3.5" />
-                        </Button>
+                        </TableHead>
                       </TableHead>
                       <TableHead className="w-[10%] text-right">Actions</TableHead>
                     </TableRow>
