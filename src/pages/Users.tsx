@@ -189,20 +189,21 @@ const Users = () => {
           </Button>
         </div>
 
+        {/* Loading state updated here */}
         <TabsContent value="all" className="mt-0">
-          {renderUserTable()}
+          {isLoading ? <UserListSkeleton /> : renderUserTable()}
         </TabsContent>
         <TabsContent value="administrator" className="mt-0">
-          {renderUserTable()}
+          {isLoading ? <UserListSkeleton /> : renderUserTable()}
         </TabsContent>
         <TabsContent value="instructor" className="mt-0">
-          {renderUserTable()}
+          {isLoading ? <UserListSkeleton /> : renderUserTable()}
         </TabsContent>
         <TabsContent value="learner" className="mt-0">
-          {renderUserTable()}
+          {isLoading ? <UserListSkeleton /> : renderUserTable()}
         </TabsContent>
         <TabsContent value="parent" className="mt-0">
-          {renderUserTable()}
+          {isLoading ? <UserListSkeleton /> : renderUserTable()}
         </TabsContent>
       </Tabs>
 
@@ -269,5 +270,43 @@ const Users = () => {
     );
   }
 };
+
+/**
+ * Elegant skeleton for list view, inspired by reference screenshot.
+ */
+function UserListSkeleton() {
+  // Columns: Name, Email, Role, Registration, Status, Parent, ...
+  return (
+    <div className="rounded-xl border bg-white dark:bg-gray-900 animate-fade-in shadow-sm">
+      {/* Table head skeleton */}
+      <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex gap-8 w-full">
+          <div className="h-5 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
+          <div className="h-5 w-40 bg-slate-200 dark:bg-slate-700 rounded" />
+          <div className="h-5 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
+          <div className="h-5 w-28 bg-slate-200 dark:bg-slate-700 rounded" />
+          <div className="h-5 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+          <div className="h-5 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+        </div>
+      </div>
+      {/* Table rows skeleton */}
+      <div>
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-8 px-6 py-3 border-b last:border-0"
+          >
+            <div className="h-4 w-32 bg-slate-100 dark:bg-slate-800 rounded" />
+            <div className="h-4 w-40 bg-slate-100 dark:bg-slate-800 rounded" />
+            <div className="h-4 w-28 bg-slate-100 dark:bg-slate-800 rounded" />
+            <div className="h-4 w-28 bg-slate-100 dark:bg-slate-800 rounded" />
+            <div className="h-4 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+            <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default Users;
