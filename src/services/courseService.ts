@@ -117,6 +117,48 @@ export interface ClassDetailsResponse {
 	};
 }
 
+export interface CourseUser {
+	id: string;
+	name: string;
+	role: "learner" | "instructor";
+	email: string;
+	enrollmentDate: string;
+	completionDate: string | null;
+	expirationDate: string | null;
+	progress: number;
+}
+
+export interface CourseFile {
+	id: string;
+	name: string;
+	type: string;
+	size: number;
+	url: string;
+	uploadedBy: string;
+	uploadedAt: string;
+}
+
+export interface CourseGroup {
+	id: string;
+	name: string;
+	description: string;
+	membersCount: number;
+	createdAt: string;
+}
+
+export interface CourseDetail {
+	id: string;
+	name: string;
+	description: string;
+	category: string;
+	price?: number;
+	createdAt: string;
+	updatedAt: string;
+	users: CourseUser[];
+	files: CourseFile[];
+	groups: CourseGroup[];
+}
+
 export const courseService = {
 	async getCourseDetails(courseId: string): Promise<CourseDetailsResponse> {
 		try {
@@ -177,4 +219,78 @@ export const courseService = {
 			throw error;
 		}
 	},
+
+	// New methods for course detail page
+	async getCourseDetail(courseId: string): Promise<CourseDetail> {
+		try {
+			// This would be a real API call in a production application
+			// For now, simulate with mock data
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve({
+						id: courseId,
+						name: "Introduction to Programming",
+						description: "Learn the fundamentals of programming with this comprehensive course",
+						category: "Computer Science",
+						price: 99.99,
+						createdAt: new Date().toISOString(),
+						updatedAt: new Date().toISOString(),
+						users: Array(5).fill(0).map((_, i) => ({
+							id: `user-${i + 1}`,
+							name: `User ${i + 1}`,
+							role: i % 3 === 0 ? "instructor" : "learner",
+							email: `user${i + 1}@example.com`,
+							enrollmentDate: new Date().toISOString(),
+							completionDate: i % 4 === 0 ? new Date().toISOString() : null,
+							expirationDate: null,
+							progress: Math.floor(Math.random() * 100)
+						})),
+						files: Array(3).fill(0).map((_, i) => ({
+							id: `file-${i + 1}`,
+							name: `Course Material ${i + 1}.pdf`,
+							type: "application/pdf",
+							size: 1024 * 1024 * (i + 1),
+							url: "#",
+							uploadedBy: "Admin User",
+							uploadedAt: new Date().toISOString()
+						})),
+						groups: Array(2).fill(0).map((_, i) => ({
+							id: `group-${i + 1}`,
+							name: `Study Group ${i + 1}`,
+							description: `A study group for the course`,
+							membersCount: i + 5,
+							createdAt: new Date().toISOString()
+						}))
+					});
+				}, 500);
+			});
+		} catch (error) {
+			console.error("Error fetching course detail:", error);
+			throw error;
+		}
+	},
+
+	async enrollUserToCourse(courseId: string, userId: string): Promise<void> {
+		try {
+			// This would be a real API call in a production application
+			console.log(`Enrolling user ${userId} to course ${courseId}`);
+			await new Promise(resolve => setTimeout(resolve, 500));
+			return;
+		} catch (error) {
+			console.error("Error enrolling user to course:", error);
+			throw error;
+		}
+	},
+
+	async deleteCourse(courseId: string): Promise<void> {
+		try {
+			// Simulating an API call
+			await new Promise(resolve => setTimeout(resolve, 500));
+			console.log(`Deleting course ${courseId}`);
+			return;
+		} catch (error) {
+			console.error("Error deleting course:", error);
+			throw error;
+		}
+	}
 };

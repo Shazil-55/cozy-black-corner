@@ -1,3 +1,4 @@
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -22,6 +23,7 @@ import NotFound from "./pages/NotFound";
 import ClassDetails from "./pages/ClassDetails";
 import Courses from "./pages/Courses";
 import CourseDetails from "./pages/CourseDetails";
+import CourseDetail from "./pages/CourseDetail";
 import Quiz from "./pages/Quiz";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
@@ -87,7 +89,8 @@ const AppRoutes = () => {
           <Route path="/upload-syllabus" element={<UploadSyllabus />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/categories" element={<Categories />} />
-          <Route path="/course/:courseId" element={<CourseDetails />} />
+          <Route path="/course/:courseId" element={<CourseDetail />} />
+          <Route path="/course/:courseId/edit" element={<CourseDetails />} />
           <Route path="/class/:moduleId/:classId" element={<ClassDetails />} />
           <Route path="/quiz/:classId" element={<Quiz />} />
           <Route path="/profile" element={<Profile />} />

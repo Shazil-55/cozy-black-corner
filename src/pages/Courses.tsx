@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { 
@@ -10,7 +10,9 @@ import {
   Grid2X2, 
   List, 
   ArrowUpDown, 
-  MoreHorizontal, 
+  Eye,
+  Pencil,
+  Trash2, 
   Book 
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -33,20 +35,26 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import api from '@/services/api';
 import { LoadingState } from '@/components/LoadingState';
+import { courseService } from '@/services/courseService';
 
 interface SyllabusData {
   id: string;
@@ -65,14 +73,17 @@ interface CategoryData {
 }
 
 const Courses: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<keyof SyllabusData>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
   
   // Fetch courses
-  const { data: courses, isLoading: coursesLoading, error: coursesError } = useQuery({
+  const { data: courses, isLoading: coursesLoading, error: coursesError, refetch } = useQuery({
     queryKey: ['courses'],
     queryFn: async (): Promise<SyllabusData[]> => {
       try {
@@ -81,7 +92,7 @@ const Courses: React.FC = () => {
         return response.data.data.map((course: SyllabusData) => ({
           ...course,
           courseCode: `CRS-${Math.floor(Math.random() * 10000)}`,
-          category: ['Mathematics', 'English', 'Science', 'New Category'][Math.floor(Math.random() * 5)],
+          category: ['Mathematics', 'English', 'Science', 'Computer Science', 'Art'][Math.floor(Math.random() * 5)],
           price: Math.floor(Math.random() * 100) * 10 + 99
         }));
       } catch (error) {
@@ -180,6 +191,36 @@ const Courses: React.FC = () => {
     });
   }, [courses, searchTerm, activeTab, sortBy, sortDirection]);
   
+  const handlePreviewCourse = (courseId: string) => {
+    navigate(`/course/${courseId}`);
+  };
+
+  const handleEditCourse = (courseId: string) => {
+    navigate(`/course/${courseId}/edit`);
+  };
+
+  const openDeleteDialog = (courseId: string) => {
+    setCourseToDelete(courseId);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteCourse = async () => {
+    if (!courseToDelete) return;
+    
+    try {
+      await courseService.deleteCourse(courseToDelete);
+      toast.success("Course deleted successfully");
+      refetch();
+    } catch (error) {
+      toast.error("Failed to delete course", {
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setCourseToDelete(null);
+    }
+  };
+  
   const isLoading = coursesLoading || categoriesLoading;
   
   // Format price as currency
@@ -267,14 +308,18 @@ const Courses: React.FC = () => {
       </div>
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex items-center justify-between mb-4 overflow-x-auto pb-2">
-          <TabsList>
-            <TabsTrigger value="all" className="flex items-center">
+        <div className="flex items-center justify-between mb-6">
+          <TabsList className="h-10 p-1 bg-muted/30 rounded-xl">
+            <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all">
               <Book className="mr-2 h-4 w-4" />
               All Courses
             </TabsTrigger>
             {categories && categories.map((category) => (
-              <TabsTrigger key={category.id} value={category.name.toLowerCase()}>
+              <TabsTrigger 
+                key={category.id} 
+                value={category.name.toLowerCase()} 
+                className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all"
+              >
                 {category.name}
               </TabsTrigger>
             ))}
@@ -385,34 +430,61 @@ const Courses: React.FC = () => {
                         <TableCell>{formatPrice(course.price)}</TableCell>
                         <TableCell>{format(new Date(course.updatedAt), 'MMM d, yyyy')}</TableCell>
                         <TableCell className="text-right">
-                          <TooltipProvider>
-                            <DropdownMenu>
+                          <div className="flex justify-end gap-2">
+                            <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon"
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => handlePreviewCourse(course.id)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Actions</p>
+                                  <p>Preview course</p>
                                 </TooltipContent>
                               </Tooltip>
-                              <DropdownMenuContent align="end">
-                                <Link to={`/course/${course.id}`}>
-                                  <DropdownMenuItem>
-                                    <Book className="mr-2 h-4 w-4" />
-                                    View Course
-                                  </DropdownMenuItem>
-                                </Link>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TooltipProvider>
+                            </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => handleEditCourse(course.id)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Edit course</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 p-0 text-red-600"
+                                    onClick={() => openDeleteDialog(course.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Delete course</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -432,44 +504,60 @@ const Courses: React.FC = () => {
                 </div>
               ) : (
                 filteredAndSortedCourses.map((course) => (
-                  <Link 
-                    key={course.id} 
-                    to={`/course/${course.id}`}
-                  >
-                    <Card className="h-full transition-all duration-300 hover:shadow-md group">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="rounded-lg bg-blue-100 dark:bg-blue-900/20 p-2 mr-4">
-                            <Book className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {course.courseCode || "N/A"}
-                          </div>
+                  <Card key={course.id} className="h-full transition-all duration-300 hover:shadow-md group">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="rounded-lg bg-blue-100 dark:bg-blue-900/20 p-2 mr-4">
+                          <Book className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
-                        <CardTitle className="text-xl mt-4 group-hover:text-blue-600 transition-colors">
-                          {course.name}
-                        </CardTitle>
-                        <CardDescription>
-                          {course.category || "Uncategorized"}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="pb-4">
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="font-medium">{formatPrice(course.price)}</div>
-                          <div className="text-muted-foreground">
-                            Updated {format(new Date(course.updatedAt), 'MMM d, yyyy')}
-                          </div>
+                        <div className="text-xs text-muted-foreground">
+                          {course.courseCode || "N/A"}
                         </div>
-                      </CardContent>
-                      <CardFooter className="pt-0 border-t border-muted/40">
-                        <div className="w-full flex justify-end">
-                          <Button variant="ghost" size="sm" className="text-xs">
-                            View course 
-                          </Button>
+                      </div>
+                      <CardTitle className="text-xl mt-4 group-hover:text-blue-600 transition-colors">
+                        {course.name}
+                      </CardTitle>
+                      <CardDescription>
+                        {course.category || "Uncategorized"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="font-medium">{formatPrice(course.price)}</div>
+                        <div className="text-muted-foreground">
+                          Updated {format(new Date(course.updatedAt), 'MMM d, yyyy')}
                         </div>
-                      </CardFooter>
-                    </Card>
-                  </Link>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="pt-0 border-t border-muted/40 flex justify-between">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-xs"
+                        onClick={() => handlePreviewCourse(course.id)}
+                      >
+                        <Eye className="mr-1 h-3 w-3" /> Preview
+                      </Button>
+                      <div className="flex gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs"
+                          onClick={() => handleEditCourse(course.id)}
+                        >
+                          <Pencil className="mr-1 h-3 w-3" /> Edit
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                          onClick={() => openDeleteDialog(course.id)}
+                        >
+                          <Trash2 className="mr-1 h-3 w-3" /> Delete
+                        </Button>
+                      </div>
+                    </CardFooter>
+                  </Card>
                 ))
               )}
             </div>
@@ -544,34 +632,61 @@ const Courses: React.FC = () => {
                           <TableCell>{formatPrice(course.price)}</TableCell>
                           <TableCell>{format(new Date(course.updatedAt), 'MMM d, yyyy')}</TableCell>
                           <TableCell className="text-right">
-                            <TooltipProvider>
-                              <DropdownMenu>
+                            <div className="flex justify-end gap-2">
+                              <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon"
-                                        className="h-8 w-8 p-0"
-                                      >
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handlePreviewCourse(course.id)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Actions</p>
+                                    <p>Preview</p>
                                   </TooltipContent>
                                 </Tooltip>
-                                <DropdownMenuContent align="end">
-                                  <Link to={`/course/${course.id}`}>
-                                    <DropdownMenuItem>
-                                      <Book className="mr-2 h-4 w-4" />
-                                      View Course
-                                    </DropdownMenuItem>
-                                  </Link>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TooltipProvider>
+                              </TooltipProvider>
+                              
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={() => handleEditCourse(course.id)}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Edit</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                      onClick={() => openDeleteDialog(course.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Delete</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -591,44 +706,60 @@ const Courses: React.FC = () => {
                   </div>
                 ) : (
                   filteredAndSortedCourses.map((course) => (
-                    <Link 
-                      key={course.id} 
-                      to={`/course/${course.id}`}
-                    >
-                      <Card className="h-full transition-all duration-300 hover:shadow-md group">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="rounded-lg bg-blue-100 dark:bg-blue-900/20 p-2 mr-4">
-                              <Book className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {course.courseCode || "N/A"}
-                            </div>
+                    <Card key={course.id} className="h-full transition-all duration-300 hover:shadow-md group">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="rounded-lg bg-blue-100 dark:bg-blue-900/20 p-2 mr-4">
+                            <Book className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                           </div>
-                          <CardTitle className="text-xl mt-4 group-hover:text-blue-600 transition-colors">
-                            {course.name}
-                          </CardTitle>
-                          <CardDescription>
-                            {course.category || "Uncategorized"}
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pb-4">
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="font-medium">{formatPrice(course.price)}</div>
-                            <div className="text-muted-foreground">
-                              Updated {format(new Date(course.updatedAt), 'MMM d, yyyy')}
-                            </div>
+                          <div className="text-xs text-muted-foreground">
+                            {course.courseCode || "N/A"}
                           </div>
-                        </CardContent>
-                        <CardFooter className="pt-0 border-t border-muted/40">
-                          <div className="w-full flex justify-end">
-                            <Button variant="ghost" size="sm" className="text-xs">
-                              View course 
-                            </Button>
+                        </div>
+                        <CardTitle className="text-xl mt-4 group-hover:text-blue-600 transition-colors">
+                          {course.name}
+                        </CardTitle>
+                        <CardDescription>
+                          {course.category || "Uncategorized"}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="pb-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="font-medium">{formatPrice(course.price)}</div>
+                          <div className="text-muted-foreground">
+                            Updated {format(new Date(course.updatedAt), 'MMM d, yyyy')}
                           </div>
-                        </CardFooter>
-                      </Card>
-                    </Link>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="pt-0 border-t border-muted/40 flex justify-between">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs"
+                          onClick={() => handlePreviewCourse(course.id)}
+                        >
+                          <Eye className="mr-1 h-3 w-3" /> Preview
+                        </Button>
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs"
+                            onClick={() => handleEditCourse(course.id)}
+                          >
+                            <Pencil className="mr-1 h-3 w-3" /> Edit
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                            onClick={() => openDeleteDialog(course.id)}
+                          >
+                            <Trash2 className="mr-1 h-3 w-3" /> Delete
+                          </Button>
+                        </div>
+                      </CardFooter>
+                    </Card>
                   ))
                 )}
               </div>
@@ -636,6 +767,23 @@ const Courses: React.FC = () => {
           </TabsContent>
         ))}
       </Tabs>
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this course?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the course and remove all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCourse} className="bg-red-500 text-white hover:bg-red-600">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
