@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
@@ -611,7 +612,7 @@ const Courses: React.FC = () => {
                         >
                           Updated On
                           <ArrowUpDown className="h-3.5 w-3.5" />
-                        </TableHead>
+                        </Button>
                       </TableHead>
                       <TableHead className="w-[10%] text-right">Actions</TableHead>
                     </TableRow>
