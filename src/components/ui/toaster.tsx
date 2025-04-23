@@ -21,16 +21,16 @@ export function Toaster() {
           <Toast 
             key={id} 
             {...props}
-            className={`${props.className} ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-900'} relative`}
+            className={`${props.className} ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-900'}`}
           >
-            <div className="grid gap-1 pr-8">
+            <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
             {action}
-            <ToastClose className="absolute top-3 right-3" />
+            <ToastClose />
           </Toast>
         )
       })}
