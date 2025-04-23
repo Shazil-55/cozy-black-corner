@@ -120,16 +120,6 @@ export function UserNav() {
           <span>My profile</span>
         </DropdownMenuItem>
         
-        <DropdownMenuItem className="cursor-pointer">
-          <Monitor className="mr-2 h-4 w-4" />
-          <span>Go to legacy interface</span>
-        </DropdownMenuItem>
-        
-        <DropdownMenuItem className="cursor-pointer">
-          <HelpCircle className="mr-2 h-4 w-4" />
-          <span>Watch demo</span>
-        </DropdownMenuItem>
-        
         <DropdownMenuSeparator />
         
         <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>

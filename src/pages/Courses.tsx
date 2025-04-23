@@ -193,35 +193,45 @@ const Courses: React.FC = () => {
 
   // Render loading state
   if (isLoading) {
+    // Professional table skeleton for Courses list view
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-talentlms-darkBlue dark:text-white">Courses</h1>
+      <div className="rounded-md border bg-white dark:bg-gray-900 animate-fade-in">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <div className="h-6 w-48 bg-muted rounded animate-pulse" />
+          <div className="flex gap-2">
+            <div className="h-9 w-28 bg-muted rounded animate-pulse" />
+          </div>
         </div>
-        <div className="space-y-6">
-          <div className="flex items-center space-x-4">
-            <div className="h-10 w-36 bg-muted animate-pulse rounded"></div>
-            <div className="h-10 w-36 bg-muted animate-pulse rounded"></div>
-            <div className="h-10 w-36 bg-muted animate-pulse rounded"></div>
-          </div>
-          <div className="flex items-center space-x-4 mb-4">
-            <div className="h-10 w-full bg-muted animate-pulse rounded"></div>
-            <div className="h-10 w-10 bg-muted animate-pulse rounded"></div>
-            <div className="h-10 w-10 bg-muted animate-pulse rounded"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, index) => (
-              <div 
-                key={index} 
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-6 h-48 animate-pulse"
-              >
-                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-6"></div>
-                <div className="flex space-x-3">
-                  <div className="h-6 w-6 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-                </div>
+        {/* Tabs skeleton */}
+        <div className="pl-4 pt-4 flex gap-2">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-8 w-32 bg-muted rounded-xl animate-pulse" />
+          ))}
+        </div>
+        {/* Search & viewmode */}
+        <div className="px-4 py-2 flex items-center gap-2">
+          <div className="h-10 flex-1 rounded bg-muted animate-pulse" />
+          <div className="h-10 w-10 rounded bg-muted animate-pulse" />
+        </div>
+        {/* Table skeleton */}
+        <div className="px-4 pb-4">
+          <div className="min-w-full">
+            <div className="grid grid-cols-6 gap-6 py-3 border-b mb-2">
+              <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-16 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-12 bg-muted rounded animate-pulse" />
+            </div>
+            {[...Array(8)].map((_, idx) => (
+              <div key={idx} className="grid grid-cols-6 gap-6 items-center py-4 border-b">
+                <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-16 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                <div className="h-8 w-12 rounded-full bg-muted animate-pulse" />
               </div>
             ))}
           </div>
