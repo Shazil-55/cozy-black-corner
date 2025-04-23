@@ -73,7 +73,7 @@ const Categories = () => {
   // Add category mutation
   const addMutation = useMutation({
     mutationFn: async (name: string) => {
-      const response = await api.post('/category', { name });
+      const response = await api.post('/administrator/category', { name });
       return response.data;
     },
     onSuccess: () => {
@@ -90,7 +90,7 @@ const Categories = () => {
   // Update category mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const response = await api.put(`/category/${id}`, { name });
+      const response = await api.put(`/administrator/category/${id}`, { name });
       return response.data;
     },
     onSuccess: () => {
@@ -107,7 +107,7 @@ const Categories = () => {
   // Delete category mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await api.delete(`/category/${id}`);
+      const response = await api.delete(`/administrator/category/${id}`);
       return response.data;
     },
     onSuccess: () => {

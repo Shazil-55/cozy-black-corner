@@ -66,7 +66,7 @@ interface CategoryData {
 
 const Courses: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<keyof SyllabusData>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -81,7 +81,7 @@ const Courses: React.FC = () => {
         return response.data.data.map((course: SyllabusData) => ({
           ...course,
           courseCode: `CRS-${Math.floor(Math.random() * 10000)}`,
-          category: ['Mathematics', 'English', 'Science', 'History', 'Computer Science'][Math.floor(Math.random() * 5)],
+          category: ['Mathematics', 'English', 'Science', 'New Category'][Math.floor(Math.random() * 5)],
           price: Math.floor(Math.random() * 100) * 10 + 99
         }));
       } catch (error) {
