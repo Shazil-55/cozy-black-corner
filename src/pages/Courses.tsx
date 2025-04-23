@@ -126,6 +126,21 @@ const Courses: React.FC = () => {
     }
   };
 
+  // IMPORTANT: Move all useMemo hooks outside of any conditional rendering to ensure consistent hook order
+  // Get unique categories from courses for tabs
+  const uniqueCategories = React.useMemo(() => {
+    if (!courses) return [];
+    
+    const uniqueCats = new Set<string>();
+    courses.forEach((course) => {
+      if (course.category) {
+        uniqueCats.add(course.category);
+      }
+    });
+    
+    return Array.from(uniqueCats);
+  }, [courses]);
+
   // Filter and sort courses based on search term, active tab, and sort parameters
   const filteredAndSortedCourses = React.useMemo(() => {
     if (!courses) return [];
@@ -167,6 +182,15 @@ const Courses: React.FC = () => {
   
   const isLoading = coursesLoading || categoriesLoading;
   
+  // Format price as currency
+  const formatPrice = (price?: number) => {
+    if (price === undefined) return "-";
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(price);
+  };
+
   // Render loading state
   if (isLoading) {
     return (
@@ -220,29 +244,6 @@ const Courses: React.FC = () => {
       </div>
     );
   }
-
-  // Format price as currency
-  const formatPrice = (price?: number) => {
-    if (price === undefined) return "-";
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price);
-  };
-  
-  // Get unique categories from courses for tabs
-  const uniqueCategories = React.useMemo(() => {
-    if (!courses) return [];
-    
-    const uniqueCats = new Set<string>();
-    courses.forEach((course) => {
-      if (course.category) {
-        uniqueCats.add(course.category);
-      }
-    });
-    
-    return Array.from(uniqueCats);
-  }, [courses]);
 
   return (
     <div className="space-y-6">
