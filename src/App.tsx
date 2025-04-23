@@ -44,7 +44,7 @@ import MainLayout from "./layouts/MainLayout";
 import { AuthLayout } from "./components/auth/AuthLayout";
 
 // Custom hooks
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 
 import "./App.css";
 
@@ -67,10 +67,22 @@ function App() {
   const [user, setUser] = useLocalStorage("user", null);
   const [token, setToken] = useLocalStorage("token", null);
 
-  const login = (userData: any, authToken: string) => {
-    setUser(userData);
-    setToken(authToken);
-    setIsAuthenticated(true);
+  const login = async (emailOrUsername: string, password: string, domain?: string): Promise<boolean> => {
+    try {
+      // Mock login for now - this would be replaced with an actual API call
+      setUser({
+        id: "user-123",
+        name: emailOrUsername.includes('@') ? emailOrUsername.split('@')[0] : emailOrUsername,
+        email: emailOrUsername,
+        role: "admin"
+      });
+      setToken("mock-token-123");
+      setIsAuthenticated(true);
+      return true;
+    } catch (error) {
+      console.error("Login failed:", error);
+      return false;
+    }
   };
 
   const logout = () => {
@@ -94,7 +106,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
-          <RoleProvider initialRole={role}>
+          <RoleProvider>
             <OnboardingProvider>
               <BrowserRouter>
                 <Routes>

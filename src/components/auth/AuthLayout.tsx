@@ -1,17 +1,20 @@
 
 import React from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+
 interface AuthLayoutProps {
   children: React.ReactNode;
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
 }
+
 export const AuthLayout = ({
   children,
-  title,
-  subtitle
+  title = "Authentication",
+  subtitle = "Secure access to your account"
 }: AuthLayoutProps) => {
-  return <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
+  return (
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background dashboard mockup */}
       <div className="absolute inset-0 w-full h-full opacity-30 dark:opacity-10">
         <div className="absolute top-0 left-0 right-0 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"></div>
@@ -22,11 +25,11 @@ export const AuthLayout = ({
         <div className="absolute top-28 right-8 w-56 h-56 rounded-full overflow-hidden">
           <div className="absolute inset-0 border-4 border-[#1B68B3]/20 dark:border-[#1B68B3]/40 bg-blue-500"></div>
           <div className="absolute inset-0 border-t-4 border-r-4 border-[#1B68B3] dark:border-[#1B68B3]" style={{
-          clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 0)'
-        }}></div>
+            clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 0)'
+          }}></div>
           <div className="absolute inset-0 border-b-4 border-l-4 border-[#FF7043] dark:border-[#FF7043]" style={{
-          clipPath: 'polygon(0 100%, 100% 100%, 0 100%, 0 0)'
-        }}></div>
+            clipPath: 'polygon(0 100%, 100% 100%, 0 100%, 0 0)'
+          }}></div>
         </div>
         
         {/* Mock cards grid */}
@@ -76,5 +79,6 @@ export const AuthLayout = ({
           {children}
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
