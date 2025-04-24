@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
@@ -14,6 +15,8 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "@/components/ui/icons";
 import { AddParentDialog } from "@/components/users/AddParentDialog";
+import { toast } from "@/hooks/use-toast";
+import { userService } from "@/services/userService";
 
 const LearnerDashboard = () => {
   const { user } = useAuth();
@@ -29,6 +32,25 @@ const LearnerDashboard = () => {
   });
 
   const learnerData = dashboardData?.data as LearnerDashboardData | undefined;
+
+  // Handle parent creation
+  const handleAddParent = async (parentData) => {
+    try {
+      await userService.createParent(parentData);
+      toast({
+        title: "Success",
+        description: "Parent added successfully",
+        variant: "default",
+      });
+      setIsAddParentOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add parent",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -113,17 +135,7 @@ const LearnerDashboard = () => {
       <AddParentDialog
         isOpen={isAddParentOpen}
         onClose={() => setIsAddParentOpen(false)}
-        onSubmit={async (parentData) => {
-          try {
-            await dashboardService.createParent(parentData);
-            toast.success("Parent added successfully");
-            setIsAddParentOpen(false);
-          } catch (error) {
-            toast.error("Failed to add parent", {
-              description: error instanceof Error ? error.message : "Unknown error occurred"
-            });
-          }
-        }}
+        onSubmit={handleAddParent}
         isLoading={false}
         learners={[]}
         currentLearnerId={user?.id}
