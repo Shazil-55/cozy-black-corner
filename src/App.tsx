@@ -87,7 +87,6 @@ const AppRoutes = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
           <Route path="/learner-dashboard" element={<LearnerDashboard />} />
-          <Route path="/parent-dashboard" element={<ParentDashboard />} />
           <Route path="/upload-syllabus" element={<UploadSyllabus />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/categories" element={<Categories />} />
@@ -99,6 +98,17 @@ const AppRoutes = () => {
           <Route path="/users" element={<Users />} />
           <Route path="/users/:userId" element={<UserDetails />} />
         </Route>
+        
+        {/* Parent dashboard uses a different layout without sidebar */}
+        <Route path="/parent-dashboard" element={
+          <PrivateRoute>
+            <div className="min-h-screen bg-gradient-to-b from-white to-purple-50 dark:from-gray-950 dark:to-purple-950/20">
+              <div className="container mx-auto px-4 py-8">
+                <ParentDashboard />
+              </div>
+            </div>
+          </PrivateRoute>
+        } />
         
         <Route path="/onboarding/step1" element={<PrivateRoute><Step1Goals /></PrivateRoute>} />
         <Route path="/onboarding/step2" element={<PrivateRoute><Step2Users /></PrivateRoute>} />
