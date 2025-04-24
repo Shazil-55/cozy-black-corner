@@ -33,6 +33,7 @@ import Step2Users from "./pages/onboarding/Step2Users";
 import Step3Industry from "./pages/onboarding/Step3Industry";
 import Categories from "./pages/Categories";
 import ParentDashboard from "./pages/ParentDashboard";
+import ChildDetails from "./pages/ChildDetails";
 
 const queryClient = new QueryClient();
 
@@ -99,6 +100,9 @@ const AppRoutes = () => {
           <Route path="/users" element={<Users />} />
           <Route path="/users/:userId" element={<UserDetails />} />
         </Route>
+        
+        {/* New routes outside MainLayout for sidebar-less parent pages */}
+        <Route path="/parent/child/:childId" element={<PrivateRoute><ChildDetails /></PrivateRoute>} />
         
         <Route path="/onboarding/step1" element={<PrivateRoute><Step1Goals /></PrivateRoute>} />
         <Route path="/onboarding/step2" element={<PrivateRoute><Step2Users /></PrivateRoute>} />
