@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -113,22 +112,22 @@ const UserDetails = () => {
       {/* Tabs */}
       <Tabs defaultValue="info" value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="border-b">
-          <TabsList className="bg-transparent h-auto p-0 w-full flex justify-start">
+          <TabsList className="h-10 p-1 bg-muted/30 rounded-xl">
             <TabsTrigger 
               value="info" 
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-6 py-3"
+              className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all"
             >
               Info
             </TabsTrigger>
             <TabsTrigger 
               value="courses" 
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-6 py-3"
+              className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all"
             >
               Courses
             </TabsTrigger>
             <TabsTrigger 
               value="groups" 
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none px-6 py-3"
+              className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all"
             >
               Groups
             </TabsTrigger>
@@ -152,4 +151,3 @@ const UserDetails = () => {
 };
 
 export default UserDetails;
-
