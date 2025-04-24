@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { BookOpen, Trophy, Star, Clock, BarChart, ChevronRight, Award } from "lucide-react";
@@ -12,11 +11,16 @@ import { dashboardService } from "@/services/dashboardService";
 import { UserRoles, LearnerDashboardData } from "@/types/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { UserPlus } from "@/components/ui/icons";
+import { AddParentDialog } from "@/components/users/AddParentDialog";
 
 const LearnerDashboard = () => {
   const { user } = useAuth();
   
   const firstName = user?.name?.split(' ')[0] || '';
+
+  const [isAddParentOpen, setIsAddParentOpen] = useState(false);
 
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['dashboardData', 'learner'],
@@ -26,7 +30,6 @@ const LearnerDashboard = () => {
 
   const learnerData = dashboardData?.data as LearnerDashboardData | undefined;
 
-  // Show loading state while fetching data
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -98,9 +101,34 @@ const LearnerDashboard = () => {
         <h2 className="text-3xl font-bold tracking-tight text-purple-800 dark:text-purple-300">
           Hello, {firstName}! 👋
         </h2>
+        <Button 
+          onClick={() => setIsAddParentOpen(true)}
+          className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600"
+        >
+          <UserPlus className="mr-2 h-4 w-4" />
+          Add Parent
+        </Button>
       </div>
-      <Separator className="bg-indigo-100 dark:bg-indigo-800" />
-      
+
+      <AddParentDialog
+        isOpen={isAddParentOpen}
+        onClose={() => setIsAddParentOpen(false)}
+        onSubmit={async (parentData) => {
+          try {
+            await dashboardService.createParent(parentData);
+            toast.success("Parent added successfully");
+            setIsAddParentOpen(false);
+          } catch (error) {
+            toast.error("Failed to add parent", {
+              description: error instanceof Error ? error.message : "Unknown error occurred"
+            });
+          }
+        }}
+        isLoading={false}
+        learners={[]}
+        currentLearnerId={user?.id}
+      />
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard 
           icon={<BookOpen className="h-6 w-6" />} 
@@ -181,7 +209,6 @@ const LearnerDashboard = () => {
           <div className="space-y-4">
             {learnerData && learnerData.assignmentDeadlines && learnerData.assignmentDeadlines.length > 0 ? (
               learnerData.assignmentDeadlines.map((task, index) => {
-                // Format the submission date
                 const submissionDate = new Date(task.submissionDate);
                 const isToday = new Date().toDateString() === submissionDate.toDateString();
                 const isTomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toDateString() === submissionDate.toDateString();
@@ -251,7 +278,6 @@ const LearnerDashboard = () => {
 
 export default LearnerDashboard;
 
-// Kid-friendly component for stats
 const StatCard = ({ icon, title, value, color }) => (
   <div className="kid-stat-card animate-float">
     <div className={`kid-icon-container bg-gradient-to-r ${color}`}>
@@ -262,7 +288,6 @@ const StatCard = ({ icon, title, value, color }) => (
   </div>
 );
 
-// Kid-friendly component for tasks
 const TaskCard = ({ icon, title, dueDate, status, color, isButton = false }) => (
   <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md border-2 border-indigo-50 dark:border-indigo-900 transition-all">
     <div className="flex items-center gap-3">
@@ -291,7 +316,6 @@ const TaskCard = ({ icon, title, dueDate, status, color, isButton = false }) => 
   </div>
 );
 
-// Kid-friendly component for courses
 const CourseCard = ({ icon, title, rating, reviews, color }) => (
   <div className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md border-2 border-indigo-50 dark:border-indigo-900 transition-all">
     <div className="flex items-center gap-3">

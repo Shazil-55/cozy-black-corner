@@ -45,12 +45,21 @@ export const learnerMenuItems: MenuItem[] = [
   { title: "Skills", icon: Award, url: "/skills" }
 ];
 
+// Parent Menu Items
+export const parentMenuItems: MenuItem[] = [
+  { title: "Home", icon: Home, url: "/parent-dashboard" },
+  { title: "Children", icon: Users, url: "/my-children" },
+  { title: "Calendar", icon: CalendarDays, url: "/calendar" }
+];
+
 export const getMenuItemsByRole = (role: string): MenuItem[] => {
   switch(role) {
     case 'instructor':
       return instructorMenuItems;
     case 'learner':
       return learnerMenuItems;
+    case 'parent':
+      return parentMenuItems;
     case 'administrator':
     default:
       return adminMenuItems;
