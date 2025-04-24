@@ -42,13 +42,15 @@ export function EnrollCoursesDialog({
   const [searchTerm, setSearchTerm] = useState("");
   const [enrollingCourses, setEnrollingCourses] = useState<Record<string, boolean>>({});
 
-  const { data: courses, isLoading } = useQuery({
+  // Fix: Using a proper query function that doesn't expect direct parameter
+  const { data: courses = [], isLoading } = useQuery({
     queryKey: ["courses-for-enrollment"],
-    queryFn: courseService.getCourseDetail,
+    queryFn: () => courseService.getCourses(),
     enabled: isOpen,
   });
 
-  const filteredCourses = courses?.filter(course => 
+  // Now filtering the array of courses
+  const filteredCourses = courses.filter(course => 
     course.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 

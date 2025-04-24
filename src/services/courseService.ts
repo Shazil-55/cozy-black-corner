@@ -1,4 +1,3 @@
-
 import api from "./api";
 
 export interface ClassData {
@@ -146,7 +145,7 @@ export interface CourseGroup {
 	createdAt: string;
 }
 
-export interface CourseDetail {
+export interface Course {
 	id: string;
 	name: string;
 	description: string;
@@ -154,6 +153,9 @@ export interface CourseDetail {
 	price?: number;
 	createdAt: string;
 	updatedAt: string;
+}
+
+export interface CourseDetail extends Course {
 	users: CourseUser[];
 	files: CourseFile[];
 	groups: CourseGroup[];
@@ -220,7 +222,58 @@ export const courseService = {
 		}
 	},
 
-	// New methods for course detail page
+	async getCourses(): Promise<Course[]> {
+		try {
+			// In a real app this would call the API
+			// For now, simulate with mock data similar to getCourseDetail
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					resolve([
+						{
+							id: "course-1",
+							name: "Introduction to Programming",
+							description: "Learn the fundamentals of programming",
+							category: "Computer Science",
+							price: 99.99,
+							createdAt: new Date().toISOString(),
+							updatedAt: new Date().toISOString(),
+						},
+						{
+							id: "course-2",
+							name: "Advanced Web Development",
+							description: "Master modern web development techniques",
+							category: "Web Development",
+							price: 149.99,
+							createdAt: new Date().toISOString(),
+							updatedAt: new Date().toISOString(),
+						},
+						{
+							id: "course-3",
+							name: "Data Science Fundamentals",
+							description: "Learn the basics of data analysis",
+							category: "Data Science",
+							price: 129.99,
+							createdAt: new Date().toISOString(),
+							updatedAt: new Date().toISOString(),
+						},
+						{
+							id: "course-4",
+							name: "UI/UX Design Principles",
+							description: "Create beautiful and functional interfaces",
+							category: "Design",
+							price: 89.99,
+							createdAt: new Date().toISOString(),
+							updatedAt: new Date().toISOString(),
+						}
+					]);
+				}, 500);
+			});
+		} catch (error) {
+			console.error("Error fetching courses:", error);
+			throw error;
+		}
+	},
+
 	async getCourseDetail(courseId: string): Promise<CourseDetail> {
 		try {
 			// This would be a real API call in a production application
