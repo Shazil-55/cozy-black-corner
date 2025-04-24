@@ -32,6 +32,7 @@ import Step1Goals from "./pages/onboarding/Step1Goals";
 import Step2Users from "./pages/onboarding/Step2Users";
 import Step3Industry from "./pages/onboarding/Step3Industry";
 import Categories from "./pages/Categories";
+import ParentDashboard from "./pages/ParentDashboard";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const AppRoutes = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
           <Route path="/learner-dashboard" element={<LearnerDashboard />} />
+          <Route path="/parent-dashboard" element={<ParentDashboard />} />
           <Route path="/upload-syllabus" element={<UploadSyllabus />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/categories" element={<Categories />} />
