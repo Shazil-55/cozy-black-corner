@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Search, UserPlus } from "lucide-react";
 
@@ -21,16 +22,16 @@ import {
   TableBody, 
   TableCell 
 } from "@/components/ui/table";
-import { LoadingState } from "@/components/LoadingState";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
-import { courseService } from "@/services/courseService";
+import { courseService, CourseEnrolledResponse } from "@/services/courseService";
 import { userService, ApiUser } from "@/services/userService";
-import { useQuery } from "@tanstack/react-query";
 
 interface EnrollUsersDialogProps {
   isOpen: boolean;
   onClose: () => void;
   courseId: string;
+  enrolledUsers: CourseEnrolledResponse[];
   onEnrollment: () => void;
 }
 
@@ -38,6 +39,7 @@ export function EnrollUsersDialog({
   isOpen,
   onClose,
   courseId,
+  enrolledUsers,
   onEnrollment
 }: EnrollUsersDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,9 +51,9 @@ export function EnrollUsersDialog({
     enabled: isOpen,
   });
 
-  const filteredUsers = users?.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const availableUsers = users?.filter(user => 
+    !enrolledUsers.some(enrolledUser => enrolledUser.userName === user.name) &&
+    user.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEnrollUser = async (userId: string) => {
@@ -74,7 +76,7 @@ export function EnrollUsersDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Enroll to course</DialogTitle>
+          <DialogTitle>Enroll users to course</DialogTitle>
           <DialogDescription>
             Find users and enroll them to this course.
           </DialogDescription>
@@ -102,14 +104,12 @@ export function EnrollUsersDialog({
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24">
-                    <div className="flex justify-center items-center">
-                      <LoadingState message="Loading users..." />
-                    </div>
+                  <TableCell colSpan={3}>
+                    <LoadingSpinner message="Loading available users..." />
                   </TableCell>
                 </TableRow>
-              ) : filteredUsers && filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => (
+              ) : availableUsers && availableUsers.length > 0 ? (
+                availableUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -138,7 +138,7 @@ export function EnrollUsersDialog({
               ) : (
                 <TableRow>
                   <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                    No users found
+                    No available users found
                   </TableCell>
                 </TableRow>
               )}

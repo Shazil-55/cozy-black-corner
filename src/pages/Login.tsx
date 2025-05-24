@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { authService } from '@/services/authService';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,6 @@ import {
   Lock, 
   Eye, 
   EyeOff, 
-  Building,
   AlertCircle,
   Loader2,
   ExternalLink,
@@ -25,15 +25,36 @@ import { LoadingState } from '@/components/LoadingState';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isLoading: authLoading, isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   
+  // Extract subdomain from URL
+  const getSubdomainFromUrl = () => {
+    const hostname = window.location.hostname;
+    // Check if we're on localhost (for development)
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      // Try to get subdomain from URL parameters for local development
+      const searchParams = new URLSearchParams(location.search);
+      return searchParams.get('domain') || 'ilmee';
+    }
+    
+    // For production, extract from hostname
+    const parts = hostname.split('.');
+    if (parts.length > 2) {
+      return parts[0];
+    }
+    return 'ilmee'; // Default domain
+  };
+  
+  const defaultDomain = getSubdomainFromUrl();
+  
   const { values, errors, touched, handleChange, handleBlur, validateForm, setValues } = useFormValidation({
     emailOrUsername: '',
     password: '',
-    domain: 'ilmee.com',
+    domain: defaultDomain,
   });
 
   useEffect(() => {
@@ -49,10 +70,15 @@ const Login = () => {
     if (savedEmail) {
       setValues(prev => ({ ...prev, emailOrUsername: savedEmail }));
     }
-  }, [setValues]);
-  
-  // Determine if domain field should be shown
-  const shouldShowDomain = values.emailOrUsername && !values.emailOrUsername.includes('@');
+    
+    // Set the domain from URL/subdomain
+    setValues(prev => ({ ...prev, domain: defaultDomain }));
+    
+    // Update document title with subdomain
+    if (defaultDomain && defaultDomain !== 'ilmee') {
+      document.title = `${defaultDomain} | Ilmee`;
+    }
+  }, [setValues, defaultDomain]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,8 +98,8 @@ const Login = () => {
         localStorage.setItem('lastLoginEmail', values.emailOrUsername);
       }
       
-      // Always pass domain for non-email logins
-      const loginDomain = !values.emailOrUsername.includes('@') ? values.domain : undefined;
+      // Always use the domain from the URL/subdomain
+      const loginDomain = defaultDomain;
       
       const success = await login(
         values.emailOrUsername, 
@@ -82,7 +108,22 @@ const Login = () => {
       );
       
       if (success) {
-        navigate('/');
+        // After successful login, redirect to the proper subdomain
+        const userDomain = localStorage.getItem('userDomain') || 'ilmee';
+        
+        if (window.location.hostname !== 'localhost' && 
+            window.location.hostname !== '127.0.0.1' && 
+            !window.location.hostname.startsWith(`${userDomain}.`)) {
+              
+          // Get base domain (e.g., ilmee.com)
+          const parts = window.location.hostname.split('.');
+          const baseDomain = parts.length > 1 ? parts.slice(-2).join('.') : window.location.hostname;
+          
+          // Redirect to subdomain
+          window.location.href = `${window.location.protocol}//${userDomain}.${baseDomain}/`;
+        } else {
+          navigate('/');
+        }
       }
     } catch (error) {
       console.error('Login submission error:', error);
@@ -94,17 +135,6 @@ const Login = () => {
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
-  };
-
-  // Custom handler for domain to prevent spaces and convert to lowercase
-  const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const sanitizedValue = value.replace(/\s+/g, '').toLowerCase();
-    
-    setValues({
-      ...values,
-      [name]: sanitizedValue
-    });
   };
 
   const isLoading = isSubmitting || authLoading;
@@ -135,7 +165,7 @@ const Login = () => {
   return (
     <AuthLayout 
       title="Welcome back" 
-      subtitle="Sign in to continue to your learning dashboard"
+      subtitle={`Sign in to continue to your ${defaultDomain !== 'ilmee' ? defaultDomain : ''} dashboard`}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-3">
@@ -192,22 +222,8 @@ const Login = () => {
             )}
           </div>
           
-          {shouldShowDomain && (
-            <div className="space-y-2">
-              <div className="relative">
-                <Building className="absolute left-3 top-3 h-5 w-5 text-gray-500 dark:text-gray-400" />
-                <Input
-                  id="domain"
-                  name="domain"
-                  type="text"
-                  className="pl-10 py-5 rounded-lg border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-[#1B68B3] focus:border-transparent"
-                  value={values.domain}
-                  onChange={handleDomainChange}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-          )}
+          {/* Domain field is now hidden as we get it from the URL */}
+          <input type="hidden" name="domain" value={defaultDomain} />
           
           <div className="flex items-center justify-between">
             <div className="flex items-center">

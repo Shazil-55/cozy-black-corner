@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ApiUser, CreateParentPayload } from "@/services/userService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface AddParentDialogProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface AddParentDialogProps {
   isLoading?: boolean;
   learners: ApiUser[];
   currentLearnerId?: string;
+  isLearnerDashboard?: boolean;
 }
 
 // Form schema for validation
@@ -52,6 +54,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
   isLoading = false,
   learners,
   currentLearnerId,
+  isLearnerDashboard = false,
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -168,7 +171,9 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                       <div className="mb-4">
                         <FormLabel className="text-base">Assign Learners <span className="text-red-500">*</span></FormLabel>
                         <FormDescription>
-                          Select the learners that this parent will have access to monitor
+                          {isLearnerDashboard 
+                            ? "You will be assigned to this parent"
+                            : "Select the learners that this parent will have access to monitor"}
                         </FormDescription>
                       </div>
                       
@@ -177,7 +182,10 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                           No learners available to assign
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div className={cn(
+                          "grid gap-2",
+                          isLearnerDashboard ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+                        )}>
                           {availableLearners.map((learner) => (
                             <FormField
                               key={learner.id}
@@ -201,6 +209,7 @@ export const AddParentDialog: React.FC<AddParentDialogProps> = ({
                                                 )
                                               )
                                         }}
+                                        disabled={isLearnerDashboard}
                                       />
                                     </FormControl>
                                     <div className="space-y-1 leading-none">

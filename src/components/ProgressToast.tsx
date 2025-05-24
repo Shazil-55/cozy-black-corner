@@ -1,17 +1,39 @@
 
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, Check, AlertCircle } from 'lucide-react';
+import { Loader2, Check, AlertCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProgressStatus } from '@/hooks/useSocketProgress';
+import { Button } from '@/components/ui/button';
 
 interface ProgressToastProps {
   progress: number;
   status: ProgressStatus;
   message: string;
+  onClose?: () => void;
+  autoClose?: boolean;
+  duration?: number;
 }
 
-export const ProgressToast = ({ progress, status, message }: ProgressToastProps) => {
+export const ProgressToast = ({ 
+  progress, 
+  status, 
+  message, 
+  onClose,
+  autoClose = true,
+  duration = 5000
+}: ProgressToastProps) => {
+  // Auto close after duration if autoClose is true
+  React.useEffect(() => {
+    if (autoClose && onClose && (status === 'completed' || status === 'error')) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, duration);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [autoClose, onClose, status, duration]);
+
   return (
     <div className="w-full bg-card shadow-md rounded-lg overflow-hidden border border-border border-l-4 border-l-blue-500 dark:border-l-blue-400">
       <div className="p-4">
@@ -43,9 +65,21 @@ export const ProgressToast = ({ progress, status, message }: ProgressToastProps)
                  status === 'error' ? 'Processing Failed' : 
                  'Processing in Progress'}
               </h3>
-              <span className="text-xs font-medium text-muted-foreground">
-                {Math.round(progress)}%
-              </span>
+              <div className="flex items-center">
+                <span className="text-xs font-medium text-muted-foreground mr-2">
+                  {Math.round(progress)}%
+                </span>
+                {onClose && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={onClose}
+                    className="h-5 w-5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
             </div>
             <p className="mt-1 text-sm text-foreground truncate">
               {message}

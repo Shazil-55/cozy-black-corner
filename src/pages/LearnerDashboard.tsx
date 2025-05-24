@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
@@ -33,7 +32,6 @@ const LearnerDashboard = () => {
 
   const learnerData = dashboardData?.data as LearnerDashboardData | undefined;
 
-  // Handle parent creation
   const handleAddParent = async (parentData) => {
     try {
       await userService.createParent(parentData);
@@ -137,8 +135,16 @@ const LearnerDashboard = () => {
         onClose={() => setIsAddParentOpen(false)}
         onSubmit={handleAddParent}
         isLoading={false}
-        learners={[]}
+        learners={user ? [{ 
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: "Learner",
+          status: "Active",
+          registrationDate: user.createdAt || new Date().toISOString(),
+        }] : []}
         currentLearnerId={user?.id}
+        isLearnerDashboard={true}
       />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

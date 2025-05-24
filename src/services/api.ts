@@ -54,4 +54,78 @@ api.interceptors.response.use(
 	}
 );
 
+// Course Store API
+export const fetchCourseStore = async () => {
+  try {
+    const response = await api.get('/user/course-store');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch course store data:', error);
+    throw error;
+  }
+};
+
+// File Upload API
+export const uploadFile = async (fileToUpload: File) => {
+  try {
+    const formData = new FormData();
+    formData.append('fileToUpload', fileToUpload);
+    
+    const response = await api.post(
+      '/common/upload-file',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to upload file:', error);
+    throw error;
+  }
+};
+
+// Assignment APIs
+export const getAssignments = async (courseId: string) => {
+  try {
+    const response = await api.get(`/user/assignments/${courseId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch assignments:', error);
+    throw error;
+  }
+};
+
+export const createAssignment = async (courseId: string, assignmentData: any) => {
+  try {
+    const response = await api.post(`/user/assignments/${courseId}`, assignmentData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create assignment:', error);
+    throw error;
+  }
+};
+
+export const updateAssignment = async (assignmentId: string, assignmentData: any) => {
+  try {
+    const response = await api.put(`/user/assignments/${assignmentId}`, assignmentData);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to update assignment:', error);
+    throw error;
+  }
+};
+
+export const deleteAssignment = async (assignmentId: string) => {
+  try {
+    const response = await api.delete(`/user/assignments/${assignmentId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete assignment:', error);
+    throw error;
+  }
+};
+
 export default api;

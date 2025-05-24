@@ -12,9 +12,35 @@ const MainLayout = () => {
   const { role } = useRole();
   const location = useLocation();
   
-  // Check if this is a learner route
+  // Check if this is a learner route or parent dashboard
   const isLearnerRoute = role === 'learner' || location.pathname.includes('learner-dashboard');
+  const isParentDashboard = location.pathname.includes('parent-dashboard');
+  // Check if this is a course preview page
+  const isCoursePreview = location.pathname.includes('/preview');
   
+  // For course preview, return just the outlet without any navigation
+  if (isCoursePreview) {
+    return (
+      <div className="min-h-screen w-full">
+        <Outlet />
+      </div>
+    );
+  }
+  
+  if (isParentDashboard) {
+    return (
+      <div className={cn(
+        "min-h-screen flex flex-col w-full transition-colors duration-200",
+        "bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950"
+      )}>
+        <Navbar hideDropdown={true} />
+        <main className="flex-1 p-5 md:p-8">
+          <Outlet />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider defaultOpen={true}>
       <div className={cn(

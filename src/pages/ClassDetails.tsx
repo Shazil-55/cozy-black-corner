@@ -1,13 +1,15 @@
 
 import React, { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Presentation, BookText, Play, FileQuestion, Trophy } from "lucide-react";
+import { ArrowLeft, Presentation, BookText, Play, FileQuestion, Trophy, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSyllabusGenerator } from "@/hooks/useSyllabusGenerator";
 import SlideCard from "@/components/syllabus/SlideCard";
 import PresentationView from "@/components/syllabus/PresentationView";
 import { SlideData, FAQ, UserTest } from "@/services/courseService";
 import ChatBot from "@/components/syllabus/ChatBot";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 
 const ClassDetails = () => {
 	const { moduleId, classId } = useParams<{
@@ -16,6 +18,14 @@ const ClassDetails = () => {
 	}>();
 	const { modules } = useSyllabusGenerator();
 	const [isPresentationMode, setIsPresentationMode] = useState(false);
+	const { toast } = useToast();
+
+	// New state for editing functionality
+	const [isEditing, setIsEditing] = useState(false);
+	const [editedTitle, setEditedTitle] = useState("");
+	const [editedConcepts, setEditedConcepts] = useState<string[]>([]);
+	const [newConceptInput, setNewConceptInput] = useState("");
+	const [isSaving, setIsSaving] = useState(false);
 
 	const { currentClass, moduleIndex, classIndex, slides, faqs, userTest } =
 		useMemo(() => {
@@ -75,12 +85,102 @@ const ClassDetails = () => {
 			};
 		}, [modules, moduleId, classId]);
 
+	// Initialize edit state when current class changes
+	React.useEffect(() => {
+		if (currentClass) {
+			setEditedTitle(currentClass.title);
+			setEditedConcepts([...currentClass.corePoints]);
+		}
+	}, [currentClass]);
+
 	const startPresentation = () => {
 		setIsPresentationMode(true);
 	};
 
 	const closePresentation = () => {
 		setIsPresentationMode(false);
+	};
+
+	// Function to toggle edit mode
+	const toggleEditMode = () => {
+		if (isEditing) {
+			// If we're currently editing, save changes
+			handleSaveChanges();
+		} else {
+			// If we're not editing, enter edit mode
+			setIsEditing(true);
+			if (currentClass) {
+				setEditedTitle(currentClass.title);
+				setEditedConcepts([...currentClass.corePoints]);
+			}
+		}
+	};
+
+	// Function to add a new concept
+	const handleAddConcept = () => {
+		if (newConceptInput.trim()) {
+			setEditedConcepts([...editedConcepts, newConceptInput.trim()]);
+			setNewConceptInput("");
+		}
+	};
+
+	// Function to remove a concept
+	const handleRemoveConcept = (index: number) => {
+		setEditedConcepts(editedConcepts.filter((_, i) => i !== index));
+	};
+
+	// Function to handle key down in the new concept input
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === 'Enter' && newConceptInput.trim()) {
+			e.preventDefault();
+			handleAddConcept();
+		}
+	};
+
+	// Function to save changes
+	const handleSaveChanges = async () => {
+		if (!classId) return;
+
+		setIsSaving(true);
+		try {
+			const response = await fetch(`https://dev-api.ilmee.ai/api/v_1/internal/user/class/${classId}`, {
+				method: 'PATCH',
+				headers: {
+					'Content-Type': 'application/json',
+					'access-token': localStorage.getItem('token') || '',
+				},
+				body: JSON.stringify({
+					classTitle: editedTitle,
+					concepts: editedConcepts,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to update class');
+			}
+
+			// Update the local state
+			if (currentClass) {
+				currentClass.title = editedTitle;
+				currentClass.corePoints = editedConcepts;
+			}
+
+			toast({
+				title: "Class updated successfully",
+				variant: "default"
+			});
+			
+			setIsEditing(false);
+		} catch (error) {
+			console.error('Error updating class:', error);
+			toast({
+				title: "Failed to update class",
+				description: "Please try again",
+				variant: "destructive"
+			});
+		} finally {
+			setIsSaving(false);
+		}
 	};
 
 	if (!currentClass) {
@@ -109,24 +209,88 @@ const ClassDetails = () => {
 						</Link>
 
 						<div className="bg-white rounded-lg p-6 shadow-subtle">
-							<div className="flex items-center space-x-3 mb-4">
-								<div className="w-10 h-10 bg-talentlms-blue rounded-full flex items-center justify-center">
-									<Presentation className="w-5 h-5 text-white" />
+							<div className="flex items-center justify-between mb-4">
+								<div className="flex items-center space-x-3">
+									<div className="w-10 h-10 bg-talentlms-blue rounded-full flex items-center justify-center">
+										<Presentation className="w-5 h-5 text-white" />
+									</div>
+									{isEditing ? (
+										<Input
+											value={editedTitle}
+											onChange={(e) => setEditedTitle(e.target.value)}
+											className="text-2xl font-medium border-2 border-blue-300 focus:border-blue-500"
+											placeholder="Class Title"
+										/>
+									) : (
+										<h1 className="text-2xl font-medium text-talentlms-darkBlue">
+											{currentClass.title}
+										</h1>
+									)}
 								</div>
-								<h1 className="text-2xl font-medium text-talentlms-darkBlue">
-									{currentClass.title}
-								</h1>
+								<Button
+									onClick={toggleEditMode}
+									variant={isEditing ? "default" : "outline"}
+									className={isEditing ? "bg-green-600 hover:bg-green-700 text-white" : ""}
+									disabled={isSaving}
+								>
+									{isSaving ? (
+										<>Saving...</>
+									) : isEditing ? (
+										<>
+											<Save className="w-4 h-4 mr-2" />
+											Save Changes
+										</>
+									) : (
+										"Edit Class"
+									)}
+								</Button>
 							</div>
 
 							<div className="mb-4">
 								<h3 className="text-sm font-medium text-gray-500 mb-2">
 									Key Points:
 								</h3>
-								<ul className="list-disc list-inside space-y-1 pl-1 text-gray-700">
-									{currentClass.corePoints.map((point, index) => (
-										<li key={index}>{point}</li>
-									))}
-								</ul>
+								{isEditing ? (
+									<div className="space-y-2">
+										<div className="flex flex-wrap gap-2">
+											{editedConcepts.map((concept, index) => (
+												<div key={index} className="flex items-center bg-blue-50 border border-blue-200 rounded-full px-3 py-1 text-sm text-blue-800">
+													{concept}
+													<Button 
+														variant="ghost" 
+														size="sm" 
+														className="ml-2 h-5 w-5 p-0 rounded-full hover:bg-blue-200"
+														onClick={() => handleRemoveConcept(index)}
+													>
+														×
+													</Button>
+												</div>
+											))}
+										</div>
+										<div className="flex items-center mt-2">
+											<Input
+												value={newConceptInput}
+												onChange={(e) => setNewConceptInput(e.target.value)}
+												onKeyDown={handleKeyDown}
+												placeholder="Add a new concept and press Enter"
+												className="flex-1"
+											/>
+											<Button 
+												onClick={handleAddConcept}
+												disabled={!newConceptInput.trim()}
+												className="ml-2"
+											>
+												Add
+											</Button>
+										</div>
+									</div>
+								) : (
+									<ul className="list-disc list-inside space-y-1 pl-1 text-gray-700">
+										{currentClass.corePoints.map((point, index) => (
+											<li key={index}>{point}</li>
+										))}
+									</ul>
+								)}
 							</div>
 
 							<div className="flex items-center justify-between">

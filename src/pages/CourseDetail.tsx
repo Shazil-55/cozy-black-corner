@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,7 +10,13 @@ import {
   FileText, 
   Users, 
   Pencil, 
-  Download
+  Download,
+  Eye,
+  XCircle,
+  Upload,
+  FilePlus,
+  Trash2,
+  FileX
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,26 +38,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   TooltipProvider,
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
 
-import { courseService, CourseDetail } from "@/services/courseService";
-import { LoadingState } from "@/components/LoadingState";
+import { courseService, CourseDetailResponse } from "@/services/courseService";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { formatFileSize } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { EnrollUsersDialog } from "@/components/courses/EnrollUsersDialog";
+import { FileUploader } from "@/components/courses/FileUploader";
+import { AssignmentsTab, ClassOption } from "@/components/courses/AssignmentsTab";
+import { Assignment } from "@/components/courses/AssignmentsTab";
 
 const CourseDetailPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -60,15 +58,21 @@ const CourseDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("users");
   const [searchTerm, setSearchTerm] = useState("");
   const [isEnrollDialogOpen, setIsEnrollDialogOpen] = useState(false);
+  const [isFileUploaderOpen, setIsFileUploaderOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    data: course,
-    isLoading,
-    error,
-    refetch
-  } = useQuery({
+  const { data: courseBasicInfo, isLoading: isLoadingBasicInfo } = useQuery({
+    queryKey: ["course-basic-info", courseId],
+    queryFn: async () => {
+      const courses = await courseService.getCourses();
+      return courses.find(c => c.id === courseId);
+    },
+    enabled: !!courseId
+  });
+
+  const { data: courseDetail, isLoading: isLoadingDetail, error: detailError, refetch } = useQuery({
     queryKey: ["courseDetail", courseId],
-    queryFn: () => courseService.getCourseDetail(courseId || ""),
+    queryFn: () => courseService.getCourseDetails(courseId || ""),
     enabled: !!courseId,
     meta: {
       onError: () => {
@@ -79,15 +83,31 @@ const CourseDetailPage: React.FC = () => {
     }
   });
 
+  const isLoading = isLoadingBasicInfo || isLoadingDetail;
+
+  // Extract classes from courseDetail for use in the AssignmentsTab
+  const courseClasses: ClassOption[] = React.useMemo(() => {
+    if (!courseDetail?.data) return [];    
+    // Check if the course has course.classes with classes
+    if (courseDetail.data.course.classes && courseDetail.data.course.classes.length > 0) {
+      return courseDetail.data.course.classes.map(course => {
+        return {
+          id: course.id,
+          title: course.title
+        };
+      });
+    }
+    
+    return [];
+  }, [courseDetail]);
+
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-12rem)]">
-        <LoadingState message="Loading course details..." />
-      </div>
-    );
+    return <div className="flex justify-center items-center h-[calc(100vh-8rem)]">
+      <LoadingSpinner message="Loading course details..." />
+    </div>;
   }
 
-  if (error || !course) {
+  if (detailError || !courseDetail) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-6">
@@ -111,17 +131,54 @@ const CourseDetailPage: React.FC = () => {
     });
   };
 
-  const filteredUsers = course?.users.filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleUnenrollUser = async (userId: string) => {
+    try {
+      await courseService.unenrollFromCourse(courseId || "", userId);
+      toast.success("User unenrolled successfully");
+      await refetch();
+    } catch (error) {
+      toast.error("Failed to unenroll user", {
+        description: "An error occurred while removing the user from the course",
+      });
+    }
+  };
+
+  const handleFileUploadSuccess = async () => {
+    await refetch();
+    setIsFileUploaderOpen(false);
+    toast.success("File uploaded successfully", {
+      description: "The file has been added to the course"
+    });
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    try {
+      await courseService.deleteFile(fileId);
+      await refetch();
+      toast.success("File deleted successfully", {
+        description: "The file has been removed from the course"
+      });
+    } catch (error) {
+      toast.error("Failed to delete file", {
+        description: "An error occurred while removing the file from the course",
+      });
+    }
+  };
+
+  const handleAssignmentAdded = async () => {
+    await refetch(); // Refetch course details to update assignments
+  };
+
+  const filteredUsers = courseDetail.data.enrolledUsers.filter(user => 
+    user.userName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredFiles = course?.files.filter(file => 
-    file.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFiles = courseDetail.data.files.filter(file => 
+    file.fileUrl.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredGroups = course?.groups.filter(group => 
-    group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredGroups = courseDetail.data.groups.filter(group => 
+    group.groupName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     group.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -140,11 +197,11 @@ const CourseDetailPage: React.FC = () => {
               </div>
             </Link>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">{course.name}</h1>
-          <p className="text-sm text-muted-foreground">{course.description}</p>
+          <h1 className="text-2xl font-bold tracking-tight">{courseBasicInfo?.courseTitle || "Course"}</h1>
+          <p className="text-sm text-muted-foreground">{courseBasicInfo?.description || "Course Details"}</p>
         </div>
         
-        <Button onClick={() => navigate(`/course/${course.id}/edit`)}>
+        <Button onClick={() => navigate(`/course/${courseId}/edit`)}>
           <Pencil className="mr-2 h-4 w-4" /> Edit course
         </Button>
       </div>
@@ -153,7 +210,7 @@ const CourseDetailPage: React.FC = () => {
         <CardHeader className="pb-3">
           <CardTitle>Course Details</CardTitle>
           <CardDescription>
-            View and manage course information, enrolled users, files, and groups.
+            View and manage course information, enrolled users, files, groups, and assignments.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -180,9 +237,17 @@ const CourseDetailPage: React.FC = () => {
                 <Users className="mr-2 h-4 w-4" />
                 Groups
               </TabsTrigger>
+              <TabsTrigger 
+                value="assignments" 
+                className="pb-4 rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 dark:data-[state=active]:text-blue-400 text-sm font-medium"
+              >
+                <FileX className="mr-2 h-4 w-4" />
+                Assignments
+              </TabsTrigger>
             </TabsList>
 
             <div className="flex flex-wrap items-center gap-2 mb-4">
+            {activeTab !== "assignments" && (
               <div className="flex-1 flex items-center space-x-2">
                 <div className="relative flex-1">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -197,9 +262,15 @@ const CourseDetailPage: React.FC = () => {
                   <Filter className="h-4 w-4" />
                 </Button>
               </div>
+              )}
               {activeTab === "users" && (
                 <Button onClick={() => setIsEnrollDialogOpen(true)}>
                   <UserPlus className="mr-2 h-4 w-4" /> Enroll to course
+                </Button>
+              )}
+              {activeTab === "files" && (
+                <Button onClick={() => setIsFileUploaderOpen(true)}>
+                  <FilePlus className="mr-2 h-4 w-4" /> Upload File
                 </Button>
               )}
             </div>
@@ -211,22 +282,58 @@ const CourseDetailPage: React.FC = () => {
                     <TableRow>
                       <TableHead className="w-[200px]">User</TableHead>
                       <TableHead>Role</TableHead>
-                      <TableHead>Progress status</TableHead>
+                      <TableHead>Progress</TableHead>
                       <TableHead>Enrollment date</TableHead>
                       <TableHead>Completion date</TableHead>
-                      <TableHead>Expiration date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers && filteredUsers.length > 0 ? (
                       filteredUsers.map((user) => (
                         <TableRow key={user.id}>
-                          <TableCell className="font-medium">{user.name}</TableCell>
-                          <TableCell className="capitalize">{user.role}</TableCell>
+                          <TableCell className="font-medium">{user.userName}</TableCell>
+                          <TableCell className="capitalize">{user.userRole}</TableCell>
                           <TableCell>{user.progress}%</TableCell>
-                          <TableCell>{new Date(user.enrollmentDate).toLocaleDateString()}</TableCell>
+                          <TableCell>{new Date(user.enrolledAt).toLocaleDateString()}</TableCell>
                           <TableCell>{user.completionDate ? new Date(user.completionDate).toLocaleDateString() : "-"}</TableCell>
-                          <TableCell>{user.expirationDate ? new Date(user.expirationDate).toLocaleDateString() : "-"}</TableCell>
+                          <TableCell className="text-right">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => navigate(`/users/${user.userId}`)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>View user</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                    onClick={() => handleUnenrollUser(user.userId)}
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Unenroll user</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </TableCell>
                         </TableRow>
                       ))
                     ) : (
@@ -246,9 +353,8 @@ const CourseDetailPage: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[300px]">File name</TableHead>
+                      <TableHead className="w-[300px]">File Name</TableHead>
                       <TableHead>Size</TableHead>
-                      <TableHead>Uploaded by</TableHead>
                       <TableHead>Upload date</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -257,15 +363,19 @@ const CourseDetailPage: React.FC = () => {
                     {filteredFiles && filteredFiles.length > 0 ? (
                       filteredFiles.map((file) => (
                         <TableRow key={file.id}>
-                          <TableCell className="font-medium">{file.name}</TableCell>
-                          <TableCell>{formatFileSize(file.size)}</TableCell>
-                          <TableCell>{file.uploadedBy}</TableCell>
-                          <TableCell>{new Date(file.uploadedAt).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="font-medium">{file.fileUrl.split('/').pop()}</TableCell>
+                          <TableCell>{formatFileSize(file.fileSize)}</TableCell>
+                          <TableCell>{new Date(file.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-right space-x-2">
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Button size="icon" variant="outline" className="h-8 w-8">
+                                  <Button 
+                                    size="icon" 
+                                    variant="outline" 
+                                    className="h-8 w-8"
+                                    onClick={() => window.open(file.fileUrl, '_blank')}
+                                  >
                                     <Download className="h-4 w-4" />
                                   </Button>
                                 </TooltipTrigger>
@@ -274,13 +384,41 @@ const CourseDetailPage: React.FC = () => {
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                    onClick={() => handleDeleteFile(file.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Delete</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                          No files found
+                        <TableCell colSpan={4} className="h-32">
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <FileText className="h-8 w-8 text-muted-foreground mb-3" />
+                            <p className="text-lg font-medium mb-1">No files uploaded yet</p>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Upload course materials, resources, or documents for your learners
+                            </p>
+                            <Button onClick={() => setIsFileUploaderOpen(true)}>
+                              <Upload className="mr-2 h-4 w-4" />
+                              Upload Files
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
@@ -304,22 +442,41 @@ const CourseDetailPage: React.FC = () => {
                     {filteredGroups && filteredGroups.length > 0 ? (
                       filteredGroups.map((group) => (
                         <TableRow key={group.id}>
-                          <TableCell className="font-medium">{group.name}</TableCell>
+                          <TableCell className="font-medium">{group.groupName}</TableCell>
                           <TableCell>{group.description}</TableCell>
-                          <TableCell>{group.membersCount}</TableCell>
+                          <TableCell>{group.groupMembers}</TableCell>
                           <TableCell>{new Date(group.createdAt).toLocaleDateString()}</TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
-                          No groups found
+                        <TableCell colSpan={4} className="h-32">
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <Users className="h-8 w-8 text-muted-foreground mb-3" />
+                            <p className="text-lg font-medium mb-1">No study groups created</p>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Create groups to enable collaborative learning and discussions
+                            </p>
+                            <Button>
+                              <UserPlus className="mr-2 h-4 w-4" />
+                              Create Study Group
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </div>
+            </TabsContent>
+            
+            <TabsContent value="assignments" className="space-y-4">
+              <AssignmentsTab 
+                courseId={courseId || ""} 
+                assignments={courseDetail.data.assignments || []} 
+                onAssignmentAdded={handleAssignmentAdded}
+                classes={courseClasses}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -329,7 +486,15 @@ const CourseDetailPage: React.FC = () => {
         isOpen={isEnrollDialogOpen}
         onClose={() => setIsEnrollDialogOpen(false)}
         courseId={courseId || ""}
+        enrolledUsers={courseDetail.data.enrolledUsers}
         onEnrollment={handleUserEnrollment}
+      />
+
+      <FileUploader
+        isOpen={isFileUploaderOpen}
+        onClose={() => setIsFileUploaderOpen(false)}
+        courseId={courseId || ""}
+        onFileUpload={handleFileUploadSuccess}
       />
     </div>
   );

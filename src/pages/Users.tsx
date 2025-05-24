@@ -162,15 +162,15 @@ const Users = () => {
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex items-center justify-between mb-4">
-          <TabsList>
-            <TabsTrigger value="all" className="flex items-center">
+          <TabsList className="h-10 p-1 bg-muted/30 rounded-xl">
+            <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all">
               <UsersIcon className="mr-2 h-4 w-4" />
               All Users
             </TabsTrigger>
-            <TabsTrigger value="administrator">Administrators</TabsTrigger>
-            <TabsTrigger value="instructor">Instructors</TabsTrigger>
-            <TabsTrigger value="learner">Learners</TabsTrigger>
-            <TabsTrigger value="parent">Parents</TabsTrigger>
+            <TabsTrigger   className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all" value="administrator">Administrators</TabsTrigger>
+            <TabsTrigger   className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all" value="instructor">Instructors</TabsTrigger>
+            <TabsTrigger  className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all" value="learner">Learners</TabsTrigger>
+            <TabsTrigger  className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all" value="parent">Parents</TabsTrigger>
           </TabsList>
         </div>
 

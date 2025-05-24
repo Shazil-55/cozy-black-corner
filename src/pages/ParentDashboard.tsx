@@ -2,7 +2,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
-import { BookOpen, Graduation, Calendar, ArrowRight, User, GraduationCap } from "lucide-react";
+import { BookOpen, Calendar, ArrowRight, User, GraduationCap } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";

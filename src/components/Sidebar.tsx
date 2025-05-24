@@ -1,10 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, FileText, Menu, X, BookOpen, GraduationCap } from 'lucide-react';
+import { ChevronDown, ChevronRight, FileText, Menu, X, BookOpen, GraduationCap, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNavigate } from 'react-router-dom';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { useTheme } from '@/context/ThemeContext';
 
 interface SidebarItem {
   id: string;
@@ -18,15 +21,28 @@ interface SidebarProps {
   items: SidebarItem[];
   onSelect: (id: string) => void;
   selectedId?: string;
+  isGenerating?: boolean;
+  generationProgress?: number;
+  generationMessage?: string;
+  isFirstClassLoading?: boolean;
 }
 
-export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
+export const Sidebar = ({ 
+  items, 
+  onSelect, 
+  selectedId, 
+  isGenerating = false,
+  generationProgress = 0,
+  generationMessage = "",
+  isFirstClassLoading = false
+}: SidebarProps) => {
   const [isOpen, setIsOpen] = useState(true);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [sidebarWidth, setSidebarWidth] = useState<number>(300); // Default width in pixels
   const [isResizing, setIsResizing] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   useEffect(() => {
     // Initialize expanded state for modules
@@ -132,6 +148,36 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
     document.removeEventListener('mouseup', handleResizeEnd);
   };
 
+  const renderContent = () => {
+    if (isFirstClassLoading) {
+      return (
+        <div className="text-center text-sm text-white/70 mt-8 px-4">
+          <Loader2 className="w-8 h-8 mx-auto text-white/50 mb-3 animate-spin" />
+          <p className="font-medium mb-1">Creating first class</p>
+          <p className="text-xs opacity-70 mb-4">The first class will appear shortly</p>
+          <Progress value={generationProgress} className="h-1.5 mb-2" />
+          <p className="text-xs opacity-70 mt-1">{generationMessage || "Processing..."}</p>
+        </div>
+      );
+    }
+
+    if (items.length > 0) {
+      return (
+        <div className="animate-fade-in">
+          {renderItems(items)}
+        </div>
+      );
+    } 
+    
+    return (
+      <div className="text-center py-8 px-6 text-white/70 text-sm animate-fade-in">
+        <GraduationCap className="w-12 h-12 mx-auto text-white/30 mb-2" />
+        <p>No syllabus content yet.</p>
+        <p className="mt-1 text-xs">Generate a syllabus to see the structure here.</p>
+      </div>
+    );
+  };
+
   return (
     <>
       {isMobile && (
@@ -154,7 +200,7 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
       
       <div 
         className={cn(
-          "bg-talentlms-blue border-r border-talentlms-darkBlue flex flex-col h-screen relative",
+          "flex flex-col h-screen relative",
           "transition-all duration-300 ease-in-out z-40",
           isMobile ? "fixed" : "sticky top-0",
           isMobile && !isOpen && "-translate-x-full",
@@ -162,19 +208,36 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
         )}
         style={{ width: `${sidebarWidth}px`, minWidth: '200px', maxWidth: '500px' }}
       >
-        <div className="p-5 border-b border-talentlms-navBlue flex items-center">
-          <BookOpen className="w-5 h-5 text-white mr-3" />
-          <h2 className="font-medium text-lg text-white">Syllabus</h2>
-        </div>
-        
-        <div className="overflow-y-auto flex-grow py-4 px-2 custom-scrollbar">
-          {items.length > 0 ? (
-            renderItems(items)
-          ) : (
-            <div className="text-center py-8 px-6 text-white/70 text-sm">
-              <GraduationCap className="w-12 h-12 mx-auto text-white/30 mb-2" />
-              <p>No syllabus content yet.</p>
-              <p className="mt-1 text-xs">Generate a syllabus to see the structure here.</p>
+        <div 
+          className={cn(
+            "border-r border-white/10 flex flex-col h-screen bg-gradient-to-b",
+            theme === 'dark' 
+              ? "from-purple-900/90 via-indigo-900/90 to-violet-800/80"
+              : "from-talentlms-blue via-talentlms-darkBlue to-blue-700"
+          )}
+        >
+          <div className="p-5 border-b border-white/10 flex items-center">
+            <BookOpen className="w-5 h-5 text-white mr-3" />
+            <h2 className="font-medium text-lg text-white">Syllabus</h2>
+          </div>
+          
+          <div className="overflow-y-auto flex-grow py-4 px-2 custom-scrollbar">
+            {renderContent()}
+          </div>
+
+          {/* Loader in sidebar when generating next classes */}
+          {!isFirstClassLoading && isGenerating && (
+            <div className="p-4 bg-black/20 border-t border-white/10 animate-fade-in">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-white/90">Generating next class</span>
+                <Badge variant="outline" className="text-xs bg-blue-500/20 text-blue-200 border-blue-700/30">
+                  {generationProgress}%
+                </Badge>
+              </div>
+              <Progress value={generationProgress} className="h-1.5 bg-blue-900/30" />
+              <p className="text-xs text-white/60 mt-2 text-center italic">
+                {generationMessage || "Processing..."}
+              </p>
             </div>
           )}
         </div>
@@ -182,7 +245,7 @@ export const Sidebar = ({ items, onSelect, selectedId }: SidebarProps) => {
         {/* Resize handle */}
         {!isMobile && (
           <div 
-            className="absolute top-0 right-0 w-2 h-full cursor-ew-resize bg-talentlms-darkBlue hover:bg-talentlms-navBlue transition-colors"
+            className="absolute top-0 right-0 w-2 h-full cursor-ew-resize hover:bg-white/20 transition-colors"
             onMouseDown={handleResizeStart}
           />
         )}

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
@@ -27,11 +26,17 @@ export interface Slide {
 }
 
 export interface Class {
-	faqs: any[];
 	id: string;
 	title: string;
 	corePoints: string[];
 	slideCount: number;
+	faqs?: FAQ[];
+	slides?: Slide[];
+	concepts?: string[]; // For API compatibility
+	classId?: string; // Added for API compatibility
+	classTitle?: string; // Added for API compatibility
+	classNo?: number; // Added for API compatibility
+	userTest?: UserTest; // Add userTest property to fix the TypeScript error
 }
 
 export interface Module {
@@ -55,6 +60,7 @@ export function useSyllabusGenerator() {
 	
 	// Use our socket progress hook
 	const { 
+		socket, 
 		socketId, 
 		isConnected, 
 		progressPercent, 
@@ -74,47 +80,87 @@ export function useSyllabusGenerator() {
 			return;
 		}
 
-		if (!socketId || !isConnected) {
-			toast.error("Unable to connect to server. Please try again later.");
-			return;
-		}
-
-		setStatus("analyzing");
-		setError(null);
-
-		try {
-			const formData = new FormData();
-			formData.append("pdfFile", file);
-			formData.append("noOfClasses", numClasses.toString());
-			formData.append("socketId", socketId);
-
-			// Show initial toast notification
-			toast.info("Starting to process your document", {
-				description: "You'll see progress updates as we work on your syllabus",
-				duration: 3000,
-			});
-
-			// Make the initial request to start processing
-			const response = await api.post("/user/generate-content", formData, {
-				headers: {
-					"Content-Type": "multipart/form-data",
-				},
-			});
-
-			if (response.data.message) {
-				toast.info(response.data.message);
-				setStatus("generating");
+		// Retry counter for socket connection
+		let retries = 0;
+		const maxRetries = 3;
+		const retryDelay = 1000; // 1 second
+		
+		const attemptGeneration = async () => {
+			// Check for socket connection
+			if (!isConnected) {
+				if (retries < maxRetries) {
+					retries++;
+					toast.info(`Connecting to server... (Attempt ${retries}/${maxRetries})`);
+					// Wait before retrying
+					setTimeout(attemptGeneration, retryDelay);
+					return;
+				} else {
+					toast.error("Unable to connect to server after multiple attempts. Please refresh the page and try again.");
+					return;
+				}
 			}
 
-			// The socket will handle progress updates from here
-		} catch (err) {
-			console.error("Error generating syllabus:", err);
-			setError(
-				err instanceof Error ? err.message : "An unknown error occurred"
-			);
-			setStatus("error");
-			toast.error("Failed to generate syllabus. Please try again.");
-		}
+			if (!socketId) {
+				if (retries < maxRetries) {
+					retries++;
+					toast.info(`Waiting for socket connection... (Attempt ${retries}/${maxRetries})`);
+					// Wait before retrying
+					setTimeout(attemptGeneration, retryDelay);
+					return;
+				} else {
+					toast.error("Socket connection established but ID is missing after multiple attempts. Please refresh the page.");
+					return;
+				}
+			}
+
+			// Proceed with syllabus generation since we have everything
+			continueGeneration();
+		};
+		
+		const continueGeneration = async () => {
+			setStatus("analyzing");
+			setError(null);
+
+			try {
+				const formData = new FormData();
+				formData.append("pdfFile", file);
+				formData.append("noOfClasses", numClasses.toString());
+				formData.append("socketId", socketId as string);
+
+				console.log("Sending request with socketId:", socketId);
+
+				// Show initial toast notification
+				toast.info("Starting to process your document", {
+					description: "You'll see progress updates as we work on your syllabus",
+					duration: 3000,
+				});
+
+				// Make the initial request to start processing
+				const response = await api.post("/user/generate-content", formData, {
+					headers: {
+						"Content-Type": "multipart/form-data",
+					},
+				});
+
+				if (response.data.message) {
+					toast.info(response.data.message);
+					setStatus("generating");
+				}
+
+				// The socket will handle progress updates from here
+			} catch (err) {
+				console.error("Error generating syllabus:", err);
+				setError(
+					err instanceof Error ? err.message : "An unknown error occurred"
+				);
+				setStatus("error");
+				toast.error("Failed to generate syllabus. Please try again.");
+			}
+		};
+		
+		// Start the attempt process
+		attemptGeneration();
+		
 	}, [file, numClasses, socketId, isConnected]);
 
 	// Watch for status changes from socket
@@ -171,14 +217,15 @@ export function useSyllabusGenerator() {
 						const newClass: Class = {
 							id: `class-${classItem.classNo}-${uuidv4().slice(0, 6)}`,
 							title: classItem.classTitle,
-							corePoints: classItem.coreConcepts,
-							slideCount: classItem.slides.length,
+							corePoints: classItem.coreConcepts || [],
+							slideCount: classItem.slides?.length || 0,
 							faqs: [],
+							userTest: undefined,
 						};
 
 						module.classes.push(newClass);
 
-						const slides: Slide[] = classItem.slides.map(
+						const slides: Slide[] = classItem.slides?.map(
 							(slide: any, slideIndex: number) => ({
 								id: `slide-${uuidv4()}`,
 								title: slide.title,
@@ -191,7 +238,7 @@ export function useSyllabusGenerator() {
 								createdAt: new Date().toISOString(),
 								updatedAt: new Date().toISOString(),
 							})
-						);
+						) || [];
 
 						module.slides.push(slides);
 
@@ -201,7 +248,7 @@ export function useSyllabusGenerator() {
 						// Initialize empty userTests array for each class
 						module.userTests?.push([]);
 
-						classItem.slides.forEach((slide: any) => {
+						classItem.slides?.forEach((slide: any) => {
 							module.lessons.push({
 								id: `lesson-${uuidv4().slice(0, 8)}`,
 								title: `Class ${classItem.classNo} - ${slide.title}`,
@@ -224,6 +271,86 @@ export function useSyllabusGenerator() {
 			toast.error("Failed to retrieve syllabus. Please try again.");
 		}
 	};
+
+	// New function to set modules directly from course edit API data
+	const setModulesFromCourseData = useCallback((classes: any[]) => {
+		if (!classes || classes.length === 0) return;
+		
+		const CLASSES_PER_MODULE = 4;
+		const generatedModules: Module[] = [];
+		
+		// Sort classes by classNo if available
+		if (classes[0]?.classNo) {
+			classes.sort((a, b) => a.classNo - b.classNo);
+		}
+
+		for (let i = 0; i < classes.length; i += CLASSES_PER_MODULE) {
+			const moduleClasses = classes.slice(i, i + CLASSES_PER_MODULE);
+			const moduleIndex = Math.floor(i / CLASSES_PER_MODULE) + 1;
+
+			const module: Module = {
+				id: `module-${moduleIndex}-${uuidv4().slice(0, 4)}`,
+				title: `Module ${moduleIndex}`,
+				classes: [],
+				slides: [],
+				faqs: [],
+				userTests: [],
+				lessons: [],
+			};
+
+			moduleClasses.forEach((classItem: any) => {
+				const newClass: Class = {
+					id: classItem.classId || `class-${uuidv4().slice(0, 6)}`,
+					title: classItem.classTitle || classItem.title || `Class ${moduleIndex}`,
+					corePoints: [],
+					concepts: classItem.concepts || [],
+					slideCount: classItem.slides?.length || 0,
+					classId: classItem.classId,
+					classTitle: classItem.classTitle,
+					classNo: classItem.classNo,
+					userTest: undefined,
+				};
+
+				module.classes.push(newClass);
+
+				// Add slides to the module
+				if (classItem.slides && Array.isArray(classItem.slides)) {
+					const slidesArray = classItem.slides.map((slide: any) => ({
+						id: slide.id || `slide-${uuidv4()}`,
+						title: slide.title,
+						slideNo: slide.slideNo || 0,
+						content: slide.content || "",
+						visualPrompt: slide.visualPrompt || "",
+						voiceoverScript: slide.voiceoverScript || "",
+						imageUrl: slide.imageUrl || null,
+						example: slide.example || "",
+						classId: newClass.id,
+						createdAt: slide.createdAt || new Date().toISOString(),
+						updatedAt: slide.updatedAt || new Date().toISOString(),
+					}));
+					module.slides.push(slidesArray);
+				} else {
+					module.slides.push([]);
+				}
+
+				// Add FAQs if they exist
+				if (classItem.faqs && Array.isArray(classItem.faqs)) {
+					module.faqs.push(classItem.faqs);
+				} else {
+					module.faqs.push([]);
+				}
+
+				// Initialize empty userTests array for each class
+				module.userTests?.push([]);
+			});
+
+			generatedModules.push(module);
+		}
+
+		setModules(generatedModules);
+		setStatus("complete");
+		console.log("Course data loaded and processed:", generatedModules);
+	}, []);
 
 	const updateModuleTitle = useCallback((moduleId: string, title: string) => {
 		setModules((prevModules) =>
@@ -271,5 +398,6 @@ export function useSyllabusGenerator() {
 		generateSyllabus,
 		updateModuleTitle,
 		updateLesson,
+		setModulesFromCourseData, // Export the new function
 	};
 }

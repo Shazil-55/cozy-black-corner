@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Module } from "@/hooks/useSyllabusGenerator";
 import { BookText, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,7 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 	};
 
 	const handleClassSelect = (moduleId: string, classId: string) => {
+		console.log("Selecting class:", moduleId, classId);
 		const moduleIndex = modules.findIndex((m) => m.id === moduleId);
 		if (moduleIndex === -1) return;
 
@@ -76,9 +77,16 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 		if (classIndex === -1) return;
 
 		const classItem = modules[moduleIndex].classes[classIndex];
-
-		const slidesData: SlideData[] =
-			modules[moduleIndex].slides?.[classIndex]?.map((slide) => ({
+		console.log("Found class item:", classItem);
+		
+		// Handle both API-loaded classes and socket-generated classes
+		// For API-loaded classes, slides might be directly in the class or in the module.slides
+		let slidesData: SlideData[] = [];
+		
+		// Try to get slides from module.slides array (socket-generated)
+		if (modules[moduleIndex].slides && modules[moduleIndex].slides[classIndex]) {
+			console.log("Found slides in module.slides:", modules[moduleIndex].slides[classIndex]);
+			slidesData = modules[moduleIndex].slides[classIndex].map((slide) => ({
 				id: slide.id,
 				title: slide.title,
 				slideNo: slide.slideNo,
@@ -90,18 +98,40 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 				classId: slide.classId,
 				createdAt: slide.createdAt,
 				updatedAt: slide.updatedAt,
-			})) || [];
+			}));
+		} 
+		// Try to get slides from classItem.slides (API-loaded)
+		else if (classItem.slides && Array.isArray(classItem.slides)) {
+			console.log("Found slides in classItem.slides:", classItem.slides);
+			slidesData = classItem.slides.map((slide: any) => ({
+				id: slide.id,
+				title: slide.title,
+				slideNo: slide.slideNo,
+				visualPrompt: slide.visualPrompt || "",
+				voiceoverScript: slide.voiceoverScript || "",
+				imageUrl: slide.imageUrl || null,
+				content: slide.content || "",
+				example: slide.example || "",
+				classId: classItem.id,
+				createdAt: slide.createdAt || new Date().toISOString(),
+				updatedAt: slide.updatedAt || new Date().toISOString(),
+			}));
+		}
 
-		const faqs: FAQ[] = modules[moduleIndex].faqs?.[classIndex] || [];
+		// Get FAQs if they exist
+		const faqs: FAQ[] = (modules[moduleIndex].faqs?.[classIndex] || classItem.faqs || []);
 		
-		// Get userTest if it exists, safely handling the optional property
-		const userTest = modules[moduleIndex].userTests?.[classIndex]?.[0];
+		// Get userTest if it exists
+		const userTest = modules[moduleIndex].userTests?.[classIndex]?.[0] || classItem.userTest;
 
+		console.log("Setting selected class with slides:", slidesData.length);
+		
 		setSelectedClass({
 			moduleId,
 			classId,
-			title: classItem.title,
-			corePoints: classItem.corePoints,
+			title: classItem.classTitle || classItem.title,
+			// Use concepts from Class if available (API data), otherwise use corePoints
+			corePoints: classItem.concepts || classItem.corePoints || [],
 			slides: slidesData,
 			faqs: faqs,
 			userTest: userTest,
@@ -130,6 +160,16 @@ const SyllabusPreview: React.FC<SyllabusPreviewProps> = ({
 	const closePresentation = () => {
 		setIsPresentationMode(false);
 	};
+
+	useEffect(() => {
+		// Update expanded modules when modules change
+		setExpandedModules(
+			modules.reduce((acc, module) => ({ ...acc, [module.id]: true }), {})
+		);
+		
+		// Debug log the modules
+		console.log("Modules updated in SyllabusPreview:", modules);
+	}, [modules]);
 
 	return (
 		<>

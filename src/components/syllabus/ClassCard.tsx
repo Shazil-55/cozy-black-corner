@@ -7,8 +7,9 @@ import { Link } from 'react-router-dom';
 interface Class {
   id: string;
   title: string;
-  corePoints: string[];
-  slideCount: number;
+  corePoints?: string[];
+  concepts?: string[];
+  slideCount?: number;
 }
 
 interface ClassCardProps {
@@ -18,6 +19,12 @@ interface ClassCardProps {
 }
 
 const ClassCard: React.FC<ClassCardProps> = ({ classItem, moduleId, onSelect }) => {
+  // Use concepts if available (from API), otherwise use corePoints
+  const displayPoints = classItem.concepts || classItem.corePoints || [];
+  
+  // For slide count, it could be directly in the class or computed from slides array
+  const slideCount = classItem.slideCount || 0;
+  
   return (
     <div className="bg-white rounded-lg shadow-subtle hover:shadow-md transition-all duration-200 p-5 h-full flex flex-col">
       <div className="flex items-start space-x-3 mb-3">
@@ -29,7 +36,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classItem, moduleId, onSelect }) 
       
       <div className="mb-4 flex-grow">
         <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 pl-2">
-          {classItem.corePoints.slice(0, 3).map((point, index) => (
+          {displayPoints.slice(0, 3).map((point, index) => (
             <li key={index} className="line-clamp-1">{point}</li>
           ))}
         </ul>
@@ -37,7 +44,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ classItem, moduleId, onSelect }) 
       
       <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
         <div className="text-sm text-gray-500">
-          {classItem.slideCount} {classItem.slideCount === 1 ? 'slide' : 'slides'}
+          {slideCount} {slideCount === 1 ? 'slide' : 'slides'}
         </div>
         <Link to={`/class/${moduleId}/${classItem.id}`}>
           <Button

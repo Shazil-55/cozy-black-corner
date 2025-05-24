@@ -15,18 +15,19 @@ export const ThemeToggle: React.FC = () => {
           variant="outline" 
           size="icon" 
           onClick={toggleTheme}
-          className="w-9 h-9 rounded-full bg-white/90 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-all"
+          className="w-9 h-9 rounded-full bg-white/90 dark:bg-violet-900/70 border border-violet-200 dark:border-violet-700 shadow-md hover:shadow-lg transition-all hover:scale-105"
+          aria-label="Toggle theme"
         >
           {theme === 'light' ? (
-            <Moon className="h-[1.2rem] w-[1.2rem] text-gray-800 dark:text-gray-300" />
+            <Moon className="h-[1.2rem] w-[1.2rem] text-violet-800 dark:text-violet-300 transition-transform duration-500 rotate-0 hover:rotate-12" />
           ) : (
-            <Sun className="h-[1.2rem] w-[1.2rem] text-amber-500" />
+            <Sun className="h-[1.2rem] w-[1.2rem] text-amber-500 transition-transform duration-500 rotate-0 hover:rotate-12" />
           )}
           <span className="sr-only">Toggle theme</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent>
-        <p>{theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}</p>
+        <p className="font-medium">{theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}</p>
       </TooltipContent>
     </Tooltip>
   );

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -54,52 +53,23 @@ import {
 
 import api from '@/services/api';
 import { LoadingState } from '@/components/LoadingState';
-import { courseService } from '@/services/courseService';
-
-interface SyllabusData {
-  id: string;
-  name: string;
-  courseCode?: string;
-  category?: string;
-  price?: number;
-  createdAt: string;
-  updatedAt: string;
-  userId: string;
-}
-
-interface CategoryData {
-  id: string;
-  name: string;
-}
+import { courseService, Course } from '@/services/courseService';
+import { CreateCourseModal } from '@/components/courses/CreateCourseModal';
 
 const Courses: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<keyof SyllabusData>("name");
+  const [sortBy, setSortBy] = useState<keyof Course>("courseTitle");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
-  // Fetch courses
   const { data: courses, isLoading: coursesLoading, error: coursesError, refetch } = useQuery({
     queryKey: ['courses'],
-    queryFn: async (): Promise<SyllabusData[]> => {
-      try {
-        const response = await api.get('/user/courses');
-        // Add mock data for the new fields that don't exist yet in the API
-        return response.data.data.map((course: SyllabusData) => ({
-          ...course,
-          courseCode: `CRS-${Math.floor(Math.random() * 10000)}`,
-          category: ['Mathematics', 'English', 'Science', 'Computer Science', 'Art'][Math.floor(Math.random() * 5)],
-          price: Math.floor(Math.random() * 100) * 10 + 99
-        }));
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-        throw error;
-      }
-    },
+    queryFn: courseService.getCourses,
     meta: {
       onError: () => {
         toast.error('Failed to fetch courses. Please try again later.');
@@ -107,80 +77,42 @@ const Courses: React.FC = () => {
     }
   });
 
-  // Fetch categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async (): Promise<CategoryData[]> => {
-      try {
-        const response = await api.get('/administrator/categories');
-        return response.data.data;
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        // Return empty array to avoid breaking the UI
-        return [];
-      }
-    }
-  });
-
-  // Toggle view mode between grid and list
-  const toggleViewMode = () => {
-    setViewMode(viewMode === "grid" ? "list" : "grid");
-  };
-
-  // Handle sorting
-  const handleSort = (column: keyof SyllabusData) => {
-    if (sortBy === column) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(column);
-      setSortDirection("asc");
-    }
-  };
-
-  // IMPORTANT: Move all useMemo hooks outside of any conditional rendering to ensure consistent hook order
-  // Get unique categories from courses for tabs
   const uniqueCategories = React.useMemo(() => {
     if (!courses) return [];
-    
     const uniqueCats = new Set<string>();
     courses.forEach((course) => {
-      if (course.category) {
-        uniqueCats.add(course.category);
+      if (course.categoryName) {
+        uniqueCats.add(course.categoryName);
       }
     });
-    
     return Array.from(uniqueCats);
   }, [courses]);
 
-  // Filter and sort courses based on search term, active tab, and sort parameters
   const filteredAndSortedCourses = React.useMemo(() => {
     if (!courses) return [];
     
-    // Filter by search term
     let filtered = courses.filter((course) => 
-      course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course.courseTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (course.courseCode && course.courseCode.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (course.category && course.category.toLowerCase().includes(searchTerm.toLowerCase()))
+      (course.categoryName && course.categoryName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     
-    // Filter by active tab/category
     if (activeTab !== "all") {
       filtered = filtered.filter((course) => 
-        course.category && course.category.toLowerCase() === activeTab.toLowerCase()
+        course.categoryName && course.categoryName.toLowerCase() === activeTab.toLowerCase()
       );
     }
     
-    // Sort the filtered courses
     return [...filtered].sort((a, b) => {
-      if (sortBy === "name" || sortBy === "courseCode" || sortBy === "category") {
+      if (sortBy === "courseTitle" || sortBy === "courseCode" || sortBy === "categoryName") {
         const aValue = a[sortBy] || "";
         const bValue = b[sortBy] || "";
         return sortDirection === "asc" 
           ? aValue.localeCompare(bValue.toString()) 
           : bValue.toString().localeCompare(aValue.toString());
       } else if (sortBy === "price") {
-        const aValue = a.price || 0;
-        const bValue = b.price || 0;
+        const aValue = a.price !== undefined ? Number(a.price) || 0 : 0;
+        const bValue = b.price !== undefined ? Number(b.price) || 0 : 0;
         return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
       } else if (sortBy === "updatedAt") {
         return sortDirection === "asc" 
@@ -190,13 +122,26 @@ const Courses: React.FC = () => {
       return 0;
     });
   }, [courses, searchTerm, activeTab, sortBy, sortDirection]);
+
+  const toggleViewMode = () => {
+    setViewMode(viewMode === "grid" ? "list" : "grid");
+  };
+
+  const handleSort = (column: keyof Course) => {
+    if (sortBy === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortDirection("asc");
+    }
+  };
   
-  const handlePreviewCourse = (courseId: string) => {
+  const handleViewCourse = (courseId: string) => {
     navigate(`/course/${courseId}`);
   };
 
   const handleEditCourse = (courseId: string) => {
-    navigate(`/course/${courseId}/edit`);
+    navigate(`/course/${courseId}/edit?isEdit=true`);
   };
 
   const openDeleteDialog = (courseId: string) => {
@@ -221,20 +166,18 @@ const Courses: React.FC = () => {
     }
   };
   
-  const isLoading = coursesLoading || categoriesLoading;
+  const isLoading = coursesLoading;
   
-  // Format price as currency
-  const formatPrice = (price?: number) => {
+  const formatPrice = (price?: number | string) => {
     if (price === undefined) return "-";
+    const numericPrice = typeof price === 'string' ? Number(price) : price;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-    }).format(price);
+    }).format(numericPrice);
   };
 
-  // Render loading state
   if (isLoading) {
-    // Professional table skeleton for Courses list view
     return (
       <div className="rounded-md border bg-white dark:bg-gray-900 animate-fade-in">
         <div className="flex items-center justify-between px-4 py-3 border-b">
@@ -243,18 +186,15 @@ const Courses: React.FC = () => {
             <div className="h-9 w-28 bg-muted rounded animate-pulse" />
           </div>
         </div>
-        {/* Tabs skeleton */}
         <div className="pl-4 pt-4 flex gap-2">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-8 w-32 bg-muted rounded-xl animate-pulse" />
           ))}
         </div>
-        {/* Search & viewmode */}
         <div className="px-4 py-2 flex items-center gap-2">
           <div className="h-10 flex-1 rounded bg-muted animate-pulse" />
           <div className="h-10 w-10 rounded bg-muted animate-pulse" />
         </div>
-        {/* Table skeleton */}
         <div className="px-4 pb-4">
           <div className="min-w-full">
             <div className="grid grid-cols-6 gap-6 py-3 border-b mb-2">
@@ -281,7 +221,6 @@ const Courses: React.FC = () => {
     );
   }
 
-  // Render error state
   if (coursesError) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
@@ -300,11 +239,9 @@ const Courses: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Courses</h1>
-        <Link to="/upload-syllabus">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" /> Add course
-          </Button>
-        </Link>
+        <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Add course
+        </Button>
       </div>
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -314,13 +251,13 @@ const Courses: React.FC = () => {
               <Book className="mr-2 h-4 w-4" />
               All Courses
             </TabsTrigger>
-            {categories && categories.map((category) => (
+            {uniqueCategories.map((category) => (
               <TabsTrigger 
-                key={category.id} 
-                value={category.name.toLowerCase()} 
+                key={category} 
+                value={category.toLowerCase()} 
                 className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-primary data-[state=active]:shadow transition-all"
               >
-                {category.name}
+                {category}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -354,7 +291,6 @@ const Courses: React.FC = () => {
           </TooltipProvider>
         </div>
 
-        {/* All courses tab */}
         <TabsContent value="all" className="mt-0">
           {viewMode === "list" ? (
             <div className="rounded-md border">
@@ -364,7 +300,7 @@ const Courses: React.FC = () => {
                     <TableHead className="w-[25%]">
                       <Button 
                         variant="ghost" 
-                        onClick={() => handleSort("name")}
+                        onClick={() => handleSort("courseTitle")}
                         className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
                       >
                         Course Name
@@ -384,50 +320,30 @@ const Courses: React.FC = () => {
                     <TableHead className="w-[20%]">
                       <Button 
                         variant="ghost" 
-                        onClick={() => handleSort("category")}
+                        onClick={() => handleSort("categoryName")}
                         className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
                       >
                         Category
                         <ArrowUpDown className="h-3.5 w-3.5" />
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[15%]">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort("price")}
-                        className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
-                      >
-                        Price
-                        <ArrowUpDown className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableHead>
-                    <TableHead className="w-[15%]">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort("updatedAt")}
-                        className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
-                      >
-                        Updated On
-                        <ArrowUpDown className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableHead>
+                    <TableHead className="w-[15%]">Updated On</TableHead>
                     <TableHead className="w-[10%] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredAndSortedCourses.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
                         No courses found.
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredAndSortedCourses.map((course) => (
                       <TableRow key={course.id}>
-                        <TableCell className="font-medium">{course.name}</TableCell>
-                        <TableCell>{course.courseCode || "-"}</TableCell>
-                        <TableCell>{course.category || "-"}</TableCell>
-                        <TableCell>{formatPrice(course.price)}</TableCell>
+                        <TableCell className="font-medium">{course.courseTitle}</TableCell>
+                        <TableCell>{course.courseCode}</TableCell>
+                        <TableCell>{course.categoryName}</TableCell>
                         <TableCell>{format(new Date(course.updatedAt), 'MMM d, yyyy')}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
@@ -438,7 +354,7 @@ const Courses: React.FC = () => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8 p-0"
-                                    onClick={() => handlePreviewCourse(course.id)}
+                                    onClick={() => handleViewCourse(course.id)}
                                   >
                                     <Eye className="h-4 w-4" />
                                   </Button>
@@ -515,10 +431,10 @@ const Courses: React.FC = () => {
                         </div>
                       </div>
                       <CardTitle className="text-xl mt-4 group-hover:text-blue-600 transition-colors">
-                        {course.name}
+                        {course.courseTitle}
                       </CardTitle>
                       <CardDescription>
-                        {course.category || "Uncategorized"}
+                        {course.categoryName || "Uncategorized"}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="pb-4">
@@ -534,7 +450,7 @@ const Courses: React.FC = () => {
                         variant="ghost" 
                         size="sm" 
                         className="text-xs"
-                        onClick={() => handlePreviewCourse(course.id)}
+                        onClick={() => handleViewCourse(course.id)}
                       >
                         <Eye className="mr-1 h-3 w-3" /> Preview
                       </Button>
@@ -563,10 +479,9 @@ const Courses: React.FC = () => {
             </div>
           )}
         </TabsContent>
-        
-        {/* Dynamic category tabs */}
-        {categories && categories.map((category) => (
-          <TabsContent key={category.id} value={category.name.toLowerCase()} className="mt-0">
+
+        {uniqueCategories.map((category) => (
+          <TabsContent key={category} value={category.toLowerCase()} className="mt-0">
             {viewMode === "list" ? (
               <div className="rounded-md border">
                 <Table>
@@ -575,7 +490,7 @@ const Courses: React.FC = () => {
                       <TableHead className="w-[25%]">
                         <Button 
                           variant="ghost" 
-                          onClick={() => handleSort("name")}
+                          onClick={() => handleSort("courseTitle")}
                           className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
                         >
                           Course Name
@@ -592,44 +507,33 @@ const Courses: React.FC = () => {
                           <ArrowUpDown className="h-3.5 w-3.5" />
                         </Button>
                       </TableHead>
-                      <TableHead className="w-[20%]">Category</TableHead>
-                      <TableHead className="w-[15%]">
+                      <TableHead className="w-[20%]">
                         <Button 
                           variant="ghost" 
-                          onClick={() => handleSort("price")}
+                          onClick={() => handleSort("categoryName")}
                           className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
                         >
-                          Price
+                          Category
                           <ArrowUpDown className="h-3.5 w-3.5" />
                         </Button>
                       </TableHead>
-                      <TableHead className="w-[15%]">
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => handleSort("updatedAt")}
-                          className="font-medium flex items-center gap-1 px-0 hover:bg-transparent"
-                        >
-                          Updated On
-                          <ArrowUpDown className="h-3.5 w-3.5" />
-                        </Button>
-                      </TableHead>
+                      <TableHead className="w-[15%]">Updated On</TableHead>
                       <TableHead className="w-[10%] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredAndSortedCourses.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
-                          No courses found in this category.
+                        <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                          No courses found.
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredAndSortedCourses.map((course) => (
                         <TableRow key={course.id}>
-                          <TableCell className="font-medium">{course.name}</TableCell>
-                          <TableCell>{course.courseCode || "-"}</TableCell>
-                          <TableCell>{course.category || "-"}</TableCell>
-                          <TableCell>{formatPrice(course.price)}</TableCell>
+                          <TableCell className="font-medium">{course.courseTitle}</TableCell>
+                          <TableCell>{course.courseCode}</TableCell>
+                          <TableCell>{course.categoryName}</TableCell>
                           <TableCell>{format(new Date(course.updatedAt), 'MMM d, yyyy')}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
@@ -639,14 +543,14 @@ const Courses: React.FC = () => {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8"
-                                      onClick={() => handlePreviewCourse(course.id)}
+                                      className="h-8 w-8 p-0"
+                                      onClick={() => handleViewCourse(course.id)}
                                     >
                                       <Eye className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Preview</p>
+                                    <p>Preview course</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -657,14 +561,14 @@ const Courses: React.FC = () => {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8"
+                                      className="h-8 w-8 p-0"
                                       onClick={() => handleEditCourse(course.id)}
                                     >
                                       <Pencil className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Edit</p>
+                                    <p>Edit course</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -675,14 +579,14 @@ const Courses: React.FC = () => {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                      className="h-8 w-8 p-0 text-red-600"
                                       onClick={() => openDeleteDialog(course.id)}
                                     >
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent>
-                                    <p>Delete</p>
+                                    <p>Delete course</p>
                                   </TooltipContent>
                                 </Tooltip>
                               </TooltipProvider>
@@ -701,7 +605,7 @@ const Courses: React.FC = () => {
                     <Book className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                     <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No courses found</h2>
                     <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      No courses found in this category.
+                      No courses matching your search criteria.
                     </p>
                   </div>
                 ) : (
@@ -717,10 +621,10 @@ const Courses: React.FC = () => {
                           </div>
                         </div>
                         <CardTitle className="text-xl mt-4 group-hover:text-blue-600 transition-colors">
-                          {course.name}
+                          {course.courseTitle}
                         </CardTitle>
                         <CardDescription>
-                          {course.category || "Uncategorized"}
+                          {course.categoryName || "Uncategorized"}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="pb-4">
@@ -736,7 +640,7 @@ const Courses: React.FC = () => {
                           variant="ghost" 
                           size="sm" 
                           className="text-xs"
-                          onClick={() => handlePreviewCourse(course.id)}
+                          onClick={() => handleViewCourse(course.id)}
                         >
                           <Eye className="mr-1 h-3 w-3" /> Preview
                         </Button>
@@ -784,6 +688,14 @@ const Courses: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      <CreateCourseModal 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
+        onSuccess={() => {
+          refetch();
+        }} 
+      />
     </div>
   );
 };

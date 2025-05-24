@@ -1,5 +1,4 @@
-
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { authService, LoginRequest, RegisterRequest, ForgotPasswordRequest, ResetPasswordRequest } from '../services/authService';
 import { userService } from '../services/userService';
 import { toast } from 'sonner';
@@ -24,7 +23,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   login: (emailOrUsername: string, password: string, domain?: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string, username: string, domain?: string, profileImage?: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, username: string, domain?: string, profileImage?: string) => Promise<{success: boolean, domain?: string}>;
   forgotPassword: (email: string) => Promise<boolean>;
   resetPassword: (token: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -32,6 +31,7 @@ interface AuthContextType {
   refreshUserData: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
+  checkSubdomain: () => void;
 }
 
 // Export AuthContext so it can be imported in other files
@@ -42,6 +42,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   
+  // Function to check if we need to redirect to the correct subdomain
+  const checkSubdomain = useCallback(() => {
+    authService.redirectToSubdomain();
+  }, []);
+  
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
@@ -50,6 +55,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
       
+      // Check if we need to redirect to a subdomain
+      checkSubdomain();
+      
       // Refresh user data on initial load
       refreshUserData().catch(err => {
         console.error('Failed to refresh user data on init:', err);
@@ -57,13 +65,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     setIsLoading(false);
-  }, []);
+  }, [checkSubdomain]);
 
   const updateUserData = (userData: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // If domain was updated, update in localStorage
+      if (userData.domain) {
+        localStorage.setItem('userDomain', userData.domain);
+        // Check if we need to redirect to a different subdomain
+        checkSubdomain();
+      }
     }
   };
 
@@ -100,6 +115,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("Updated user data:", updatedUser);
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        // Update domain in localStorage if it exists
+        if (updatedUser.domain) {
+          localStorage.setItem('userDomain', updatedUser.domain);
+          
+          // Update document title with domain
+          if (updatedUser.domain !== 'ilmee') {
+            document.title = `${updatedUser.domain} | Ilmee`;
+          }
+        }
+        
         return updatedUser;
       }
     } catch (error) {
@@ -124,13 +150,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('refreshToken', refreshToken);
         }
         
+        const userDomain = response?.data?.data?.user?.domain || domain || 'ilmee';
+        
         const basicUser = {
           id: 'temp-id',
           name: emailOrUsername.includes('@') ? emailOrUsername.split('@')[0] : emailOrUsername,
-          email: emailOrUsername.includes('@') ? emailOrUsername : `${emailOrUsername}@${domain || 'ilmee.com'}`,
-          avatar: localStorage.getItem('userAvatar') || undefined
+          email: emailOrUsername.includes('@') ? emailOrUsername : `${emailOrUsername}@${userDomain}.ilmee.ai`,
+          avatar: localStorage.getItem('userAvatar') || undefined,
+          domain: userDomain
         };
         localStorage.setItem('user', JSON.stringify(basicUser));
+        localStorage.setItem('userDomain', userDomain);
         
         setUser(basicUser);
         setIsAuthenticated(true);
@@ -165,7 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     username: string, 
     domain?: string, 
     profileImage?: string
-  ): Promise<boolean> => {
+  ): Promise<{success: boolean, domain?: string}> => {
     setIsLoading(true);
     
     try {
@@ -181,39 +211,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         registerData.profileImage = profileImage;
       }
       
+      // Modified to not automatically log the user in
       const response = await authService.register(registerData);
       
-      const accessToken = response?.data?.data?.token?.accessToken;
-      const refreshToken = response?.data?.data?.token?.refreshToken;
+      // Get the domain from the response or use the provided domain
+      const userDomain = response?.data?.data?.user?.domain || domain || 'ilmee';
       
-      if (accessToken) {
-        localStorage.setItem('token', accessToken);
-        
-        if (refreshToken) {
-          localStorage.setItem('refreshToken', refreshToken);
-        }
-        
-        const basicUser = {
-          id: 'temp-id',
-          name: name,
-          email: email,
-          avatar: profileImage
-        };
-        localStorage.setItem('user', JSON.stringify(basicUser));
-        
-        setUser(basicUser);
-        setIsAuthenticated(true);
-        toast.success('Successfully registered!');
-        return true;
-      } else {
-        console.error('Registration response missing token:', response);
-        toast.error('Registration failed: Invalid response from server');
-        return false;
-      }
+      // Store just the domain for redirecting to login page
+      localStorage.setItem('userDomain', userDomain);
+      
+      // Don't set isAuthenticated or user data
+      toast.success('Successfully registered! Please log in to continue.');
+      
+      return {
+        success: true,
+        domain: userDomain
+      };
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error(error.response?.data?.message || 'Registration failed');
-      return false;
+      return { success: false };
     } finally {
       setIsLoading(false);
     }
@@ -252,12 +269,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
+    // Get domain before logout for redirection
+    const domain = localStorage.getItem('userDomain');
+    
     authService.logout();
     setUser(null);
     setIsAuthenticated(false);
     toast.success('Successfully logged out');
     
-    window.location.href = '/login';
+    // Redirect to login page on the correct subdomain if needed
+    if (domain && domain !== 'ilmee' && 
+        !['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+      window.location.href = `https://${domain}.ilmee.ai/login`;
+    } else {
+      window.location.href = '/login';
+    }
   };
 
   return (
@@ -271,7 +297,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateUserData,
       refreshUserData,
       isAuthenticated, 
-      isLoading 
+      isLoading,
+      checkSubdomain
     }}>
       {children}
     </AuthContext.Provider>

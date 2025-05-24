@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Search, BookOpen } from "lucide-react";
 
@@ -21,15 +22,15 @@ import {
   TableBody, 
   TableCell 
 } from "@/components/ui/table";
-import { LoadingState } from "@/components/LoadingState";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
-import { useQuery } from "@tanstack/react-query";
 import { courseService } from "@/services/courseService";
 
 interface EnrollCoursesDialogProps {
   isOpen: boolean;
   onClose: () => void;
   userId: string;
+  enrolledCourses?: { courseId: string }[];
   onEnrollment: () => void;
 }
 
@@ -37,21 +38,21 @@ export function EnrollCoursesDialog({
   isOpen,
   onClose,
   userId,
-  onEnrollment
+  enrolledCourses = [],
+  onEnrollment,
 }: EnrollCoursesDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [enrollingCourses, setEnrollingCourses] = useState<Record<string, boolean>>({});
 
-  // Fix: Using a proper query function that doesn't expect direct parameter
   const { data: courses = [], isLoading } = useQuery({
-    queryKey: ["courses-for-enrollment"],
+    queryKey: ["available-courses"],
     queryFn: () => courseService.getCourses(),
     enabled: isOpen,
   });
 
-  // Now filtering the array of courses
-  const filteredCourses = courses.filter(course => 
-    course.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const availableCourses = courses.filter(course => 
+    !enrolledCourses.some(enrolled => enrolled.courseId === course.id) &&
+    course.courseTitle.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEnrollCourse = async (courseId: string) => {
@@ -59,13 +60,12 @@ export function EnrollCoursesDialog({
       setEnrollingCourses(prev => ({ ...prev, [courseId]: true }));
       await courseService.enrollUserToCourse(courseId, userId);
       toast.success("Course enrolled successfully");
-      setEnrollingCourses(prev => ({ ...prev, [courseId]: false }));
       onEnrollment();
     } catch (error) {
-      console.error("Error enrolling course:", error);
-      toast.error("Failed to enroll course", { 
-        description: "An error occurred while enrolling the course" 
+      toast.error("Failed to enroll in course", { 
+        description: "An error occurred while enrolling in the course" 
       });
+    } finally {
       setEnrollingCourses(prev => ({ ...prev, [courseId]: false }));
     }
   };
@@ -76,7 +76,7 @@ export function EnrollCoursesDialog({
         <DialogHeader>
           <DialogTitle>Enroll to course</DialogTitle>
           <DialogDescription>
-            Find courses and enroll the user to them.
+            Find courses and enroll to them.
           </DialogDescription>
         </DialogHeader>
         
@@ -102,17 +102,15 @@ export function EnrollCoursesDialog({
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="h-24">
-                    <div className="flex justify-center items-center">
-                      <LoadingState message="Loading courses..." />
-                    </div>
+                  <TableCell colSpan={3}>
+                    <LoadingSpinner message="Loading available courses..." />
                   </TableCell>
                 </TableRow>
-              ) : filteredCourses && filteredCourses.length > 0 ? (
-                filteredCourses.map((course) => (
+              ) : availableCourses.length > 0 ? (
+                availableCourses.map((course) => (
                   <TableRow key={course.id}>
-                    <TableCell className="font-medium">{course.name}</TableCell>
-                    <TableCell>{course.category}</TableCell>
+                    <TableCell className="font-medium">{course.courseTitle}</TableCell>
+                    <TableCell>{course.categoryName || "Uncategorized"}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="outline"
@@ -138,7 +136,7 @@ export function EnrollCoursesDialog({
               ) : (
                 <TableRow>
                   <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
-                    No courses found
+                    No available courses found
                   </TableCell>
                 </TableRow>
               )}

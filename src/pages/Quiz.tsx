@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, Award, AlertCircle, Clock, CheckCircle2, Medal, Trophy } from "lucide-react";
@@ -73,7 +72,7 @@ const Quiz: React.FC = () => {
   };
 
   // Handle option selection
-  const handleSelectOption = (questionId: number, option: string) => {
+  const handleSelectOption = (questionId: number | string, option: string) => {
     setSelectedAnswers((prev) => ({
       ...prev,
       [questionId]: option,

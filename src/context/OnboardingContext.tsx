@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, AuthContext } from './AuthContext';
+import { useAuth } from './AuthContext';
 import { userService } from '../services/userService';
 import { toast } from 'sonner';
 
@@ -26,24 +26,48 @@ interface OnboardingContextType {
 const OnboardingContext = createContext<OnboardingContextType | undefined>(undefined);
 
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // We're moving the useAuth hook to a safer place to avoid context nesting issues
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(false);
   const [goals, setGoals] = useState<string[]>([]);
   const [mainGoal, setMainGoal] = useState<string | null>(null);
   const [userRange, setUserRange] = useState<string | null>(null);
   const [industry, setIndustry] = useState<string | null>(null);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(false);
   const navigate = useNavigate();
   
-  // Use useAuth directly instead of accessing the context
+  // Use useAuth directly
   const auth = useAuth();
   
-  // Check if onboarding is complete on mount
+  // Check if onboarding is complete based on user.mainGoal
   useEffect(() => {
-    const onboardingComplete = localStorage.getItem('onboardingComplete');
-    if (onboardingComplete === 'true') {
-      setIsOnboardingComplete(true);
+    // If user is authenticated, check if they have mainGoal
+    if (auth.user) {
+      const hasCompletedOnboarding = auth.user.mainGoal && 
+                                    Array.isArray(auth.user.mainGoal) && 
+                                    auth.user.mainGoal.length > 0;
+      
+      setIsOnboardingComplete(hasCompletedOnboarding);
+      
+      // If onboarding is not complete, and we're checking this after authentication
+      if (auth.isAuthenticated && !hasCompletedOnboarding) {
+        // Check if we're not already on an onboarding page
+        if (!window.location.pathname.includes('/onboarding')) {
+          navigate('/onboarding/step1');
+        }
+      }
+      
+      // Load saved onboarding data from user object if available
+      if (auth.user.mainGoal && Array.isArray(auth.user.mainGoal) && auth.user.mainGoal.length > 0) {
+        setMainGoal(auth.user.mainGoal[0]);
+      }
+      
+      if (auth.user.portalUsers) {
+        setUserRange(auth.user.portalUsers);
+      }
+      
+      if (auth.user.industry) {
+        setIndustry(auth.user.industry);
+      }
     } else {
-      // Load saved onboarding data if available
+      // If no user, also load from localStorage as fallback (for the form state persistence)
       const savedGoals = localStorage.getItem('onboardingGoals');
       const savedMainGoal = localStorage.getItem('onboardingMainGoal');
       const savedUserRange = localStorage.getItem('onboardingUserRange');
@@ -54,20 +78,10 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (savedUserRange) setUserRange(savedUserRange);
       if (savedIndustry) setIndustry(savedIndustry);
     }
-  }, []);
+  }, [auth.user, auth.isAuthenticated, navigate]);
 
   // Safe reference to refreshUserData
   const refreshUserData = auth.refreshUserData;
-
-  // Redirect newly registered users to onboarding
-  useEffect(() => {
-    if (auth.isAuthenticated && !isOnboardingComplete) {
-      // Check if we're not already on an onboarding page
-      if (!window.location.pathname.includes('/onboarding')) {
-        navigate('/onboarding/step1');
-      }
-    }
-  }, [auth.isAuthenticated, isOnboardingComplete, navigate]);
 
   const completeOnboarding = async () => {
     try {
@@ -86,7 +100,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         await refreshUserData();
       }
       
-      localStorage.setItem('onboardingComplete', 'true');
+      // Set onboarding complete 
       setIsOnboardingComplete(true);
       toast.success('Profile updated successfully!');
     } catch (error) {
@@ -97,11 +111,11 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const getOnboardingData = () => {
     // Make sure mainGoal is always an array
-    const mainGoalValue = localStorage.getItem('onboardingMainGoal');
+    const mainGoalValue = mainGoal || localStorage.getItem('onboardingMainGoal');
     return {
       mainGoal: mainGoalValue ? [mainGoalValue] : [],
-      portalUsers: localStorage.getItem('onboardingUserRange') || '',
-      industry: localStorage.getItem('onboardingIndustry') || ''
+      portalUsers: userRange || localStorage.getItem('onboardingUserRange') || '',
+      industry: industry || localStorage.getItem('onboardingIndustry') || ''
     };
   };
 
