@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +6,6 @@ import {
   FileText, 
   Calendar, 
   Users, 
-  Download,
   Eye,
   Edit,
   Search,
@@ -38,6 +36,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { GradingDialog } from "@/components/grading/GradingDialog";
 
 interface AssignmentDetails {
   id: string;
@@ -56,7 +55,7 @@ interface StudentSubmission {
   grade: number | null;
   status: "submitted" | "graded" | "late" | "not_submitted";
   fileUrl?: string;
-  comments?: string;
+  feedback?: string;
 }
 
 // Mock data for assignment details
@@ -69,7 +68,7 @@ const mockAssignmentDetails: AssignmentDetails = {
   totalMarks: 100
 };
 
-// Mock data for student submissions
+// Updated mock data for student submissions with feedback
 const mockSubmissions: StudentSubmission[] = [
   {
     id: "1",
@@ -79,7 +78,7 @@ const mockSubmissions: StudentSubmission[] = [
     grade: 85,
     status: "graded",
     fileUrl: "/submissions/alice-react-assignment.zip",
-    comments: "Great work on component structure!"
+    feedback: "Great work on component structure! Your code is well-organized and follows React best practices. Minor improvement needed in error handling."
   },
   {
     id: "2",
@@ -88,7 +87,8 @@ const mockSubmissions: StudentSubmission[] = [
     submissionDate: "2024-01-15T09:15:00",
     grade: null,
     status: "submitted",
-    fileUrl: "/submissions/bob-react-assignment.zip"
+    fileUrl: "/submissions/bob-react-assignment.zip",
+    feedback: ""
   },
   {
     id: "3",
@@ -98,7 +98,7 @@ const mockSubmissions: StudentSubmission[] = [
     grade: 78,
     status: "late",
     fileUrl: "/submissions/carol-react-assignment.zip",
-    comments: "Good effort, but submitted late"
+    feedback: "Good effort, but submitted late. Some components could be optimized for better performance."
   },
   {
     id: "4",
@@ -108,7 +108,7 @@ const mockSubmissions: StudentSubmission[] = [
     grade: 92,
     status: "graded",
     fileUrl: "/submissions/david-react-assignment.zip",
-    comments: "Excellent implementation!"
+    feedback: "Excellent implementation! Your code demonstrates advanced understanding of React concepts and clean architecture."
   },
   {
     id: "5",
@@ -116,27 +116,31 @@ const mockSubmissions: StudentSubmission[] = [
     studentId: "std005",
     submissionDate: "",
     grade: null,
-    status: "not_submitted"
+    status: "not_submitted",
+    feedback: ""
   }
 ];
 
 const AssignmentGrading: React.FC = () => {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const [searchTerm, setSearchTerm] = useState("");
+  const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<StudentSubmission | null>(null);
+  const [submissions, setSubmissions] = useState(mockSubmissions);
 
   const { data: assignmentDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ["assignment-details", assignmentId],
     queryFn: () => Promise.resolve(mockAssignmentDetails),
   });
 
-  const { data: submissions, isLoading: isLoadingSubmissions } = useQuery({
+  const { data: submissionsData, isLoading: isLoadingSubmissions } = useQuery({
     queryKey: ["assignment-submissions", assignmentId],
-    queryFn: () => Promise.resolve(mockSubmissions),
+    queryFn: () => Promise.resolve(submissions),
   });
 
   const isLoading = isLoadingDetails || isLoadingSubmissions;
 
-  const filteredSubmissions = submissions?.filter(submission =>
+  const filteredSubmissions = submissionsData?.filter(submission =>
     submission.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     submission.studentId.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
@@ -161,6 +165,28 @@ const AssignmentGrading: React.FC = () => {
         {labels[status]}
       </Badge>
     );
+  };
+
+  const handleGradeSubmission = (submission: StudentSubmission) => {
+    setSelectedSubmission(submission);
+    setGradingDialogOpen(true);
+  };
+
+  const handleSaveGrade = (grade: number, feedback: string) => {
+    if (selectedSubmission) {
+      setSubmissions(prev => 
+        prev.map(sub => 
+          sub.id === selectedSubmission.id 
+            ? { ...sub, grade, feedback, status: "graded" as const }
+            : sub
+        )
+      );
+    }
+  };
+
+  const truncateFeedback = (feedback: string) => {
+    if (feedback.length <= 100) return feedback;
+    return feedback.substring(0, 100) + "...";
   };
 
   if (isLoading) {
@@ -273,6 +299,7 @@ const AssignmentGrading: React.FC = () => {
                   <TableHead>Student ID</TableHead>
                   <TableHead>Submission Date</TableHead>
                   <TableHead>Grade</TableHead>
+                  <TableHead>Feedback</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -295,28 +322,11 @@ const AssignmentGrading: React.FC = () => {
                           "-"
                         }
                       </TableCell>
+                      <TableCell className="max-w-xs">
+                        {submission.feedback ? truncateFeedback(submission.feedback) : "-"}
+                      </TableCell>
                       <TableCell>{getStatusBadge(submission.status)}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        {submission.fileUrl && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 p-0"
-                                  onClick={() => window.open(submission.fileUrl, '_blank')}
-                                >
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Download submission</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -341,6 +351,7 @@ const AssignmentGrading: React.FC = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 p-0"
+                                onClick={() => handleGradeSubmission(submission)}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -355,7 +366,7 @@ const AssignmentGrading: React.FC = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       No submissions found
                     </TableCell>
                   </TableRow>
@@ -365,6 +376,16 @@ const AssignmentGrading: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      <GradingDialog
+        isOpen={gradingDialogOpen}
+        onClose={() => setGradingDialogOpen(false)}
+        onSave={handleSaveGrade}
+        studentName={selectedSubmission?.studentName || ""}
+        totalMarks={assignmentDetails?.totalMarks || 100}
+        currentGrade={selectedSubmission?.grade}
+        currentFeedback={selectedSubmission?.feedback}
+      />
     </div>
   );
 };

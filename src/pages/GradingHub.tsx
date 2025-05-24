@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -38,10 +37,10 @@ interface Assignment {
   dueDate: string;
   totalMarks: number;
   submissionsCount: number;
-  status: "upcoming" | "active" | "overdue" | "completed";
+  status: "ongoing" | "overdue";
 }
 
-// Dummy data for assignments
+// Updated dummy data for assignments with new status values
 const mockAssignments: Assignment[] = [
   {
     id: "1",
@@ -50,7 +49,7 @@ const mockAssignments: Assignment[] = [
     dueDate: "2024-01-15",
     totalMarks: 100,
     submissionsCount: 23,
-    status: "active"
+    status: "ongoing"
   },
   {
     id: "2", 
@@ -59,7 +58,7 @@ const mockAssignments: Assignment[] = [
     dueDate: "2024-01-20",
     totalMarks: 150,
     submissionsCount: 18,
-    status: "active"
+    status: "ongoing"
   },
   {
     id: "3",
@@ -77,7 +76,7 @@ const mockAssignments: Assignment[] = [
     dueDate: "2024-01-25",
     totalMarks: 120,
     submissionsCount: 12,
-    status: "upcoming"
+    status: "ongoing"
   },
   {
     id: "5",
@@ -86,7 +85,7 @@ const mockAssignments: Assignment[] = [
     dueDate: "2024-01-08",
     totalMarks: 90,
     submissionsCount: 30,
-    status: "completed"
+    status: "overdue"
   }
 ];
 
@@ -106,17 +105,13 @@ const GradingHub: React.FC = () => {
 
   const getStatusBadge = (status: Assignment["status"]) => {
     const variants = {
-      upcoming: "outline",
-      active: "default", 
-      overdue: "destructive",
-      completed: "secondary"
+      ongoing: "default",
+      overdue: "destructive"
     } as const;
 
     const labels = {
-      upcoming: "Upcoming",
-      active: "Active",
-      overdue: "Overdue", 
-      completed: "Completed"
+      ongoing: "Ongoing",
+      overdue: "Overdue"
     };
 
     return (
