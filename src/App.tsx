@@ -1,4 +1,3 @@
-
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -25,7 +24,7 @@ import ClassDetails from "./pages/ClassDetails";
 import Courses from "./pages/Courses";
 import CourseEditor from "./pages/CourseEditor";
 import CourseDetail from "./pages/CourseDetail";
-import CoursePreview from "./pages/CoursePreview"; // Add the import for CoursePreview
+import CoursePreview from "./pages/CoursePreview";
 import Quiz from "./pages/Quiz";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
@@ -43,6 +42,8 @@ import CourseStoreDetails from "./pages/CourseStoreDetails";
 import Subscription from "./pages/Subscription";
 import HelpCenter from "./pages/HelpCenter";
 import Contact from "./pages/Contact";
+import GradingHub from "./pages/GradingHub";
+import AssignmentGrading from "./pages/AssignmentGrading";
 
 const queryClient = new QueryClient();
 
@@ -143,7 +144,7 @@ const AppRoutes = () => {
           <Route path="/courses" element={<Courses />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/course/:courseId" element={<CourseDetail />} />
-          <Route path="/course/:courseId/preview" element={<CoursePreview />} /> {/* Add the new route */}
+          <Route path="/course/:courseId/preview" element={<CoursePreview />} />
           <Route path="/class/:moduleId/:classId" element={<ClassDetails />} />
           <Route path="/quiz/:classId" element={<Quiz />} />
           <Route path="/profile" element={<Profile />} />
@@ -156,6 +157,8 @@ const AppRoutes = () => {
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/grading-hub" element={<GradingHub />} />
+          <Route path="/grading-hub/assignment/:assignmentId" element={<AssignmentGrading />} />
         </Route>
         
         {/* Route for course editor - outside MainLayout because we want a custom sidebar */}
