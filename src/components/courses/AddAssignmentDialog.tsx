@@ -30,7 +30,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Assignment } from "./AssignmentsTab";
 import { courseService } from "@/services/courseService";
-import { uploadFile } from "@/services/api";
 import { 
   Command, 
   CommandEmpty, 
@@ -349,7 +348,7 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
       // Upload file for manual assignments if it's changed or new
       let fileUrl = assignment?.fileUrl || '';
       if (activeTab === "manual" && selectedFile && (fileChanged || !isEditMode)) {
-        const uploadResponse = await uploadFile(selectedFile);
+        const uploadResponse = await courseService.uploadFile(selectedFile);
         fileUrl = uploadResponse.data.url;
       }
 

@@ -78,7 +78,7 @@ export function LearnerSidebar() {
           isMobile ? "fixed" : "sticky top-0",
           isMobile && !openMobile && "-translate-x-full",
           isMobile && openMobile && "translate-x-0 shadow-xl",
-          isCollapsed ? "w-[70px]" : "w-[220px]"
+          isCollapsed ? "w-[70px]" : "w-[250px]"
         )}
       >
         <div className="flex flex-col h-full">

@@ -8,8 +8,8 @@ import { Info, Book, CircleDollarSign, Star, StarHalf, Search } from "lucide-rea
 import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import CategoryBadge from "@/components/courses/CategoryBadge";
-import { fetchCourseStore } from "@/services/api";
 import { toast } from 'sonner';
+import { courseStoreService } from '@/services/courseStoreService';
 
 // Types for API response
 interface CourseStoreData {
@@ -85,7 +85,7 @@ const CourseStore = () => {
     const loadCourseData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetchCourseStore();
+        const response = await courseStoreService.fetchCourseStore();
         console.log('Course store data:', response);
         
         if (response && response.data) {

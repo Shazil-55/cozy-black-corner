@@ -44,7 +44,7 @@ export const assignmentService = {
   // Get all assignments for instructor
   getInstructorAssignments: async () => {
     try {
-      const response = await api.get('/instructor/assignments');
+      const response = await api.get('/user/assignments');
       return response.data;
     } catch (error) {
       console.error('Failed to fetch instructor assignments:', error);
