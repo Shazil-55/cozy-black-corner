@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { ProgressStatus } from '@/hooks/useSocketProgress';
@@ -11,6 +10,14 @@ interface ProcessingScreenProps {
 }
 
 export const ProcessingScreen = ({ progress, message, classInfo }: ProcessingScreenProps) => {
+  // Add loading class to body when component mounts, remove when unmounts
+  useEffect(() => {
+    document.body.classList.add('loading');
+    return () => {
+      document.body.classList.remove('loading');
+    };
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center w-full h-full min-h-[400px] p-8 bg-white rounded-lg shadow-sm border border-gray-100">
       <div className="relative w-36 h-36 mb-6">

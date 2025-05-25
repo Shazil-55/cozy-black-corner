@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -96,7 +95,7 @@
     position: relative;
   }
 
-  /* Elegant animated background */
+  /* Light static gradient background - always visible */
   body::before {
     content: '';
     position: fixed;
@@ -105,20 +104,36 @@
     width: 100%;
     height: 100%;
     background: 
-      radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
-      radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%),
-      linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+      linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(147, 51, 234, 0.03) 50%, rgba(236, 72, 153, 0.03) 100%);
     z-index: -2;
-    animation: float-background 20s ease-in-out infinite;
   }
 
   .dark body::before {
     background: 
-      radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
-      linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(31, 41, 55, 0.8) 100%);
+      linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 50%, rgba(236, 72, 153, 0.05) 100%);
+  }
+
+  /* Loading state animated background - only visible during loading */
+  body.loading::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 50%);
+    z-index: -1;
+    animation: float-background 8s ease-in-out infinite;
+  }
+
+  .dark body.loading::after {
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
   }
 
   /* Floating particles effect */
@@ -252,9 +267,9 @@
 
 /* Enhanced keyframe animations */
 @keyframes float-background {
-  0%, 100% { transform: translateX(0px) translateY(0px) rotate(0deg); }
-  33% { transform: translateX(30px) translateY(-30px) rotate(120deg); }
-  66% { transform: translateX(-20px) translateY(20px) rotate(240deg); }
+  0%, 100% { transform: translateX(0px) translateY(0px) rotate(0deg); opacity: 0.5; }
+  33% { transform: translateX(15px) translateY(-15px) rotate(60deg); opacity: 0.7; }
+  66% { transform: translateX(-10px) translateY(10px) rotate(120deg); opacity: 0.6; }
 }
 
 @keyframes drift {
