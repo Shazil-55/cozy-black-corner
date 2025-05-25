@@ -44,6 +44,10 @@ import HelpCenter from "./pages/HelpCenter";
 import Contact from "./pages/Contact";
 import GradingHub from "./pages/GradingHub";
 import AssignmentGrading from "./pages/AssignmentGrading";
+import Conferences from "./pages/Conferences";
+import Calendar from "./pages/Calendar";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -159,6 +163,16 @@ const AppRoutes = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/grading-hub" element={<GradingHub />} />
           <Route path="/grading-hub/assignment/:assignmentId" element={<AssignmentGrading />} />
+          <Route path="/conferences" element={<Conferences />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/reports/courses" element={<Reports />} />
+          <Route path="/reports/groups" element={<Reports />} />
+          <Route path="/reports/users" element={<Reports />} />
+          <Route path="/reports/categories" element={<Reports />} />
+          <Route path="/reports/students" element={<Reports />} />
+          <Route path="/reports/assignments" element={<Reports />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
         
         {/* Route for course editor - outside MainLayout because we want a custom sidebar */}

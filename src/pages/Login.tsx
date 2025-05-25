@@ -32,7 +32,6 @@ const Login = () => {
 
 	// Extract subdomain from URL
 	const getSubdomainFromUrl = () => {
-		return "devteam.ilmee.com";
 		const hostname = window.location.hostname;
 		// Check if we're on localhost (for development)
 		if (hostname === "localhost" || hostname === "127.0.0.1") {

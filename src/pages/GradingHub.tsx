@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -29,96 +30,35 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-
-interface Assignment {
-  id: string;
-  name: string;
-  courseName: string;
-  dueDate: string;
-  totalMarks: number;
-  submissionsCount: number;
-  status: "ongoing" | "overdue";
-}
-
-// Updated dummy data for assignments with new status values
-const mockAssignments: Assignment[] = [
-  {
-    id: "1",
-    name: "React Components Assignment",
-    courseName: "Web Development Fundamentals",
-    dueDate: "2024-01-15",
-    totalMarks: 100,
-    submissionsCount: 23,
-    status: "ongoing"
-  },
-  {
-    id: "2", 
-    name: "Database Design Project",
-    courseName: "Database Management Systems",
-    dueDate: "2024-01-20",
-    totalMarks: 150,
-    submissionsCount: 18,
-    status: "ongoing"
-  },
-  {
-    id: "3",
-    name: "Algorithm Analysis",
-    courseName: "Data Structures & Algorithms",
-    dueDate: "2024-01-10",
-    totalMarks: 80,
-    submissionsCount: 25,
-    status: "overdue"
-  },
-  {
-    id: "4",
-    name: "Mobile App Prototype",
-    courseName: "Mobile Application Development",
-    dueDate: "2024-01-25",
-    totalMarks: 120,
-    submissionsCount: 12,
-    status: "ongoing"
-  },
-  {
-    id: "5",
-    name: "Network Security Report",
-    courseName: "Cybersecurity Fundamentals",
-    dueDate: "2024-01-08",
-    totalMarks: 90,
-    submissionsCount: 30,
-    status: "overdue"
-  }
-];
+import { assignmentService } from "@/services/assignmentService";
+import { Assignment } from "@/types/assignment";
 
 const GradingHub: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: assignments, isLoading } = useQuery({
-    queryKey: ["assignments"],
-    queryFn: () => Promise.resolve(mockAssignments),
+  const { data: assignmentsResponse, isLoading, error } = useQuery({
+    queryKey: ["instructor-assignments"],
+    queryFn: assignmentService.getInstructorAssignments,
   });
 
-  const filteredAssignments = assignments?.filter(assignment =>
-    assignment.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const assignments = assignmentsResponse?.data || [];
+
+  const filteredAssignments = assignments.filter((assignment: Assignment) =>
+    assignment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     assignment.courseName.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  );
 
-  const getStatusBadge = (status: Assignment["status"]) => {
-    const variants = {
-      ongoing: "default",
-      overdue: "destructive"
-    } as const;
-
-    const labels = {
-      ongoing: "Ongoing",
-      overdue: "Overdue"
-    };
-
-    return (
-      <Badge variant={variants[status]}>
-        {labels[status]}
-      </Badge>
-    );
+  const getStatusBadge = (status: string) => {
+    const statusLower = status.toLowerCase();
+    
+    if (statusLower === "ongoing") {
+      return <Badge variant="default">Ongoing</Badge>;
+    } else if (statusLower === "overdue") {
+      return <Badge variant="destructive">Overdue</Badge>;
+    } else {
+      return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   const handleAssignmentClick = (assignmentId: string) => {
@@ -129,6 +69,19 @@ const GradingHub: React.FC = () => {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-8rem)]">
         <LoadingSpinner message="Loading assignments..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          Error loading assignments
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Failed to fetch assignments. Please try again later.
+        </p>
       </div>
     );
   }
@@ -174,7 +127,7 @@ const GradingHub: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Assignment Name</TableHead>
+                  <TableHead>Assignment Title</TableHead>
                   <TableHead>Course</TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Total Marks</TableHead>
@@ -184,7 +137,7 @@ const GradingHub: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {filteredAssignments.length > 0 ? (
-                  filteredAssignments.map((assignment) => (
+                  filteredAssignments.map((assignment: Assignment) => (
                     <TableRow 
                       key={assignment.id}
                       className="cursor-pointer hover:bg-muted/50"
@@ -193,7 +146,7 @@ const GradingHub: React.FC = () => {
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground" />
-                          {assignment.name}
+                          {assignment.title}
                         </div>
                       </TableCell>
                       <TableCell>{assignment.courseName}</TableCell>
@@ -207,7 +160,7 @@ const GradingHub: React.FC = () => {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
-                          {assignment.submissionsCount}
+                          {assignment.totalSubmissions}
                         </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(assignment.status)}</TableCell>
