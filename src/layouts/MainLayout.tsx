@@ -22,7 +22,9 @@ const MainLayout = () => {
   if (isCoursePreview) {
     return (
       <div className="min-h-screen w-full">
-        <Outlet />
+        <div className="page-transition">
+          <Outlet />
+        </div>
       </div>
     );
   }
@@ -30,12 +32,17 @@ const MainLayout = () => {
   if (isParentDashboard) {
     return (
       <div className={cn(
-        "min-h-screen flex flex-col w-full transition-colors duration-200",
-        "bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950"
+        "min-h-screen flex flex-col w-full transition-all duration-500",
+        "relative"
       )}>
+        {/* Enhanced background overlay for parent dashboard */}
+        <div className="fixed inset-0 bg-gradient-to-br from-purple-50/80 via-indigo-50/60 to-pink-50/80 dark:from-purple-950/80 dark:via-indigo-950/60 dark:to-pink-950/80 -z-10" />
+        
         <Navbar hideDropdown={true} />
-        <main className="flex-1 p-5 md:p-8">
-          <Outlet />
+        <main className="flex-1 p-5 md:p-8 page-transition">
+          <div className="fade-in-up">
+            <Outlet />
+          </div>
         </main>
       </div>
     );
@@ -44,11 +51,17 @@ const MainLayout = () => {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className={cn(
-        "min-h-screen flex flex-col w-full transition-colors duration-200",
-        isLearnerRoute 
-          ? "bg-gradient-to-br from-blue-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950" 
-          : "bg-gradient-to-br from-background to-muted/50 dark:from-gray-900 dark:to-gray-950"
+        "min-h-screen flex flex-col w-full transition-all duration-500",
+        "relative"
       )}>
+        {/* Enhanced background overlay */}
+        <div className={cn(
+          "fixed inset-0 -z-10",
+          isLearnerRoute 
+            ? "bg-gradient-to-br from-blue-50/70 via-purple-50/50 to-indigo-50/70 dark:from-indigo-950/70 dark:via-purple-950/50 dark:to-blue-950/70" 
+            : "bg-gradient-to-br from-slate-50/70 via-gray-50/50 to-blue-50/70 dark:from-gray-950/70 dark:via-slate-950/50 dark:to-gray-900/70"
+        )} />
+        
         <Navbar />
         <div className="flex flex-1">
           {isLearnerRoute ? <LearnerSidebar /> : <DashboardSidebar />}
@@ -56,7 +69,11 @@ const MainLayout = () => {
             "flex-1 overflow-auto",
             isLearnerRoute ? "p-5 md:p-8" : "p-4 md:p-6"
           )}>
-            <Outlet />
+            <div className="page-transition">
+              <div className="fade-in-up">
+                <Outlet />
+              </div>
+            </div>
           </main>
         </div>
       </div>
