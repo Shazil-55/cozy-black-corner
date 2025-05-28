@@ -1,3 +1,4 @@
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -22,6 +23,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import ClassDetails from "./pages/ClassDetails";
 import Courses from "./pages/Courses";
+import MyCourses from "./pages/MyCourses";
 import CourseEditor from "./pages/CourseEditor";
 import CourseDetail from "./pages/CourseDetail";
 import CoursePreview from "./pages/CoursePreview";
