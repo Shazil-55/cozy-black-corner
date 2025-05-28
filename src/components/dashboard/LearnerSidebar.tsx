@@ -32,7 +32,7 @@ export function LearnerSidebar() {
     },
     {
       title: "My Courses",
-      url: "/courses",
+      url: "/my-courses",
       icon: BookOpen
     },
     {

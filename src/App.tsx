@@ -148,6 +148,7 @@ const AppRoutes = () => {
           <Route path="/parent-dashboard" element={<ParentDashboard />} />
           <Route path="/upload-syllabus" element={<UploadSyllabus />} />
           <Route path="/courses" element={<Courses />} />
+          <Route path="/my-courses" element={<MyCourses />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route path="/course/:courseId/preview" element={<CoursePreview />} />
