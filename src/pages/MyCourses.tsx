@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 interface ClassData {
   id: string;
   name: string;
-  instructor: string;
+  grade: number;
   enrolledStudents: number;
   totalCourses: number;
   completedCourses: number;
@@ -41,7 +40,7 @@ const MyCourses = () => {
     {
       id: "1",
       name: "Math Adventures",
-      instructor: "Ms. Johnson",
+      grade: 1,
       enrolledStudents: 24,
       totalCourses: 8,
       completedCourses: 3,
@@ -53,7 +52,7 @@ const MyCourses = () => {
     {
       id: "2", 
       name: "Science Explorers",
-      instructor: "Mr. Smith",
+      grade: 2,
       enrolledStudents: 18,
       totalCourses: 12,
       completedCourses: 7,
@@ -65,7 +64,7 @@ const MyCourses = () => {
     {
       id: "3",
       name: "Creative Writing",
-      instructor: "Mrs. Davis",
+      grade: 3,
       enrolledStudents: 15,
       totalCourses: 6,
       completedCourses: 2,
@@ -133,7 +132,7 @@ const MyCourses = () => {
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-purple-800 dark:text-purple-300">
-              {selectedClass.name} Courses
+              Grade {selectedClass.grade} - {selectedClass.name}
             </h1>
             <p className="text-purple-600 dark:text-purple-400">
               Progress: {selectedClass.completedCourses}/{selectedClass.totalCourses} courses completed
@@ -278,10 +277,10 @@ const MyCourses = () => {
               <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
               <div className="relative z-10">
                 <h3 className="text-2xl font-bold text-white mb-2">
-                  {classData.name}
+                  Grade {classData.grade}
                 </h3>
                 <p className="text-white/90 text-sm">
-                  with {classData.instructor}
+                  {classData.name}
                 </p>
               </div>
               <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-white/20 rounded-full"></div>
