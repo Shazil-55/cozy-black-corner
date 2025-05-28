@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTheme } from "@/context/ThemeContext";
 import { useRole } from "@/context/RoleContext";
+import { useAuth } from "@/context/AuthContext";
 import { getMenuItemsByRole } from "@/constants/menuItems";
 
 export function DashboardSidebar() {
@@ -33,9 +34,10 @@ export function DashboardSidebar() {
   const isMobile = useIsMobile();
   const { theme } = useTheme();
   const { role } = useRole();
+  const { user } = useAuth();
 
-  // Get menu items based on role
-  const items = getMenuItemsByRole(role);
+  // Get menu items based on role and user's actual role
+  const items = getMenuItemsByRole(role, user?.role);
 
   const handleDropdownItemClick = (url: string) => {
     navigate(url);

@@ -1,3 +1,4 @@
+
 import { 
   Home, Users, LayoutGrid, Settings, HelpCircle, BookText, 
   Store, UsersRound, GitBranch, Zap, Bell, BarChart, 
@@ -10,6 +11,7 @@ export interface MenuItem {
   url: string;
   hasDropdown?: boolean;
   dropdownItems?: DropdownItem[];
+  adminOnly?: boolean; // New property to mark admin-only items
 }
 
 export interface DropdownItem {
@@ -20,16 +22,17 @@ export interface DropdownItem {
 // Administrator Menu Items
 export const adminMenuItems: MenuItem[] = [
   { title: "Home", icon: Home, url: "/" },
-  { title: "Users", icon: Users, url: "/users" },
+  { title: "Users", icon: Users, url: "/users", adminOnly: true },
   { title: "Courses", icon: LayoutGrid, url: "/courses" },
-  { title: "Course store", icon: Store, url: "/course-store" },
-  { title: "Categories", icon: LayoutGrid, url: "/categories" },
+  { title: "Course store", icon: Store, url: "/course-store", adminOnly: true },
+  { title: "Categories", icon: LayoutGrid, url: "/categories", adminOnly: true },
   { title: "Groups", icon: UsersRound, url: "/groups" },
   { 
     title: "Reports", 
     icon: BarChart, 
     url: "/reports",
     hasDropdown: true,
+    adminOnly: true,
     dropdownItems: [
       { title: "Course Reports", url: "/reports/courses" },
       { title: "Group Reports", url: "/reports/groups" },
@@ -38,7 +41,7 @@ export const adminMenuItems: MenuItem[] = [
     ]
   },
   { title: "Account & Settings", icon: Settings, url: "/settings" },
-  { title: "Subscription", icon: BookText, url: "/subscription" },
+  { title: "Subscription", icon: BookText, url: "/subscription", adminOnly: true },
   { title: "Help Center", icon: HelpCircle, url: "/help" }
 ];
 
@@ -78,7 +81,9 @@ export const parentMenuItems: MenuItem[] = [
   { title: "Calendar", icon: CalendarDays, url: "/calendar" }
 ];
 
-export const getMenuItemsByRole = (role: string): MenuItem[] => {
+export const getMenuItemsByRole = (role: string, userRole?: string): MenuItem[] => {
+  const isActualAdmin = userRole === 'Administrator';
+  
   switch(role) {
     case 'instructor':
       return instructorMenuItems;
@@ -88,6 +93,10 @@ export const getMenuItemsByRole = (role: string): MenuItem[] => {
       return parentMenuItems;
     case 'administrator':
     default:
+      // Filter admin-only items if user is not actually an admin
+      if (!isActualAdmin && role === 'administrator') {
+        return adminMenuItems.filter(item => !item.adminOnly);
+      }
       return adminMenuItems;
   }
 };

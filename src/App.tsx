@@ -134,6 +134,17 @@ const SubdomainHandler = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Admin route protection component
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  
+  if (user?.role !== 'Administrator') {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const AppRoutes = () => {
   useSocketProgress();
   const { isAuthenticated, isLoading } = useAuth();
@@ -149,30 +160,34 @@ const AppRoutes = () => {
           <Route path="/upload-syllabus" element={<UploadSyllabus />} />
           <Route path="/courses" element={<Courses />} />
           <Route path="/my-courses" element={<MyCourses />} />
-          <Route path="/categories" element={<Categories />} />
+          
+          {/* Admin-only routes */}
+          <Route path="/categories" element={<AdminRoute><Categories /></AdminRoute>} />
+          <Route path="/users" element={<AdminRoute><Users /></AdminRoute>} />
+          <Route path="/users/:userId" element={<AdminRoute><UserDetails /></AdminRoute>} />
+          <Route path="/course-store" element={<AdminRoute><CourseStore /></AdminRoute>} />
+          <Route path="/course-store/course/:courseId" element={<AdminRoute><CourseStoreDetails /></AdminRoute>} />
+          <Route path="/subscription" element={<AdminRoute><Subscription /></AdminRoute>} />
+          <Route path="/reports" element={<AdminRoute><Reports /></AdminRoute>} />
+          <Route path="/reports/courses" element={<AdminRoute><Reports /></AdminRoute>} />
+          <Route path="/reports/groups" element={<AdminRoute><Reports /></AdminRoute>} />
+          <Route path="/reports/users" element={<AdminRoute><Reports /></AdminRoute>} />
+          <Route path="/reports/categories" element={<AdminRoute><Reports /></AdminRoute>} />
+          
+          {/* Regular protected routes */}
           <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route path="/course/:courseId/preview" element={<CoursePreview />} />
           <Route path="/class/:moduleId/:classId" element={<ClassDetails />} />
           <Route path="/quiz/:classId" element={<Quiz />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/users/:userId" element={<UserDetails />} />
           <Route path="/groups" element={<Groups />} />
           <Route path="/groups/:groupId" element={<GroupDetails />} />
-          <Route path="/course-store" element={<CourseStore />} />
-          <Route path="/course-store/course/:courseId" element={<CourseStoreDetails />} />
-          <Route path="/subscription" element={<Subscription />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/grading-hub" element={<GradingHub />} />
           <Route path="/grading-hub/assignment/:assignmentId" element={<AssignmentGrading />} />
           <Route path="/conferences" element={<Conferences />} />
           <Route path="/calendar" element={<Calendar />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/reports/courses" element={<Reports />} />
-          <Route path="/reports/groups" element={<Reports />} />
-          <Route path="/reports/users" element={<Reports />} />
-          <Route path="/reports/categories" element={<Reports />} />
           <Route path="/reports/students" element={<Reports />} />
           <Route path="/reports/assignments" element={<Reports />} />
           <Route path="/settings" element={<Settings />} />

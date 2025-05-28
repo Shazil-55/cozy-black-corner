@@ -47,6 +47,9 @@ export function UserNav() {
     navigate('/profile');
   };
 
+  // Check if user is admin to show role switching
+  const isAdmin = user?.role === 'Administrator' || role === 'administrator';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -78,42 +81,47 @@ export function UserNav() {
         
         <DropdownMenuSeparator />
         
-        <div className="p-2">
-          <p className="text-sm font-medium mb-2 px-2">Switch role</p>
-          <RadioGroup value={role} onValueChange={handleRoleChange} className="space-y-1">
-            <div className={cn(
-              "flex items-center space-x-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent",
-              role === "administrator" && "bg-blue-50 dark:bg-blue-900/20"
-            )}>
-              <RadioGroupItem value="administrator" id="administrator" />
-              <label htmlFor="administrator" className="text-sm cursor-pointer flex-1">
-                Administrator
-              </label>
+        {/* Only show role switching for administrators */}
+        {isAdmin && (
+          <>
+            <div className="p-2">
+              <p className="text-sm font-medium mb-2 px-2">Switch role</p>
+              <RadioGroup value={role} onValueChange={handleRoleChange} className="space-y-1">
+                <div className={cn(
+                  "flex items-center space-x-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent",
+                  role === "administrator" && "bg-blue-50 dark:bg-blue-900/20"
+                )}>
+                  <RadioGroupItem value="administrator" id="administrator" />
+                  <label htmlFor="administrator" className="text-sm cursor-pointer flex-1">
+                    Administrator
+                  </label>
+                </div>
+                
+                <div className={cn(
+                  "flex items-center space-x-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent",
+                  role === "instructor" && "bg-blue-50 dark:bg-blue-900/20"
+                )}>
+                  <RadioGroupItem value="instructor" id="instructor" />
+                  <label htmlFor="instructor" className="text-sm cursor-pointer flex-1">
+                    Instructor
+                  </label>
+                </div>
+                
+                <div className={cn(
+                  "flex items-center space-x-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent",
+                  role === "learner" && "bg-blue-50 dark:bg-blue-900/20"
+                )}>
+                  <RadioGroupItem value="learner" id="learner" />
+                  <label htmlFor="learner" className="text-sm cursor-pointer flex-1">
+                    Learner
+                  </label>
+                </div>
+              </RadioGroup>
             </div>
             
-            <div className={cn(
-              "flex items-center space-x-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent",
-              role === "instructor" && "bg-blue-50 dark:bg-blue-900/20"
-            )}>
-              <RadioGroupItem value="instructor" id="instructor" />
-              <label htmlFor="instructor" className="text-sm cursor-pointer flex-1">
-                Instructor
-              </label>
-            </div>
-            
-            <div className={cn(
-              "flex items-center space-x-2 rounded-md px-2 py-1.5 cursor-pointer hover:bg-accent",
-              role === "learner" && "bg-blue-50 dark:bg-blue-900/20"
-            )}>
-              <RadioGroupItem value="learner" id="learner" />
-              <label htmlFor="learner" className="text-sm cursor-pointer flex-1">
-                Learner
-              </label>
-            </div>
-          </RadioGroup>
-        </div>
-        
-        <DropdownMenuSeparator />
+            <DropdownMenuSeparator />
+          </>
+        )}
         
         <DropdownMenuItem className="cursor-pointer" onClick={handleProfileClick}>
           <User className="mr-2 h-4 w-4" />
