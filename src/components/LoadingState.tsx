@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -20,14 +21,6 @@ export const LoadingState = ({
   statusMessage,
   variant = 'default',
 }: LoadingStateProps) => {
-  // Add loading class to body when component mounts, remove when unmounts
-  useEffect(() => {
-    document.body.classList.add('loading');
-    return () => {
-      document.body.classList.remove('loading');
-    };
-  }, []);
-
   const steps = [
     "Preparing resources...",
     "Connecting to server...",

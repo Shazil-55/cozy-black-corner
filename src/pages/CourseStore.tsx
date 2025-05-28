@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -194,7 +193,7 @@ const CourseStore = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-8 fade-in-up">
+        <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Course Store</h1>
           <p className="text-muted-foreground">
             Discover and access professional learning content from our library and trusted partners
@@ -212,15 +211,15 @@ const CourseStore = () => {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="mb-8 fade-in-up">
+        <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Course Store</h1>
           <p className="text-muted-foreground">
             Discover and access professional learning content from our library and trusted partners
           </p>
         </div>
-        <div className="text-center py-16 border border-dashed rounded-lg glass-card">
+        <div className="text-center py-16 border border-dashed rounded-lg">
           <p className="text-red-500 mb-2">{error}</p>
-          <Button onClick={() => window.location.reload()} className="button-hover">
+          <Button onClick={() => window.location.reload()}>
             Try Again
           </Button>
         </div>
@@ -230,23 +229,21 @@ const CourseStore = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="mb-8 fade-in-up">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-          Course Store
-        </h1>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Course Store</h1>
         <p className="text-muted-foreground">
           Discover and access professional learning content from our library and trusted partners
         </p>
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="glass-card p-6 mb-8 animate-delay-100 fade-in-up">
+      <div className="bg-card border rounded-lg p-6 mb-8 shadow-sm">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search courses..."
-              className="pl-10 w-full transition-all duration-200 focus:scale-[1.02] focus:shadow-lg"
+              className="pl-10 w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -257,7 +254,7 @@ const CourseStore = () => {
               <Button 
                 variant={featuredFilter ? "default" : "outline"} 
                 size="sm" 
-                className="flex items-center gap-2 button-hover"
+                className="flex items-center gap-2"
                 onClick={() => setFeaturedFilter(!featuredFilter)}
               >
                 <Star className="h-4 w-4" />
@@ -266,7 +263,7 @@ const CourseStore = () => {
             )}
 
             {(selectedCategories.length > 0 || searchQuery || featuredFilter) && (
-              <Button variant="outline" size="sm" onClick={clearFilters} className="button-hover">
+              <Button variant="outline" size="sm" onClick={clearFilters}>
                 Clear filters
               </Button>
             )}
@@ -276,21 +273,20 @@ const CourseStore = () => {
         <div>
           <h3 className="text-sm font-medium mb-3">Categories</h3>
           <div className="flex flex-wrap gap-2">
-            {categories.map((category, index) => (
-              <div key={category} className={`animate-delay-${(index % 5 + 1) * 100} fade-in-scale`}>
-                <CategoryBadge 
-                  category={category}
-                  isSelected={selectedCategories.includes(category)}
-                  onClick={() => toggleCategory(category)}
-                />
-              </div>
+            {categories.map(category => (
+              <CategoryBadge 
+                key={category} 
+                category={category}
+                isSelected={selectedCategories.includes(category)}
+                onClick={() => toggleCategory(category)}
+              />
             ))}
           </div>
         </div>
       </div>
 
       {/* Help Banner */}
-      <div className="glass-morphism p-4 mb-8 flex justify-between items-center rounded-xl animate-delay-200 fade-in-up">
+      <div className="bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-900 rounded-lg p-4 mb-8 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
           <p className="text-sm text-blue-800 dark:text-blue-300">
@@ -300,22 +296,22 @@ const CourseStore = () => {
             }
           </p>
         </div>
-        <Button variant="link" size="sm" className="text-blue-700 dark:text-blue-400 hover-scale">
+        <Button variant="link" size="sm" className="text-blue-700 dark:text-blue-400">
           How it works
         </Button>
       </div>
 
-      <Tabs defaultValue="ilmeeLibrary" value={activeTab} className="mb-8 animate-delay-300 fade-in-up" onValueChange={setActiveTab}>
-        <TabsList className="w-full grid grid-cols-2 mb-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 overflow-hidden rounded-xl p-1 h-auto shadow-lg">
+      <Tabs defaultValue="ilmeeLibrary" value={activeTab} className="mb-8" onValueChange={setActiveTab}>
+        <TabsList className="w-full grid grid-cols-2 mb-6 bg-background border overflow-hidden rounded-lg p-1 h-auto">
           <TabsTrigger 
             value="ilmeeLibrary" 
-            className="text-sm md:text-base py-3 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300"
+            className="text-sm md:text-base py-3 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             IlmeeLibrary™
           </TabsTrigger>
           <TabsTrigger 
             value="otherProviders" 
-            className="text-sm md:text-base py-3 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-purple-600 data-[state=active]:text-white transition-all duration-300"
+            className="text-sm md:text-base py-3 rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
           >
             Other providers
           </TabsTrigger>
@@ -324,30 +320,25 @@ const CourseStore = () => {
         <TabsContent value="ilmeeLibrary" className="space-y-8">
           {transformedIlmeeLibraryCourses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {transformedIlmeeLibraryCourses.map((course, index) => (
-                <Card 
-                  key={course.id} 
-                  className={`overflow-hidden cursor-pointer group glass-card card-hover animate-delay-${(index % 3 + 1) * 100} fade-in-scale`} 
-                  onClick={() => handleCourseClick(course.id)}
-                >
+              {transformedIlmeeLibraryCourses.map(course => (
+                <Card key={course.id} className="overflow-hidden hover:shadow-xl transition-all cursor-pointer group border bg-card" onClick={() => handleCourseClick(course.id)}>
                   <div className="relative h-48 overflow-hidden">
                     <img 
                       src={course.image} 
                       alt={course.title} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     {course.featured && (
-                      <Badge className="absolute top-3 right-3 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white shadow-lg">
+                      <Badge className="absolute top-3 right-3 bg-amber-500 hover:bg-amber-500">
                         Featured
                       </Badge>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
                   
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200">
+                        <CardTitle className="text-lg group-hover:text-primary transition-colors">
                           {course.title}
                         </CardTitle>
                         <CardDescription className="text-xs">
@@ -369,10 +360,10 @@ const CourseStore = () => {
                   </CardContent>
                   
                   <CardFooter className="pt-0 flex justify-between">
-                    <Badge variant="secondary" className="text-xs font-normal bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900">
+                    <Badge variant="secondary" className="text-xs font-normal">
                       IlmeeLibrary™
                     </Badge>
-                    <Button size="sm" className="ml-auto button-hover bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+                    <Button size="sm" className="ml-auto">
                       Get this course
                     </Button>
                   </CardFooter>
@@ -380,9 +371,9 @@ const CourseStore = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 border border-dashed rounded-lg glass-card">
+            <div className="text-center py-16 border border-dashed rounded-lg">
               <p className="text-muted-foreground mb-2">No courses match your filters</p>
-              <Button variant="outline" size="sm" onClick={clearFilters} className="button-hover">
+              <Button variant="outline" size="sm" onClick={clearFilters}>
                 Clear filters
               </Button>
             </div>
@@ -392,17 +383,13 @@ const CourseStore = () => {
         <TabsContent value="otherProviders" className="space-y-8">
           {transformedOtherProviderCourses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {transformedOtherProviderCourses.map((course, index) => (
-                <Card 
-                  key={course.id} 
-                  className={`overflow-hidden cursor-pointer group glass-card card-hover animate-delay-${(index % 3 + 1) * 100} fade-in-scale`} 
-                  onClick={() => handleCourseClick(course.id)}
-                >
+              {transformedOtherProviderCourses.map(course => (
+                <Card key={course.id} className="overflow-hidden hover:shadow-xl transition-all cursor-pointer group border bg-card" onClick={() => handleCourseClick(course.id)}>
                   <div className="relative h-48 overflow-hidden">
                     <img 
                       src={course.image} 
                       alt={course.title} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent py-2 px-3">
                       <span className="text-xs font-medium text-white">
@@ -414,7 +401,7 @@ const CourseStore = () => {
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
                       <div>
-                        <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200">
+                        <CardTitle className="text-lg group-hover:text-primary transition-colors">
                           {course.title}
                         </CardTitle>
                         <CardDescription className="text-xs">
@@ -437,7 +424,7 @@ const CourseStore = () => {
                     </div>
                     <Button 
                       size="sm" 
-                      className={`button-hover ${course.price ? "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700" : ""}`}
+                      className={course.price ? "bg-green-600 hover:bg-green-700" : ""}
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/course-store/course/${course.id}`);
@@ -450,9 +437,9 @@ const CourseStore = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 border border-dashed rounded-lg glass-card">
+            <div className="text-center py-16 border border-dashed rounded-lg">
               <p className="text-muted-foreground mb-2">No courses match your filters</p>
-              <Button variant="outline" size="sm" onClick={clearFilters} className="button-hover">
+              <Button variant="outline" size="sm" onClick={clearFilters}>
                 Clear filters
               </Button>
             </div>
