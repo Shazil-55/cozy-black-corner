@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CreateUserPayload } from "@/services/userService";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 
 interface AddUserDialogProps {
@@ -104,205 +103,165 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="py-4 space-y-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton className="h-16 w-full rounded-md" />
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Skeleton className="h-10 w-20" />
-              <Skeleton className="h-10 w-20" />
-            </div>
-          </div>
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Name Field */}
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter full name" {...field} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Email Field */}
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="name@example.com" {...field} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Username Field */}
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input placeholder="unique_username" {...field} disabled={isLoading} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* User Role Field */}
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>User Role <span className="text-red-500">*</span></FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isLoading}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select user role" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Administrator">Administrator</SelectItem>
-                          <SelectItem value="Instructor">Instructor</SelectItem>
-                          <SelectItem value="Learner">Learner</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Password Field */}
+              {/* Name Field */}
               <FormField
                 control={form.control}
-                name="password"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
+                    <FormLabel>Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Create a secure password" {...field} disabled={isLoading} />
+                      <Input placeholder="Enter full name" {...field} disabled={isLoading} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Email Field */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="name@example.com" {...field} disabled={isLoading} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Username Field */}
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="unique_username" {...field} disabled={isLoading} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* User Role Field */}
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>User Role <span className="text-red-500">*</span></FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      disabled={isLoading}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select user role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Administrator">Administrator</SelectItem>
+                        <SelectItem value="Instructor">Instructor</SelectItem>
+                        <SelectItem value="Learner">Learner</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Password Field */}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Create a secure password" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormDescription>
+                    Password must be at least 8 characters and include uppercase, lowercase, and numbers.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Bio Field */}
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Short description about the user (optional)"
+                      className="min-h-[100px]"
+                      {...field} 
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* User Status */}
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value === "Active"}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked ? "Active" : "Inactive");
+                      }}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Active Account</FormLabel>
                     <FormDescription>
-                      Password must be at least 8 characters and include uppercase, lowercase, and numbers.
+                      Enable this to allow the user to sign in immediately.
                     </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  </div>
+                </FormItem>
+              )}
+            />
 
-              {/* Bio Field */}
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Short description about the user (optional)"
-                        className="min-h-[100px]"
-                        {...field} 
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <div className="flex items-center">
+                    <Spinner size="sm" className="mr-2" />
+                    Adding User...
+                  </div>
+                ) : (
+                  "Add User"
                 )}
-              />
-
-              {/* User Status */}
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value === "Active"}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked ? "Active" : "Inactive");
-                        }}
-                        disabled={isLoading}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Active Account</FormLabel>
-                      <FormDescription>
-                        Enable this to allow the user to sign in immediately.
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <Spinner size="sm" className="mr-2" />
-                      Adding User...
-                    </div>
-                  ) : (
-                    "Add User"
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
