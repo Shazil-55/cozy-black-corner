@@ -52,10 +52,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/LoadingState";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 interface UserTableProps {
   users: ApiUser[];
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   onUpdate: (user: ApiUser) => void;
   onAddParent: (userId: string, parentName: string) => Promise<any>;
   onCreateParent?: (learnerId: string) => void;
@@ -72,6 +73,7 @@ export const UserTable: React.FC<UserTableProps> = ({
   const [sortBy, setSortBy] = useState<keyof ApiUser>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [parentDialogOpen, setParentDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [parentName, setParentName] = useState("");
@@ -108,10 +110,17 @@ export const UserTable: React.FC<UserTableProps> = ({
     }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (userToDelete) {
-      onDelete(userToDelete);
-      setUserToDelete(null);
+      try {
+        setDeletingUserId(userToDelete);
+        await onDelete(userToDelete);
+        setUserToDelete(null);
+      } catch (error) {
+        console.error("Error deleting user:", error);
+      } finally {
+        setDeletingUserId(null);
+      }
     }
   };
 
@@ -328,8 +337,16 @@ export const UserTable: React.FC<UserTableProps> = ({
             <AlertDialogAction 
               onClick={handleConfirmDelete}
               className="bg-red-600 hover:bg-red-700"
+              disabled={!!deletingUserId}
             >
-              Delete
+              {deletingUserId ? (
+                <div className="flex items-center">
+                  <Spinner size="sm" className="mr-2" />
+                  Deleting...
+                </div>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

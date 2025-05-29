@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -33,6 +32,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { CreateUserPayload } from "@/services/userService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
 
 interface AddUserDialogProps {
   isOpen: boolean;
@@ -154,7 +154,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                     <FormItem>
                       <FormLabel>Name <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter full name" {...field} />
+                        <Input placeholder="Enter full name" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -169,7 +169,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                     <FormItem>
                       <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="name@example.com" {...field} />
+                        <Input type="email" placeholder="name@example.com" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -186,7 +186,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                     <FormItem>
                       <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="unique_username" {...field} />
+                        <Input placeholder="unique_username" {...field} disabled={isLoading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -203,6 +203,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        disabled={isLoading}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -229,7 +230,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                   <FormItem>
                     <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Create a secure password" {...field} />
+                      <Input type="password" placeholder="Create a secure password" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormDescription>
                       Password must be at least 8 characters and include uppercase, lowercase, and numbers.
@@ -251,6 +252,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                         placeholder="Short description about the user (optional)"
                         className="min-h-[100px]"
                         {...field} 
+                        disabled={isLoading}
                       />
                     </FormControl>
                     <FormMessage />
@@ -270,6 +272,7 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                         onCheckedChange={(checked) => {
                           field.onChange(checked ? "Active" : "Inactive");
                         }}
+                        disabled={isLoading}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
@@ -286,7 +289,16 @@ export const AddUserDialog: React.FC<AddUserDialogProps> = ({
                 <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading}>Add User</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="flex items-center">
+                      <Spinner size="sm" className="mr-2" />
+                      Adding User...
+                    </div>
+                  ) : (
+                    "Add User"
+                  )}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
