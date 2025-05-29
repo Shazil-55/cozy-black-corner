@@ -7,6 +7,7 @@ import { LearnerSidebar } from "@/components/dashboard/LearnerSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useRole } from "@/context/RoleContext";
 import { cn } from "@/lib/utils";
+import { backgroundClasses, interactionClasses } from "@/lib/animation";
 
 const MainLayout = () => {
   const { role } = useRole();
@@ -30,12 +31,17 @@ const MainLayout = () => {
   if (isParentDashboard) {
     return (
       <div className={cn(
-        "min-h-screen flex flex-col w-full transition-colors duration-200",
-        "bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950"
+        "min-h-screen flex flex-col w-full transition-all duration-700 ease-smooth",
+        backgroundClasses.premium,
+        "bg-gradient-to-br from-purple-50/80 via-indigo-50/80 to-pink-50/80",
+        "dark:from-purple-950/80 dark:via-indigo-950/80 dark:to-pink-950/80",
+        interactionClasses.pageEnter
       )}>
         <Navbar hideDropdown={true} />
-        <main className="flex-1 p-5 md:p-8">
-          <Outlet />
+        <main className="flex-1 p-5 md:p-8 animate-fade-in-delay-200">
+          <div className="animate-fade-in-delay-300">
+            <Outlet />
+          </div>
         </main>
       </div>
     );
@@ -44,19 +50,28 @@ const MainLayout = () => {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className={cn(
-        "min-h-screen flex flex-col w-full transition-colors duration-200",
+        "min-h-screen flex flex-col w-full transition-all duration-700 ease-smooth",
+        backgroundClasses.premium,
+        backgroundClasses.floating,
         isLearnerRoute 
-          ? "bg-gradient-to-br from-blue-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950" 
-          : "bg-gradient-to-br from-background to-muted/50 dark:from-gray-900 dark:to-gray-950"
+          ? "bg-gradient-to-br from-blue-50/80 via-purple-50/80 to-indigo-50/80 dark:from-indigo-950/80 dark:via-purple-950/80 dark:to-blue-950/80" 
+          : "bg-gradient-to-br from-slate-50/80 via-blue-50/80 to-indigo-50/80 dark:from-slate-950/80 dark:via-blue-950/80 dark:to-indigo-950/80",
+        interactionClasses.pageEnter
       )}>
-        <Navbar />
-        <div className="flex flex-1">
-          {isLearnerRoute ? <LearnerSidebar /> : <DashboardSidebar />}
+        <div className="animate-slide-in-down">
+          <Navbar />
+        </div>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="animate-slide-in-left">
+            {isLearnerRoute ? <LearnerSidebar /> : <DashboardSidebar />}
+          </div>
           <main className={cn(
-            "flex-1 overflow-auto",
+            "flex-1 overflow-auto animate-fade-in-delay-300",
             isLearnerRoute ? "p-5 md:p-8" : "p-4 md:p-6"
           )}>
-            <Outlet />
+            <div className="animate-scale-in-delay-200">
+              <Outlet />
+            </div>
           </main>
         </div>
       </div>
