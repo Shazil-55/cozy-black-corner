@@ -144,7 +144,7 @@ export const userService = {
 
   deleteUser: async (userId: string): Promise<any> => {
     try {
-      const response = await api.delete(`/users/${userId}`);
+      const response = await api.delete(`/administrator/user/${userId}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -153,7 +153,7 @@ export const userService = {
 
   addParentName: async (userId: string, parentName: string): Promise<any> => {
     try {
-      const response = await api.put(`/users/${userId}/parent`, { parentName });
+      const response = await api.put(`/user/${userId}/parent`, { parentName });
       return response.data;
     } catch (error) {
       throw error;

@@ -41,7 +41,7 @@ const MyCourses = () => {
   const { data: apiData, isLoading, error } = useQuery({
     queryKey: ['learnerCourses'],
     queryFn: async (): Promise<ApiResponse> => {
-      const response = await api.get('/learner/courses');
+      const response = await api.get('/user/learner/courses');
       return response.data;
     },
     retry: 2
