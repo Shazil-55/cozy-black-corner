@@ -132,29 +132,6 @@
     @apply text-xl md:text-2xl;
   }
 
-  /* Page transition animations */
-  .page-enter {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  .page-enter-active {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 600ms ease-out, transform 600ms ease-out;
-  }
-
-  .page-exit {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .page-exit-active {
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: opacity 400ms ease-in, transform 400ms ease-in;
-  }
-
   /* Premium background patterns */
   .premium-background {
     position: relative;
@@ -212,3 +189,13 @@
     animation: float-particles 20s linear infinite;
     pointer-events: none;
   }
+
+  @keyframes float-particles {
+    0% {
+      transform: translateY(0px);
+    }
+    100% {
+      transform: translateY(-100px);
+    }
+  }
+}
