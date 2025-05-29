@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -92,6 +93,30 @@
   body {
     @apply bg-background text-foreground antialiased overflow-x-hidden;
     font-feature-settings: "ss01", "ss03", "cv01", "cv02", "cv03";
+    position: relative;
+  }
+
+  /* Elegant background patterns */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .dark body::before {
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(88, 28, 135, 0.4) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(91, 33, 182, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.2) 0%, transparent 50%);
   }
 
   /* Custom scrollbar for webkit browsers */
@@ -139,6 +164,30 @@
   
   .interactive {
     @apply transition-all duration-200 ease-in-out hover:brightness-105 active:brightness-95;
+  }
+
+  .elegant-gradient {
+    @apply bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-indigo-900/30;
+  }
+
+  .card-gradient {
+    @apply bg-gradient-to-br from-white/80 to-white/60 dark:from-gray-800/80 dark:to-gray-900/60;
+  }
+
+  .glassmorphism {
+    @apply bg-white/20 dark:bg-gray-800/20 backdrop-blur-lg border border-white/30 dark:border-gray-700/30 shadow-xl;
+  }
+
+  .floating-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 0.6s ease-out forwards;
+  }
+
+  .slide-in-right {
+    animation: slideInRight 0.5s ease-out forwards;
   }
 
   .talentlms-gradient {
@@ -193,9 +242,51 @@
   animation-delay: 500ms;
 }
 
+/* Keyframe animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.6); }
+}
+
 /* Transitions */
 .transition-smooth {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-spring {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* Dynamic toast styling for theme support */
@@ -269,6 +360,19 @@
 
 .kid-icon-container {
   @apply w-12 h-12 rounded-full flex items-center justify-center mb-2;
+}
+
+/* Enhanced card hover effects */
+.enhanced-card {
+  @apply transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl;
+}
+
+.enhanced-card:hover {
+  background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+}
+
+.dark .enhanced-card:hover {
+  background: linear-gradient(145deg, rgba(55,65,81,0.9), rgba(75,85,99,0.7));
 }
 
 /* Animation for kid UI */
