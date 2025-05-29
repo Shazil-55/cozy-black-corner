@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,8 +58,8 @@ const MyCourses = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen p-6 space-y-6">
-        <div className="text-center mb-8 fade-in-up">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-purple-800 dark:text-purple-300 mb-2">
             My Learning Journey 🎓
           </h1>
           <p className="text-purple-600 dark:text-purple-400 text-lg">
@@ -73,7 +74,7 @@ const MyCourses = () => {
   if (selectedClass) {
     return (
       <div className="min-h-screen p-6 space-y-6">
-        <div className="flex items-center gap-4 mb-6 fade-in-up">
+        <div className="flex items-center gap-4 mb-6">
           <Button
             variant="ghost" 
             onClick={() => setSelectedClass(null)}
@@ -83,7 +84,7 @@ const MyCourses = () => {
             Back to Classes
           </Button>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold text-purple-800 dark:text-purple-300">
               Class {selectedClass.classNo}
             </h1>
             <p className="text-purple-600 dark:text-purple-400">
@@ -95,15 +96,15 @@ const MyCourses = () => {
         <div className="grid gap-6">
           {selectedClass.courses.map((course, index) => (
             <Card key={course.id} className={cn(
-              "kid-card hover:shadow-xl transition-all duration-300 overflow-hidden enhanced-card",
-              "animate-fade-in slide-in-right",
+              "kid-card hover:shadow-xl transition-all duration-300 overflow-hidden",
+              "animate-fade-in",
               `animate-delay-${index * 100}`
             )}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-r from-purple-400 to-pink-500 shadow-lg">
+                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-gradient-to-r from-purple-400 to-pink-500">
                         {course.courseImage ? (
                           <img 
                             src={course.courseImage} 
@@ -117,7 +118,7 @@ const MyCourses = () => {
                         )}
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold bg-gradient-to-r from-purple-700 to-blue-700 bg-clip-text text-transparent dark:from-purple-300 dark:to-blue-300">
+                        <h3 className="text-xl font-bold text-purple-800 dark:text-purple-300">
                           {course.courseName}
                         </h3>
                         <p className="text-purple-600 dark:text-purple-400 text-sm">
@@ -161,7 +162,7 @@ const MyCourses = () => {
                     <Button 
                       onClick={() => navigate(`/course/${course.courseId}`)}
                       className={cn(
-                        "kid-button shadow-lg hover:shadow-xl",
+                        "kid-button",
                         parseFloat(course.progress) === 100 
                           ? "bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600" 
                           : parseFloat(course.progress) > 0 
@@ -198,8 +199,8 @@ const MyCourses = () => {
 
   return (
     <div className="min-h-screen p-6 space-y-6">
-      <div className="text-center mb-8 fade-in-up">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-purple-800 dark:text-purple-300 mb-2">
           My Learning Journey 🎓
         </h1>
         <p className="text-purple-600 dark:text-purple-400 text-lg">
@@ -226,27 +227,27 @@ const MyCourses = () => {
             <Card
               key={`class-${classData.classNo}`}
               className={cn(
-                "kid-card cursor-pointer hover:shadow-2xl transition-all duration-300 overflow-hidden group enhanced-card",
-                "animate-fade-in hover:scale-105 slide-in-right",
+                "kid-card cursor-pointer hover:shadow-2xl transition-all duration-300 overflow-hidden group",
+                "animate-fade-in hover:scale-105",
                 `animate-delay-${index * 200}`
               )}
               onClick={() => setSelectedClass(classData)}
             >
               <div className={cn(
-                "h-32 bg-gradient-to-r p-6 relative overflow-hidden shadow-inner",
+                "h-32 bg-gradient-to-r p-6 relative overflow-hidden",
                 colorVariants[index % colorVariants.length]
               )}>
                 <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
                 <div className="relative z-10">
-                  <h3 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">
+                  <h3 className="text-2xl font-bold text-white mb-2">
                     Class {classData.classNo}
                   </h3>
-                  <p className="text-white/90 text-sm drop-shadow">
+                  <p className="text-white/90 text-sm">
                     {classData.totalCourses} course{classData.totalCourses !== 1 ? 's' : ''} available
                   </p>
                 </div>
-                <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-white/20 rounded-full floating-animation"></div>
-                <div className="absolute -top-4 -left-4 w-16 h-16 bg-white/10 rounded-full floating-animation" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute -bottom-4 -right-4 w-20 h-20 bg-white/20 rounded-full"></div>
+                <div className="absolute -top-4 -left-4 w-16 h-16 bg-white/10 rounded-full"></div>
               </div>
 
               <CardContent className="p-6">
@@ -280,7 +281,7 @@ const MyCourses = () => {
                   </div>
 
                   {classData.nextCourse && (
-                    <div className="p-3 glassmorphism rounded-2xl border border-indigo-200/50 dark:border-indigo-700/50">
+                    <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-2xl">
                       <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
                         Next course:
                       </p>
@@ -291,7 +292,7 @@ const MyCourses = () => {
                   )}
 
                   <Button 
-                    className="w-full kid-button bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 group-hover:scale-105 transition-transform shadow-lg hover:shadow-xl"
+                    className="w-full kid-button bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 group-hover:scale-105 transition-transform"
                   >
                     Explore Courses
                     <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -304,17 +305,17 @@ const MyCourses = () => {
       </div>
 
       {enrolledClasses.length === 0 && !isLoading && (
-        <div className="text-center py-12 fade-in-up">
-          <div className="kid-card max-w-md mx-auto p-8 enhanced-card">
-            <BookOpen className="h-16 w-16 text-purple-400 mx-auto mb-4 floating-animation" />
-            <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+        <div className="text-center py-12">
+          <div className="kid-card max-w-md mx-auto p-8">
+            <BookOpen className="h-16 w-16 text-purple-400 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-purple-800 dark:text-purple-300 mb-2">
               No Classes Yet
             </h3>
             <p className="text-purple-600 dark:text-purple-400 mb-6">
               You haven't enrolled in any classes yet. Let's find some awesome courses for you!
             </p>
             <Link to="/course-catalog">
-              <Button className="kid-button bg-gradient-to-r from-indigo-500 to-purple-500 shadow-lg hover:shadow-xl">
+              <Button className="kid-button bg-gradient-to-r from-indigo-500 to-purple-500">
                 Explore Classes
               </Button>
             </Link>
