@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -292,15 +291,8 @@ interface AIGenerationProps {
 
 const AIGeneration: React.FC<AIGenerationProps> = ({ onClassIdsChange, classes }) => {
   const [selectedClasses, setSelectedClasses] = useState<ClassOption[]>([]);
-  const [commandOpen, setCommandOpen] = useState(false);
 
-  useEffect(() => {
-    if (classes.length) {
-      setSelectedClasses(classes);
-    }
-  }, [classes]);
-
-  const handleSelect = (classItem: ClassOption) => {
+  const handleClassToggle = (classItem: ClassOption) => {
     setSelectedClasses(current => {
       // Check if already selected
       if (current.some(item => item.id === classItem.id)) {
@@ -319,7 +311,7 @@ const AIGeneration: React.FC<AIGenerationProps> = ({ onClassIdsChange, classes }
     });
   };
 
-  const removeItem = (classId: string) => {
+  const removeClass = (classId: string) => {
     setSelectedClasses(current => {
       const newSelection = current.filter(item => item.id !== classId);
       onClassIdsChange(newSelection.map(item => item.id));
@@ -328,90 +320,118 @@ const AIGeneration: React.FC<AIGenerationProps> = ({ onClassIdsChange, classes }
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="bg-blue-50 dark:bg-blue-950/50 p-4 rounded-lg">
         <div className="flex items-start gap-3">
           <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-1" />
           <div>
             <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">AI-Generated Assignment</h3>
             <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
-              Select up to 3 classes to generate an assignment based on their content.
+              Select up to 3 classes to generate an assignment based on their content. AI will analyze the class materials and create relevant questions.
             </p>
           </div>
         </div>
       </div>
       
-      <div className="space-y-2">
-        <FormLabel className="text-sm font-medium">Select Classes (max 3)</FormLabel>
+      <div className="space-y-4">
+        <div>
+          <FormLabel className="text-sm font-medium">Select Classes (up to 3)</FormLabel>
+          <p className="text-xs text-muted-foreground mt-1">
+            Choose classes whose content will be used to generate the assignment questions
+          </p>
+        </div>
+
+        {/* Selected Classes Display */}
+        {selectedClasses.length > 0 && (
+          <div className="space-y-2">
+            <FormLabel className="text-xs font-medium text-muted-foreground">Selected Classes:</FormLabel>
+            <div className="flex flex-wrap gap-2">
+              {selectedClasses.map(classItem => (
+                <Badge key={classItem.id} variant="secondary" className="py-1 pl-3 pr-1 flex items-center gap-2">
+                  <span className="text-xs">
+                    {classItem.title.length > 30 ? `${classItem.title.substring(0, 30)}...` : classItem.title}
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-4 w-4 p-0 rounded-full hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => removeClass(classItem.id)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
         
-        <div className="flex flex-wrap gap-2 mb-2">
-          {selectedClasses.map(item => (
-            <Badge key={item.id} variant="secondary" className="py-1 pl-2 pr-1 flex items-center gap-1">
-              {item.title.length > 30 ? `${item.title.substring(0, 30)}...` : item.title}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-5 w-5 p-0 rounded-full"
-                onClick={() => removeItem(item.id)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          ))}
+        {/* Available Classes */}
+        <div className="space-y-2">
+          <FormLabel className="text-xs font-medium text-muted-foreground">Available Classes:</FormLabel>
+          {classes && classes.length > 0 ? (
+            <div className="grid gap-2 max-h-60 overflow-y-auto border rounded-md p-2">
+              {classes.map(classItem => {
+                const isSelected = selectedClasses.some(item => item.id === classItem.id);
+                const isDisabled = !isSelected && selectedClasses.length >= 3;
+                
+                return (
+                  <div
+                    key={classItem.id}
+                    className={cn(
+                      "flex items-center space-x-3 p-3 rounded-lg border-2 transition-all cursor-pointer",
+                      isSelected 
+                        ? "border-blue-500 bg-blue-500" 
+                        : isDisabled
+                        ? "border-gray-200 bg-gray-50 dark:bg-gray-800 opacity-50 cursor-not-allowed"
+                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    )}
+                    onClick={() => !isDisabled && handleClassToggle(classItem)}
+                  >
+                    <div className="flex-shrink-0">
+                      <div className={cn(
+                        "w-4 h-4 rounded border-2 flex items-center justify-center",
+                        isSelected 
+                          ? "border-blue-500 bg-blue-500" 
+                          : "border-gray-300"
+                      )}>
+                        {isSelected && <Check className="h-3 w-3 text-white" />}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {classItem.title}
+                      </p>
+                      {classItem.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">
+                          {classItem.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground border rounded-md">
+              <p className="text-sm">No classes available in this course</p>
+              <p className="text-xs mt-1">Add some classes to generate AI assignments</p>
+            </div>
+          )}
         </div>
         
-        <Popover open={commandOpen} onOpenChange={setCommandOpen}>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="outline" 
-              role="combobox" 
-              className="w-full justify-between font-normal"
-            >
-              {selectedClasses.length > 0 
-                ? `${selectedClasses.length} class${selectedClasses.length > 1 ? 'es' : ''} selected`
-                : "Select classes..."}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-0">
-            <Command>
-              <CommandInput placeholder="Search classes..." />
-              <CommandEmpty>No classes found.</CommandEmpty>
-              <CommandGroup className="max-h-[300px] overflow-auto">
-                {classes && classes.length > 0 ? (
-                  classes.map(classItem => (
-                    <CommandItem
-                      key={classItem.id}
-                      value={classItem.title}
-                      onSelect={() => {
-                        handleSelect(classItem);
-                        setCommandOpen(false);
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <div className={cn(
-                        "mr-2", 
-                        selectedClasses.some(item => item.id === classItem.id) ? "opacity-100" : "opacity-0"
-                      )}>
-                        <Check className="h-4 w-4" />
-                      </div>
-                      <span className="flex-1 truncate">
-                        {classItem.title}
-                      </span>
-                    </CommandItem>
-                  ))
-                ) : (
-                  <div className="py-6 text-center text-sm">No classes available</div>
-                )}
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
-        
-        {selectedClasses.length === 0 && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Please select at least one class for AI generation
+        {selectedClasses.length === 0 && classes.length > 0 && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 p-2 rounded">
+            Please select at least one class to generate an AI assignment
           </p>
+        )}
+
+        {selectedClasses.length > 0 && (
+          <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg">
+            <p className="text-xs text-green-700 dark:text-green-400">
+              ✓ {selectedClasses.length} class{selectedClasses.length > 1 ? 'es' : ''} selected. 
+              AI will analyze the content from these classes to generate relevant assignment questions.
+            </p>
+          </div>
         )}
       </div>
     </div>
