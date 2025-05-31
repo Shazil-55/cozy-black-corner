@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload, Zap, X, Check, ChevronsUpDown } from "lucide-react";
+import { CalendarIcon, Zap, X, Check, ChevronsUpDown, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -51,6 +52,15 @@ const assignmentSchema = z.object({
   published: z.boolean().optional(),
 });
 
+// Question interface
+interface Question {
+  id: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  marks: number;
+}
+
 // Type for API responses
 interface CourseFileUploadResponse {
   data: {
@@ -60,66 +70,142 @@ interface CourseFileUploadResponse {
   };
 }
 
-interface FileUploadProps {
-  onFileSelect: (file: File) => void;
-  initialFileUrl?: string;
+interface ManualQuestionsProps {
+  questions: Question[];
+  onQuestionsChange: (questions: Question[]) => void;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, initialFileUrl }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (initialFileUrl) {
-      const filename = initialFileUrl.split('/').pop() || 'Current file';
-      setFileName(filename);
+const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestionsChange }) => {
+  const addQuestion = () => {
+    if (questions.length >= 10) {
+      toast.error("You can only add up to 10 questions");
+      return;
     }
-  }, [initialFileUrl]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
-      onFileSelect(file);
-    }
+    const newQuestion: Question = {
+      id: Math.random().toString(36).substr(2, 9),
+      question: "",
+      options: ["", "", "", ""],
+      correctAnswer: 0,
+      marks: 1
+    };
+
+    onQuestionsChange([...questions, newQuestion]);
+  };
+
+  const removeQuestion = (questionId: string) => {
+    onQuestionsChange(questions.filter(q => q.id !== questionId));
+  };
+
+  const updateQuestion = (questionId: string, field: keyof Question, value: any) => {
+    onQuestionsChange(questions.map(q => 
+      q.id === questionId ? { ...q, [field]: value } : q
+    ));
+  };
+
+  const updateOption = (questionId: string, optionIndex: number, value: string) => {
+    onQuestionsChange(questions.map(q => 
+      q.id === questionId 
+        ? { ...q, options: q.options.map((opt, idx) => idx === optionIndex ? value : opt) }
+        : q
+    ));
   };
 
   return (
-    <div className="space-y-4">
-      <div 
-        className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50"
-        onClick={() => fileInputRef.current?.click()}
-      >
-        <Upload className="mx-auto h-10 w-10 text-gray-400 mb-3" />
-        <p className="text-sm font-semibold">
-          {initialFileUrl ? 'Replace current file' : 'Click to upload or drag and drop'}
-        </p>
-        <p className="text-xs text-gray-500 mt-1">PDF, DOCX, or TXT (max 10MB)</p>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          className="hidden"
-          accept=".pdf,.docx,.txt"
-        />
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-medium">Manual Questions</h3>
+          <p className="text-sm text-muted-foreground">
+            Add up to 10 questions manually ({questions.length}/10)
+          </p>
+        </div>
+        <Button 
+          type="button" 
+          onClick={addQuestion} 
+          disabled={questions.length >= 10}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add Question
+        </Button>
       </div>
-      
-      {fileName && (
-        <div className="p-3 bg-gray-50 rounded flex items-center justify-between">
-          <span className="text-sm truncate">{fileName}</span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={(e) => {
-              e.stopPropagation();
-              setFileName(null);
-              if (fileInputRef.current) fileInputRef.current.value = '';
-            }}
-          >
-            Remove
-          </Button>
+
+      {questions.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>No questions added yet. Click "Add Question" to get started.</p>
         </div>
       )}
+
+      {questions.map((question, questionIndex) => (
+        <div key={question.id} className="border rounded-lg p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium">Question {questionIndex + 1}</h4>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => removeQuestion(question.id)}
+              className="text-red-600 hover:text-red-700"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <FormLabel>Question</FormLabel>
+              <Textarea
+                placeholder="Enter your question here..."
+                value={question.question}
+                onChange={(e) => updateQuestion(question.id, 'question', e.target.value)}
+                className="mt-1"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {question.options.map((option, optionIndex) => (
+                <div key={optionIndex} className="space-y-1">
+                  <FormLabel className="text-xs">Option {optionIndex + 1}</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder={`Option ${optionIndex + 1}`}
+                      value={option}
+                      onChange={(e) => updateOption(question.id, optionIndex, e.target.value)}
+                    />
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        name={`correct-${question.id}`}
+                        checked={question.correctAnswer === optionIndex}
+                        onChange={() => updateQuestion(question.id, 'correctAnswer', optionIndex)}
+                        className="h-4 w-4 text-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <FormLabel className="text-xs">Marks</FormLabel>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={question.marks}
+                  onChange={(e) => updateQuestion(question.id, 'marks', parseInt(e.target.value) || 1)}
+                  className="w-20"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Correct answer: Option {question.correctAnswer + 1}
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };
@@ -276,10 +362,9 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
 }) => {
   const isEditMode = !!assignment;
   const [activeTab, setActiveTab] = useState<string>(assignment?.isAiGenerated ? "ai" : "manual");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [classIds, setClassIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fileChanged, setFileChanged] = useState(false);
   
   // Initialize form with default values or values from existing assignment
   const form = useForm<z.infer<typeof assignmentSchema>>({
@@ -308,6 +393,10 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
       if (assignment.classNumbers?.length) {
         setClassIds(assignment.classNumbers);
       }
+
+      // TODO: If editing, load existing questions from assignment
+      // This would require backend API changes to store questions
+      setQuestions([]);
     } else {
       form.reset({
         title: "",
@@ -318,24 +407,33 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
       });
       setActiveTab("manual");
       setClassIds([]);
-      setSelectedFile(null);
-      setFileChanged(false);
+      setQuestions([]);
     }
   }, [assignment, form]);
-
-  const handleFileSelect = (file: File) => {
-    setSelectedFile(file);
-    setFileChanged(true);
-  };
 
   const handleSubmit = async (values: z.infer<typeof assignmentSchema>) => {
     setIsSubmitting(true);
     try {
-      // For manual assignments, file is required for new assignments
-      if (activeTab === "manual" && !isEditMode && !selectedFile) {
-        toast.error("Please upload an assignment file");
+      // For manual assignments, questions are required
+      if (activeTab === "manual" && questions.length === 0) {
+        toast.error("Please add at least one question");
         setIsSubmitting(false);
         return;
+      }
+
+      // Validate questions for manual assignments
+      if (activeTab === "manual") {
+        const invalidQuestions = questions.filter(q => 
+          !q.question.trim() || 
+          q.options.some(opt => !opt.trim()) ||
+          q.marks <= 0
+        );
+        
+        if (invalidQuestions.length > 0) {
+          toast.error("Please complete all question fields");
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       // For AI generation, class IDs are required
@@ -345,19 +443,12 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
         return;
       }
 
-      // Upload file for manual assignments if it's changed or new
-      let fileUrl = assignment?.fileUrl || '';
-      if (activeTab === "manual" && selectedFile && (fileChanged || !isEditMode)) {
-        const uploadResponse = await courseService.uploadFile(selectedFile);
-        fileUrl = uploadResponse.data.url;
-      }
-
       // Prepare assignment data
       const assignmentData = {
         title: values.title,
         description: values.description,
         dueDate: values.dueDate.toISOString(),
-        fileUrl: activeTab === "manual" ? fileUrl : '',
+        questions: activeTab === "manual" ? questions : undefined,
         classNumbers: activeTab === "ai" ? classIds : undefined,
         isAiGenerated: activeTab === "ai",
         published: values.published,
@@ -372,7 +463,7 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
         await courseService.createAssignment(courseId, assignmentData);
         toast.success(
           activeTab === "manual" 
-            ? "Assignment uploaded successfully" 
+            ? "Assignment created successfully" 
             : "AI is generating your assignment",
           {
             description: activeTab === "manual" 
@@ -385,9 +476,8 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
       await onAssignmentAdded();
       onClose();
       form.reset();
-      setSelectedFile(null);
+      setQuestions([]);
       setClassIds([]);
-      setFileChanged(false);
     } catch (error) {
       toast.error(isEditMode ? "Failed to update assignment" : "Failed to create assignment", {
         description: "An error occurred"
@@ -399,7 +489,7 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditMode ? "Edit Assignment" : "Add Assignment"}</DialogTitle>
           <DialogDescription>
@@ -505,13 +595,13 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
             
             <Tabs value={activeTab} onValueChange={isEditMode ? undefined : setActiveTab}>
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="manual" disabled={isEditMode}>Manual Upload</TabsTrigger>
+                <TabsTrigger value="manual" disabled={isEditMode}>Manual Questions</TabsTrigger>
                 <TabsTrigger value="ai" disabled={isEditMode}>AI Generated</TabsTrigger>
               </TabsList>
               <TabsContent value="manual" className="mt-4">
-                <FileUpload 
-                  onFileSelect={handleFileSelect} 
-                  initialFileUrl={assignment?.fileUrl}
+                <ManualQuestions 
+                  questions={questions}
+                  onQuestionsChange={setQuestions}
                 />
               </TabsContent>
               <TabsContent value="ai" className="mt-4">
