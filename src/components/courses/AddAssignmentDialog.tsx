@@ -62,8 +62,7 @@ interface Question {
   type: QuestionType;
   question: string;
   options?: string[]; // Only for multiple choice
-  correctAnswer?: number; // Only for multiple choice (index)
-  correctText?: string; // Only for fill in the blank
+  correctAnswer?: string; // For both multiple choice (option text) and fill in the blank
 }
 
 // Type for API responses
@@ -116,22 +115,19 @@ const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestion
           return {
             ...baseQuestion,
             options: ["", "", "", ""],
-            correctAnswer: 0,
-            correctText: undefined
+            correctAnswer: ""
           };
         } else if (type === 'fill-blank') {
           return {
             ...baseQuestion,
-            correctText: "",
-            options: undefined,
-            correctAnswer: undefined
+            correctAnswer: "",
+            options: undefined
           };
         } else { // brief
           return {
             ...baseQuestion,
             options: undefined,
-            correctAnswer: undefined,
-            correctText: undefined
+            correctAnswer: undefined
           };
         }
       }
@@ -144,6 +140,12 @@ const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestion
       q.id === questionId 
         ? { ...q, options: q.options?.map((opt, idx) => idx === optionIndex ? value : opt) }
         : q
+    ));
+  };
+
+  const setCorrectOption = (questionId: string, optionText: string) => {
+    onQuestionsChange(questions.map(q => 
+      q.id === questionId ? { ...q, correctAnswer: optionText } : q
     ));
   };
 
@@ -166,8 +168,8 @@ const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestion
                       <input
                         type="radio"
                         name={`correct-${question.id}`}
-                        checked={question.correctAnswer === optionIndex}
-                        onChange={() => updateQuestion(question.id, 'correctAnswer', optionIndex)}
+                        checked={question.correctAnswer === option}
+                        onChange={() => setCorrectOption(question.id, option)}
                         className="h-4 w-4 text-primary"
                       />
                     </div>
@@ -176,7 +178,7 @@ const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestion
               ))}
             </div>
             <div className="text-xs text-muted-foreground">
-              Correct answer: Option {(question.correctAnswer || 0) + 1}
+              Correct answer: {question.correctAnswer || "None selected"}
             </div>
           </>
         );
@@ -187,8 +189,8 @@ const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestion
             <FormLabel className="text-xs">Correct Answer</FormLabel>
             <Input
               placeholder="Enter the correct answer for the blank"
-              value={question.correctText || ""}
-              onChange={(e) => updateQuestion(question.id, 'correctText', e.target.value)}
+              value={question.correctAnswer || ""}
+              onChange={(e) => updateQuestion(question.id, 'correctAnswer', e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
               Students will need to fill in the blank with this answer
@@ -500,11 +502,11 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
           if (!q.question.trim()) return true;
           
           if (q.type === 'multiple-choice') {
-            return !q.options || q.options.some(opt => !opt.trim()) || q.correctAnswer === undefined;
+            return !q.options || q.options.some(opt => !opt.trim()) || !q.correctAnswer;
           }
           
           if (q.type === 'fill-blank') {
-            return !q.correctText || !q.correctText.trim();
+            return !q.correctAnswer || !q.correctAnswer.trim();
           }
           
           return false; // Brief questions only need the question text
@@ -524,12 +526,15 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
         return;
       }
 
+      // Prepare questions for payload (remove id field)
+      const questionsForPayload = questions.map(({ id, ...questionWithoutId }) => questionWithoutId);
+
       // Prepare assignment data
       const assignmentData = {
         title: values.title,
         description: values.description,
         dueDate: values.dueDate.toISOString(),
-        questions: activeTab === "manual" ? questions : undefined,
+        questions: activeTab === "manual" ? questionsForPayload : undefined,
         classNumbers: activeTab === "ai" ? classIds : undefined,
         isAiGenerated: activeTab === "ai",
         published: values.published,
