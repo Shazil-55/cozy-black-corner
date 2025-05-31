@@ -401,11 +401,6 @@ const AIGeneration: React.FC<AIGenerationProps> = ({ onClassIdsChange, classes }
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                         {classItem.title}
                       </p>
-                      {classItem.description && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">
-                          {classItem.description}
-                        </p>
-                      )}
                     </div>
                   </div>
                 );
