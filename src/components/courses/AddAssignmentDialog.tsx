@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { ClassOption } from "./AssignmentsTab";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Create the schema based on the provided schema
 const assignmentSchema = z.object({
@@ -52,13 +53,17 @@ const assignmentSchema = z.object({
   published: z.boolean().optional(),
 });
 
+// Question types
+type QuestionType = 'brief' | 'multiple-choice' | 'fill-blank';
+
 // Question interface
 interface Question {
   id: string;
+  type: QuestionType;
   question: string;
-  options: string[];
-  correctAnswer: number;
-  marks: number;
+  options?: string[]; // Only for multiple choice
+  correctAnswer?: number; // Only for multiple choice (index)
+  correctText?: string; // Only for fill in the blank
 }
 
 // Type for API responses
@@ -84,10 +89,8 @@ const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestion
 
     const newQuestion: Question = {
       id: Math.random().toString(36).substr(2, 9),
+      type: 'brief',
       question: "",
-      options: ["", "", "", ""],
-      correctAnswer: 0,
-      marks: 1
     };
 
     onQuestionsChange([...questions, newQuestion]);
@@ -103,12 +106,104 @@ const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestion
     ));
   };
 
+  const updateQuestionType = (questionId: string, type: QuestionType) => {
+    onQuestionsChange(questions.map(q => {
+      if (q.id === questionId) {
+        const baseQuestion = { ...q, type };
+        
+        // Reset type-specific fields based on new type
+        if (type === 'multiple-choice') {
+          return {
+            ...baseQuestion,
+            options: ["", "", "", ""],
+            correctAnswer: 0,
+            correctText: undefined
+          };
+        } else if (type === 'fill-blank') {
+          return {
+            ...baseQuestion,
+            correctText: "",
+            options: undefined,
+            correctAnswer: undefined
+          };
+        } else { // brief
+          return {
+            ...baseQuestion,
+            options: undefined,
+            correctAnswer: undefined,
+            correctText: undefined
+          };
+        }
+      }
+      return q;
+    }));
+  };
+
   const updateOption = (questionId: string, optionIndex: number, value: string) => {
     onQuestionsChange(questions.map(q => 
       q.id === questionId 
-        ? { ...q, options: q.options.map((opt, idx) => idx === optionIndex ? value : opt) }
+        ? { ...q, options: q.options?.map((opt, idx) => idx === optionIndex ? value : opt) }
         : q
     ));
+  };
+
+  const renderQuestionInputs = (question: Question, questionIndex: number) => {
+    switch (question.type) {
+      case 'multiple-choice':
+        return (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {question.options?.map((option, optionIndex) => (
+                <div key={optionIndex} className="space-y-1">
+                  <FormLabel className="text-xs">Option {optionIndex + 1}</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder={`Option ${optionIndex + 1}`}
+                      value={option}
+                      onChange={(e) => updateOption(question.id, optionIndex, e.target.value)}
+                    />
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        name={`correct-${question.id}`}
+                        checked={question.correctAnswer === optionIndex}
+                        onChange={() => updateQuestion(question.id, 'correctAnswer', optionIndex)}
+                        className="h-4 w-4 text-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Correct answer: Option {(question.correctAnswer || 0) + 1}
+            </div>
+          </>
+        );
+      
+      case 'fill-blank':
+        return (
+          <div className="space-y-2">
+            <FormLabel className="text-xs">Correct Answer</FormLabel>
+            <Input
+              placeholder="Enter the correct answer for the blank"
+              value={question.correctText || ""}
+              onChange={(e) => updateQuestion(question.id, 'correctText', e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Students will need to fill in the blank with this answer
+            </p>
+          </div>
+        );
+      
+      case 'brief':
+      default:
+        return (
+          <div className="text-xs text-muted-foreground py-2">
+            This is a brief question. Students will provide a written answer.
+          </div>
+        );
+    }
   };
 
   return (
@@ -154,6 +249,23 @@ const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestion
 
           <div className="space-y-4">
             <div>
+              <FormLabel>Question Type</FormLabel>
+              <Select
+                value={question.type}
+                onValueChange={(value: QuestionType) => updateQuestionType(question.id, value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select question type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="brief">Brief Question</SelectItem>
+                  <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
+                  <SelectItem value="fill-blank">Fill in the Blank</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <FormLabel>Question</FormLabel>
               <Textarea
                 placeholder="Enter your question here..."
@@ -163,46 +275,7 @@ const ManualQuestions: React.FC<ManualQuestionsProps> = ({ questions, onQuestion
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {question.options.map((option, optionIndex) => (
-                <div key={optionIndex} className="space-y-1">
-                  <FormLabel className="text-xs">Option {optionIndex + 1}</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder={`Option ${optionIndex + 1}`}
-                      value={option}
-                      onChange={(e) => updateOption(question.id, optionIndex, e.target.value)}
-                    />
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name={`correct-${question.id}`}
-                        checked={question.correctAnswer === optionIndex}
-                        onChange={() => updateQuestion(question.id, 'correctAnswer', optionIndex)}
-                        className="h-4 w-4 text-primary"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
-                <FormLabel className="text-xs">Marks</FormLabel>
-                <Input
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={question.marks}
-                  onChange={(e) => updateQuestion(question.id, 'marks', parseInt(e.target.value) || 1)}
-                  className="w-20"
-                />
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Correct answer: Option {question.correctAnswer + 1}
-              </div>
-            </div>
+            {renderQuestionInputs(question, questionIndex)}
           </div>
         </div>
       ))}
@@ -423,11 +496,19 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
 
       // Validate questions for manual assignments
       if (activeTab === "manual") {
-        const invalidQuestions = questions.filter(q => 
-          !q.question.trim() || 
-          q.options.some(opt => !opt.trim()) ||
-          q.marks <= 0
-        );
+        const invalidQuestions = questions.filter(q => {
+          if (!q.question.trim()) return true;
+          
+          if (q.type === 'multiple-choice') {
+            return !q.options || q.options.some(opt => !opt.trim()) || q.correctAnswer === undefined;
+          }
+          
+          if (q.type === 'fill-blank') {
+            return !q.correctText || !q.correctText.trim();
+          }
+          
+          return false; // Brief questions only need the question text
+        });
         
         if (invalidQuestions.length > 0) {
           toast.error("Please complete all question fields");
