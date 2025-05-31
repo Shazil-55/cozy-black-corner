@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FilePlus, Download, Eye, Trash2, Pencil } from "lucide-react";
+import { FilePlus, Trash2, Pencil } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AddAssignmentDialog } from "./AddAssignmentDialog";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ export interface Assignment {
   isAiGenerated: boolean;
   published?: boolean;
   totalMarks?: number;
+  questions?: any[];
 }
 
 export interface ClassOption {
@@ -97,6 +98,11 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
     setIsAddDialogOpen(false);
   };
 
+  const handleAssignmentSuccess = async () => {
+    await onAssignmentAdded();
+    handleCloseDialog();
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -123,7 +129,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
               <TableHead className="w-[120px]">Due Date</TableHead>
               <TableHead className="w-[80px]">Marks</TableHead>
               <TableHead className="w-[100px]">Type</TableHead>
-              <TableHead className="text-right w-[150px]">Actions</TableHead>
+              <TableHead className="text-right w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,44 +143,6 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
                   <TableCell>{assignment.isAiGenerated ? "AI Generated" : "Manual"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end space-x-1">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              size="icon" 
-                              variant="outline" 
-                              className="h-8 w-8"
-                              onClick={() => window.open(assignment.fileUrl, '_blank')}
-                              disabled={!assignment.fileUrl}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>View</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button 
-                              size="icon" 
-                              variant="outline" 
-                              className="h-8 w-8"
-                              onClick={() => window.open(assignment.fileUrl, '_blank')}
-                              disabled={!assignment.fileUrl}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Download</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -270,7 +238,7 @@ export const AssignmentsTab: React.FC<AssignmentsTabProps> = ({
         isOpen={isAddDialogOpen} 
         onClose={handleCloseDialog} 
         courseId={courseId}
-        onAssignmentAdded={onAssignmentAdded}
+        onAssignmentAdded={handleAssignmentSuccess}
         assignment={selectedAssignment}
         classes={classes}
       />

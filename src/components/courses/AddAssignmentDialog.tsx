@@ -484,9 +484,19 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
         setClassIds(assignment.classNumbers);
       }
 
-      // TODO: If editing, load existing questions from assignment
-      // This would require backend API changes to store questions
-      setQuestions([]);
+      // Prepopulate questions if they exist
+      if (assignment.questions && assignment.questions.length > 0) {
+        const mappedQuestions = assignment.questions.map((q: any) => ({
+          id: Math.random().toString(36).substr(2, 9), // Generate new ID for frontend
+          type: q.type,
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer
+        }));
+        setQuestions(mappedQuestions);
+      } else {
+        setQuestions([]);
+      }
     } else {
       form.reset({
         title: "",
@@ -580,6 +590,7 @@ export const AddAssignmentDialog: React.FC<AddAssignmentDialogProps> = ({
       setQuestions([]);
       setClassIds([]);
     } catch (error) {
+      console.error("Assignment submission error:", error);
       toast.error(isEditMode ? "Failed to update assignment" : "Failed to create assignment", {
         description: "An error occurred"
       });
